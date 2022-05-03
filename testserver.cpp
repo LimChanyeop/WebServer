@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <bitset> //
 
 #include <sys/event.h> // for kqueue
 
@@ -21,9 +22,10 @@
 
 void set_sockaddr(sockaddr_in *address)
 {
-	// memset((char *)address, 0, sizeof(*address)); // ?
+	memset((char *)address, 0, sizeof(*address)); // ?
 	address->sin_family = AF_INET;
 	address->sin_port = htons(PORT);
+	// std::cout << std::bitset<16>(htons(PORT)) << std::endl; // -> \n
 	address->sin_addr.s_addr = htonl(INADDR_ANY);
 	memset(address->sin_zero, 0, sizeof(address->sin_zero));
 }
@@ -42,11 +44,10 @@ int main()
 
 	set_sockaddr(&address);
 
-	int address_len = sizeof(address);
-
 	int optvalue = 1;
 	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &optvalue, sizeof(optvalue)); // for bind error
 
+	int address_len = sizeof(address);
 	if (int ret = bind(server_fd, (sockaddr *)&address, address_len) < 0) // (socklen_t)sizeof, bind suc:0 fa:-1
 	{
 		std::cout << ret << std::endl;
@@ -60,29 +61,36 @@ int main()
 		exit(0); // why exit?
 	}
 
-	// int kq_fd = kqueue(); // kqqqqq 주석을 처리하든 안하든 똑같당 잘 되고있는지 모르겠당
-	// if (kq_fd == -1)
-	// {
-	// 	std::cout << "kqueue error\n";
-	// 	exit(0);
-	// }
-	// std::vector<struct kevent> kq_list;
-	// struct kevent event_list[8];
-	// struct kevent temp_event;
-	// EV_SET(&temp_event, server_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-	// kq_list.push_back(temp_event);
+	int kq_fd = kqueue(); // kqqqqq
+
+	std::vector<struct kevent> change_list;
+	struct kevent event_list[8];
+	struct kevent temp_event;
+	EV_SET(&temp_event, server_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	change_list.push_back(temp_event);
 
 	int kevent_v;
 	while (1)
 	{
+		struct kevent *cur_event;
 		std::cout << "waiting for new connection...\n";
 
-		// if ((kevent_v = kevent(kq_fd, &kq_list[0], kq_list.size(), event_list, 8, NULL)) == -1) // kqqq
-		// {
-		// 	std::cerr << "kevent error\n";
-		// 	exit(0);
-		// }
+		if ((kevent_v = kevent(kq_fd, &change_list[0], change_list.size(), event_list, 8, NULL)) == -1) // kqqq
+		{
+			std::cerr << "kevent error\n";
+			exit(0);
+		}
 
+		for (int i = 0; i < kevent_v; ++i)
+		{
+			cur_event = &event_list[i];
+			std::cout << cur_event->ident << std::endl
+					  << cur_event->filter << std::endl
+					  << cur_event->flags << std::endl
+					  << cur_event->fflags << std::endl
+					  << cur_event->data << std::endl
+					  << cur_event->udata << std::endl;
+		}
 		int acc_socket;
 		if ((acc_socket = accept(server_fd,												// block fn
 								 (sockaddr *)&address, (socklen_t *)&address_len)) < 0) //
@@ -92,22 +100,19 @@ int main()
 		}
 
 		std::cout << "Connected!\n";
-		////////////////////// Conneted!!!
 
 		char request[1024] = {0};
-		std::string str_buf;
-		// int valread = read(acc_socket, &request, 1024);
-		int valread = recv(acc_socket, request, 1024, 0);
-		str_buf += request;
+		int valread = read(acc_socket, request, 1024);
+		// int valread = recv(acc_socket, request, 1024, 0);
+		std::string str_buf = request;
 		std::cout << str_buf << std::endl;
 
-		std::string hello = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: ";
-		hello += std::to_string(str_buf.length() + 16);
-		// std::cout << std::to_string(str_buf.length()) << std::endl; // requrest lenth
-		hello += "\n\nyour request :\n";
-		hello += str_buf; // IMPORTANT!!
+		std::string response_str = "HTTP/1.1 200 OK\nContent-Type: text/plain\nContent-Length: ";
+		response_str += std::to_string(str_buf.length() + 15);
+		response_str += "\n\nyour request :\n";
+		response_str += str_buf; // IMPORTANT!!
 
-		write(acc_socket, hello.c_str(), hello.length());
+		write(acc_socket, response_str.c_str(), response_str.length());
 
 		close(acc_socket);
 	}

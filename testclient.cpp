@@ -42,10 +42,10 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	std::string BoNe = argv[1];
+	std::string request = argv[1];
 
-	send(sock, BoNe.c_str(), BoNe.length(), 0);
-	std::cout << "message '" << BoNe << "' send!" << std::endl;
+	send(sock, request.c_str(), request.length(), 0);
+	std::cout << "message '" << request << "' send!" << std::endl;
 
 	int valread = read(sock, buffer, 1024);
 	std::cout << "read :\n"
