@@ -42,13 +42,14 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	std::string bo = argv[1];
+	std::string request = argv[1];
 
-	send(sock, bo.c_str(), bo.length(), 0);
-	std::cout << "message '" << bo << "' send!" << std::endl;
+	send(sock, request.c_str(), request.length(), 0);
+	std::cout << "message '" << request << "' send!" << std::endl;
 
 	int valread = read(sock, buffer, 1024);
-	std::cout << "read : " << buffer << std::endl;
+	std::cout << "read :\n"
+			  << buffer << std::endl;
 
 	return 0;
 }
