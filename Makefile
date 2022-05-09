@@ -1,6 +1,11 @@
 CC = c++
 
-SFILE = testserver.cpp
+SFILE = testserver.cpp \
+		debug.cpp \
+		Socket.cpp \
+		ServerSocket.cpp \
+		
+
 # SOBJ = $(SFILE:.c=.o)
 CFILE = testclient.cpp
 # COBJ = $(CFILE:.c=.o)
