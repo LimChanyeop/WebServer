@@ -1,6 +1,6 @@
 CC = c++
 
-SFILE = testserver.cpp \
+SFILE = Server.cpp \
 		debug.cpp \
 		Socket.cpp \
 		ServerSocket.cpp \

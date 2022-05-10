@@ -1,8 +1,8 @@
 // #include <sys/types.h>
 // #include <sys/stat.h>
 
-#include "ClientSocket.hpp"
 #include "Server.hpp"
+#include "ClientSocket.hpp"
 #include "ServerSocket.hpp"
 #include "Socket.hpp"
 
@@ -20,6 +20,7 @@ int main() {
     timespec wait = {10, 0};
     ServerSocket serv_sock;
     serv_sock.set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
+
     if (serv_sock.get_socket_fd() <= 0) {
         std::cerr << "socket error" << std::endl;
         return 0;
@@ -29,9 +30,8 @@ int main() {
     setsockopt(serv_sock.get_socket_fd(), SOL_SOCKET, SO_REUSEADDR, &optvalue,
                sizeof(optvalue)); // to solve bind error
 
-    if (int ret = bind(serv_sock.get_socket_fd(), (sockaddr *)serv_sock.get_address(), (socklen_t)sizeof(serv_sock.get_address())) <
-                  0) // (socklen_t)sizeof, bind suc:0 fa:-1
-    {
+    int ret;
+    if ((ret = bind(serv_sock.get_socket_fd(), (sockaddr *)&serv_sock.get_address(), (socklen_t)sizeof(serv_sock.get_address()))) == -1) {
         std::cerr << "bind error : return value = " << ret << std::endl;
         return 0;
     }
@@ -60,22 +60,20 @@ int main() {
             std::cerr << "kevent error\n";
             exit(0);
         }
-
         change_list.clear(); // 등록 이벤트 목록 초기화
 
         for (int i = 0; i < num_of_event; i++) {
-            print_event(event_list[i]);
+            // print_event(event_list[i]);
             if (event_list[i].filter == EVFILT_READ) {
                 std::cout << "accept READ Event / ident :" << event_list[i].ident << std::endl;
                 if (event_list[i].ident == serv_sock.get_socket_fd()) {
                     int acc_fd;
-                    if ((acc_fd = accept(serv_sock.get_socket_fd(), (sockaddr *)serv_sock.get_address(),
+                    if ((acc_fd = accept(serv_sock.get_socket_fd(), (sockaddr *)&serv_sock.get_address(),
                                          (socklen_t *)&serv_sock.get_address_len())) == -1) //
                     {
                         std::cerr << "accept error" << std::endl;
                         exit(0);
                     }
-                    std::cout << acc_fd << std::endl;
                     // fcntl(acc_fd, F_SETFL, O_NONBLOCK);
                     change_events(change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
                     change_events(change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
@@ -88,8 +86,11 @@ int main() {
                     std::cout << str_buf << std::endl;
                 }
             } else if (event_list[i].filter == EVFILT_WRITE) {
+                std::cout << "accept WRITE Event / ident :" << event_list[i].ident << std::endl;
                 server.set_response(i, str_buf);
                 write(event_list[i].ident, server.get_response().c_str(), server.get_response().length());
+                // write(event_list[i].ident, "<head><link rel=\"shortcut icon\" href=\"test.ico\"></head>", 54);
+
                 close(event_list[i].ident);
             }
         }
