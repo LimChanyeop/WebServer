@@ -4,6 +4,8 @@ SFILE = Server.cpp \
 		debug.cpp \
 		Socket.cpp \
 		ServerSocket.cpp \
+		./utils/parseUtils.cpp \
+		parseConfig.cpp
 		
 
 # SOBJ = $(SFILE:.c=.o)

@@ -2,9 +2,11 @@
 // #include <sys/stat.h>
 
 #include "Server.hpp"
+#include "./utils/parseUtils.hpp"
 #include "ClientSocket.hpp"
 #include "ServerSocket.hpp"
 #include "Socket.hpp"
+#include "parseConfig.hpp"
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,
                    void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
@@ -15,9 +17,13 @@ void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int
     change_list.push_back(temp_event);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    std::vector<std::string> vec_attr;
+    split_config(remove_annotaion(argv[1]), vec_attr);
+    // for (std::vector<std::string>::iterator it = vec_attr.begin(); it != vec_attr.end(); it++) {
+    //     std::cout << *it << std::endl;
+    // }
     Server server;
-    timespec wait = {10, 0};
     ServerSocket serv_sock;
     serv_sock.set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
 
@@ -56,7 +62,7 @@ int main() {
 
         int n_changes = change_list.size(); // number of changes = 등록하고자 하는 이벤트 수
         int n_event_list = 8;
-        if ((num_of_event = kevent(kq_fd, &change_list[0], n_changes, event_list, n_event_list, &wait)) == -1) {
+        if ((num_of_event = kevent(kq_fd, &change_list[0], n_changes, event_list, n_event_list, NULL)) == -1) {
             std::cerr << "kevent error\n";
             exit(0);
         }

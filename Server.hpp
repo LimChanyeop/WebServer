@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "./utils/parseUtils.hpp"
+#include <fstream>     // for file io
 #include <sys/event.h> // for kqueue
 #include <time.h>      // for time
 
