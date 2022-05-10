@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include "./utils/parseUtils.hpp"
+#include <fstream>     // for file io
 #include <sys/event.h> // for kqueue
 #include <time.h>      // for time
 
@@ -37,8 +39,8 @@ class Server {
     void set_response(int i, std::string str_buf) {
         response_str = "HTTP/1.1 200 OK\nContent-Type: "
                        "text/plain\nContent-Length: ";
-        response_str += std::to_string(str_buf.length() + 15);
-        response_str += "\n\nyour request :\n";
+        response_str += std::to_string(str_buf.length() + 10000);
+        response_str += "\n\ndsad<!DOCTYPE html><h1>TITLE</h1></html>\n";
         response_str += str_buf; // IMPORTANT!!
     }
 };
