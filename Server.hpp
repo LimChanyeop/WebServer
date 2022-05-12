@@ -48,5 +48,4 @@ public:
 };
 
 void print_event(struct kevent event_list);
-
 #endif

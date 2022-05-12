@@ -5,7 +5,7 @@ SFILE = Server.cpp \
 		Socket.cpp \
 		ServerSocket.cpp \
 		./utils/parseUtils.cpp \
-		parseConfig.cpp
+		parseConfig.cpp \
 		
 
 # SOBJ = $(SFILE:.c=.o)

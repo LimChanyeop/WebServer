@@ -2,11 +2,9 @@
 // #include <sys/stat.h>
 
 #include "Server.hpp"
-#include "./utils/parseUtils.hpp"
 #include "ClientSocket.hpp"
 #include "ServerSocket.hpp"
 #include "Socket.hpp"
-#include "parseConfig.hpp"
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,
 				   void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
@@ -21,7 +19,8 @@ int main(int argc, char *argv[])
 {
 	std::vector<std::string> vec_attr;
 	split_config(remove_annotaion(argv[1]), vec_attr);
-	config_parsing(vec_attr);
+	Config_base config_base;
+	config_parsing(vec_attr, config_base);
 	// for (std::vector<std::string>::iterator it = vec_attr.begin(); it != vec_attr.end(); it++)
 	// {
 	// 	std::cout << *it << std::endl;
