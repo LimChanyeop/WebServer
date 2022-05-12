@@ -7,15 +7,16 @@
 
 #include "Server.hpp"
 
-class Socket {
-  private:
-  protected:
-    int socket_fd;
-    int type;
+class Socket
+{
+private:
+protected:
+	int socket_fd;
+	int type;
 
-  public:
-    void set_socket_fd(int socket_fd);
-    int get_socket_fd();
+public:
+	void set_socket_fd(int socket_fd);
+	int get_socket_fd();
 };
 
 #endif

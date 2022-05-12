@@ -6,16 +6,19 @@
 #include <iostream>
 #include <memory>
 
-#define PORT 4242
+#define PORT 8000
 
-void set_sockaddr(sockaddr_in *address) {
+void set_sockaddr(sockaddr_in *address)
+{
     memset((char *)address, 0, sizeof(*address)); // ?
     address->sin_family = AF_INET;
     address->sin_port = htons(PORT);
 }
 
-int main(int argc, char *argv[]) {
-    if (argc == 1) {
+int main(int argc, char *argv[])
+{
+    if (argc == 1)
+    {
         std::cerr << "Please input message\n";
         exit(0);
     }
@@ -27,12 +30,14 @@ int main(int argc, char *argv[]) {
     set_sockaddr(&serv_add);
     int address_len = sizeof(serv_add);
 
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_add.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_add.sin_addr) <= 0)
+    {
         std::cerr << "Invalid address or Address not supported\n";
         return -1;
     }
 
-    if (connect(sock, (sockaddr *)&serv_add, address_len) < 0) {
+    if (connect(sock, (sockaddr *)&serv_add, address_len) < 0)
+    {
         std::cerr << "Not connected!" << std::endl;
         return -1;
     }

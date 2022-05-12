@@ -3,9 +3,10 @@
 
 #include "Socket.hpp"
 
-class ClientSocket : public Socket {
-  private:
-  public:
+class ClientSocket : public Socket
+{
+private:
+public:
 };
 
 #endif
