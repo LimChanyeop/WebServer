@@ -19,12 +19,13 @@ int main(int argc, char *argv[])
 {
 	std::vector<std::string> vec_attr;
 	split_config(remove_annotaion(argv[1]), vec_attr);
-	Base_block config_base;
-	config_parsing(vec_attr, config_base);
+	Base_block base_block;
+	config_parsing(vec_attr, base_block);
 	// for (std::vector<std::string>::iterator it = vec_attr.begin(); it != vec_attr.end(); it++)
 	// {
 	// 	std::cout << *it << std::endl;
 	// }
+	base_block.print_all();
 	Server server;
 	ServerSocket serv_sock;
 	serv_sock.set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
