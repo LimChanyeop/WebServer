@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 {
 	std::vector<std::string> vec_attr;
 	split_config(remove_annotaion(argv[1]), vec_attr);
-	Config_base config_base;
+	Base_block config_base;
 	config_parsing(vec_attr, config_base);
 	// for (std::vector<std::string>::iterator it = vec_attr.begin(); it != vec_attr.end(); it++)
 	// {

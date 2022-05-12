@@ -49,7 +49,7 @@ int find_key(const std::string &key)
 	return (-1);
 }
 
-void config_parsing(std::vector<std::string> lists, Config_base &config_base) //, Config_base config_base)
+void config_parsing(std::vector<std::string> lists, Base_block &config_base) //, Config_base config_base)
 {
 	std::vector<std::string>::iterator it;
 	for (it = lists.begin(); it != lists.end(); it++)

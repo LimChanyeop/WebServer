@@ -19,6 +19,8 @@
 #include <sys/event.h> // for kqueue
 #include <time.h>      // for time
 
+#include "parseConfig.hpp"
+
 #define PORT 4242
 
 class Server
