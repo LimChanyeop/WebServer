@@ -5,7 +5,7 @@
 #define SERVER 2
 #define CONNECTION 3
 
-#include "Server.hpp"
+#include "Webserv.hpp"
 
 class Socket
 {

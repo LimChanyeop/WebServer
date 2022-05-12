@@ -1,18 +1,20 @@
 CC = c++
 
-SFILE = Server.cpp \
-		debug.cpp \
-		Socket.cpp \
-		ServerSocket.cpp \
-		./utils/parseUtils.cpp 
+SFILE = ./Server/Webserv.cpp \
+		./Socket/Socket.cpp \
+		./Socket/ServerSocket.cpp \
+		./Socket/ClientSocket.cpp \
+		./utils/parseUtils.cpp \
+		./utils/debug.cpp \
+		./Config/Base_block.cpp
 		
 
 # SOBJ = $(SFILE:.c=.o)
-CFILE = testclient.cpp
+CFILE = ./Client/testclient.cpp
 # COBJ = $(CFILE:.c=.o)
 
-SNAME = server
-CNAME = client
+SNAME = Webserv
+CNAME = TestClient
 
 all : $(SNAME) $(CNAME)
 
