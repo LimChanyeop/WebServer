@@ -49,7 +49,6 @@ std::string remove_annotaion(char *argv)
 
 int find_key(const std::string &key)
 {
-	std::cout << key << " - "; /////////////////////
 	std::vector<std::string> keys;
 	keys.push_back("client_limit_body_size");
 	keys.push_back("request_limit_header_size");
