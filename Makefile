@@ -6,7 +6,9 @@ SFILE = ./Server/Webserv.cpp \
 		./Socket/ClientSocket.cpp \
 		./utils/parseUtils.cpp \
 		./utils/debug.cpp \
-		./Config/Base_block.cpp
+		./Config/Base_block.cpp \
+		./Config/Location_block.cpp \
+		./Config/Server_block.cpp
 		
 
 # SOBJ = $(SFILE:.c=.o)
