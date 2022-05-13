@@ -30,84 +30,79 @@ void Base_block::set_auth_key(std::string &str) { auth_key = str; }
 void Base_block::set_client_limit_body_size(int i) { client_limit_body_size = i; }
 void Base_block::set_request_limit_header_size(int i) { request_limit_header_size = i; }
 
-void Base_block::print_all(void) const
-{
-	std::cout << "client_limit_body_size " << client_limit_body_size << std::endl
-			  << "request_limit_header_size " << request_limit_header_size << std::endl
-			  << "user " << user << std::endl
-			  << "worker_processes " << worker_processes
-			  << std::endl
-			  //   << "listen " << listen << std::endl
-			  //   << "server_name " << server_name << std::endl
-			  << "root " << root << std::endl
-			  << "index " << index << std::endl
-			  << "autoindex " << autoindex << std::endl
-			  << "return_n " << return_n << std::endl
-			  << "error_page " << error_page << std::endl
-			  << "cgi_info " << cgi_info << std::endl
-			  << "allow_methods " << allow_methods << std::endl
-			  << "auth_key " << auth_key << std::endl;
+void Base_block::print_all(void) const {
+    std::cout << "client_limit_body_size " << client_limit_body_size << std::endl
+              << "request_limit_header_size " << request_limit_header_size << std::endl
+              << "user " << user << std::endl
+              << "worker_processes " << worker_processes
+              << std::endl
+              //   << "listen " << listen << std::endl
+              //   << "server_name " << server_name << std::endl
+              << "root " << root << std::endl
+              << "index " << index << std::endl
+              << "autoindex " << autoindex << std::endl
+              << "return_n " << return_n << std::endl
+              << "error_page " << error_page << std::endl
+              << "cgi_info " << cgi_info << std::endl
+              << "allow_methods " << allow_methods << std::endl
+              << "auth_key " << auth_key << std::endl;
 }
 
 void Base_block::config_parsing(std::vector<std::string> lists) //, Config_base config_base)
 {
-	std::vector<std::string>::iterator it;
-	for (it = lists.begin(); it != lists.end(); it++)
-	{
-		std::cout << "(" << *it << ")" << find_key(*it) << std::endl;
-		switch (find_key(*it))
-		{
-		case 0:
-			this->set_client_limit_body_size(atoi((*(++it)).c_str()));
-			break;
-		case 1:
-			this->set_request_limit_header_size(atoi((*(++it)).c_str()));
-			break;
-		case 2:
-			this->set_user(*(++it));
-			break;
-		case 3:
-			this->set_worker_processes(*(++it));
-			break;
-		// case 4:
-		// 	this->set_listen(*(++it));
-		// 	break;
-		// case 5:
-		// 	this->set_server_name(*(++it));
-		// 	break;
-		case 6:
-			this->set_root(*(++it));
-			break;
-		case 7:
-			this->set_index(*(++it));
-			break;
-		case 8:
-			this->set_autoindex(*(++it));
-			break;
-		case 9:
-			this->set_return_n(*(++it));
-			break;
-		case 10:
-			this->set_error_page(*(++it));
-			break;
-		case 11:
-			this->set_cgi_info(*(++it));
-			break;
-		case 12:
-			this->set_allow_methods(*(++it));
-			break;
-		case 13:
-			this->set_auth_key(*(++it));
-			break;
-		case 14: // server
-			this->set_auth_key(*(++it));
-			break;
-			// case 15: // location
-			// 	this->set_auth_key(*(++it));
-			// 	break;
-
-		default:
-			break;
-		}
-	}
+    std::vector<std::string>::iterator it;
+    int i = 0;
+    for (it = lists.begin(); it != lists.end(); it++) {
+        std::cout << "(" << *it << ")" << find_key(*it) << std::endl;
+        switch (find_key(*it)) {
+        case 0:
+            this->set_client_limit_body_size(atoi((*(++it)).c_str()));
+            break;
+        case 1:
+            this->set_request_limit_header_size(atoi((*(++it)).c_str()));
+            break;
+        case 2:
+            this->set_user(*(++it));
+            break;
+        case 3:
+            this->set_worker_processes(*(++it));
+            break;
+        // case 4:
+        // 	this->set_listen(*(++it));
+        // 	break;
+        // case 5:
+        // 	this->set_server_name(*(++it));
+        // 	break;
+        case 6:
+            this->set_root(*(++it));
+            break;
+        case 7:
+            this->set_index(*(++it));
+            break;
+        case 8:
+            this->set_autoindex(*(++it));
+            break;
+        case 9:
+            this->set_return_n(*(++it));
+            break;
+        case 10:
+            this->set_error_page(*(++it));
+            break;
+        case 11:
+            this->set_cgi_info(*(++it));
+            break;
+        case 12:
+            this->set_allow_methods(*(++it));
+            break;
+        case 13:
+            this->set_auth_key(*(++it));
+            break;
+        case 14:
+            servers.push_back(Server_block(*this));                // vec servers push_back
+            servers[servers.size() - 1].config_parsing(it, lists); // servers[i].server_block_parsing((&)it, conf_lists)
+            break;
+        default:
+            break;
+        }
+    }
 }
