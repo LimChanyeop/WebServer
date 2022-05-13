@@ -4,6 +4,7 @@
 // #include "Config_location.hpp"
 #include "Server_block.hpp"
 #include "parseUtils.hpp"
+class Server_block;
 
 class Base_block {
   public:

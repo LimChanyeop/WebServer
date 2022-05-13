@@ -52,7 +52,7 @@ void Base_block::config_parsing(std::vector<std::string> lists) //, Config_base 
 {
     std::vector<std::string>::iterator it;
     for (it = lists.begin(); it != lists.end(); it++) {
-        std::cout << find_key(*it) << std::endl;
+        std::cout << "(" << *it << ")" << find_key(*it) << std::endl;
         switch (find_key(*it)) {
         case 0:
             this->set_client_limit_body_size(atoi((*(++it)).c_str()));
