@@ -1,10 +1,10 @@
 // #include <sys/types.h>
 // #include <sys/stat.h>
 
-#include "Server.hpp"
-#include "ClientSocket.hpp"
-#include "ServerSocket.hpp"
-#include "Socket.hpp"
+#include "../includes/Webserv.hpp"
+#include "../includes/ClientSocket.hpp"
+#include "../includes/ServerSocket.hpp"
+#include "../includes/Socket.hpp"
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,
 				   void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 	// 	std::cout << *it << std::endl;
 	// }
 	base_block.print_all();
-	Server server;
+	Webserv webserv;
 	ServerSocket serv_sock;
 	serv_sock.set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
 
@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
 			else if (event_list[i].filter == EVFILT_WRITE)
 			{
 				std::cout << "accept WRITE Event / ident :" << event_list[i].ident << std::endl;
-				server.set_response(i, str_buf);
-				write(event_list[i].ident, server.get_response().c_str(), server.get_response().length());
+				webserv.set_response(i, str_buf);
+				write(event_list[i].ident, webserv.get_response().c_str(), webserv.get_response().length());
 				// write(event_list[i].ident, "<head><link rel=\"shortcut icon\" href=\"test.ico\"></head>", 54);
 
 				close(event_list[i].ident);

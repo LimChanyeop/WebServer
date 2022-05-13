@@ -1,5 +1,5 @@
-#ifndef SERVER_HPP
-#define SERVER_HPP
+#ifndef WEBSERV_HPP
+#define WEBSERV_HPP
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -14,14 +14,14 @@
 #include <string>
 #include <vector>
 
-#include "./utils/parseUtils.hpp"
+#include "parseUtils.hpp"
 #include <fstream>	   // for file io
 #include <sys/event.h> // for kqueue
 #include <time.h>	   // for time
 
 #define PORT 4242
 
-class Server
+class Webserv
 {
 private:
 	const int port;
@@ -31,8 +31,8 @@ private:
 	std::string response_str;
 
 public:
-	Server() : port(PORT){};
-	~Server(){};
+	Webserv() : port(PORT){};
+	~Webserv(){};
 	void set_sockaddr(sockaddr_in *address);
 	std::string get_response(void) { return response_str; }
 	// void setServer(int port, );
