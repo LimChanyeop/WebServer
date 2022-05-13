@@ -1,7 +1,7 @@
 #include "../includes/parseUtils.hpp"
 
 void split_config(std::string lines, std::vector<std::string> &vec_attr) {
-    std::string delim = " \t{};";
+    std::string delim = " \t;";
     std::string::iterator it;
     std::string attr = "";
     for (it = lines.begin(); it != lines.end(); it++) {
@@ -38,7 +38,6 @@ std::string remove_annotaion(char *argv) {
 }
 
 int find_key(const std::string &key) {
-    std::cout << key << " - "; /////////////////////
     std::vector<std::string> keys;
     keys.push_back("client_limit_body_size");
     keys.push_back("request_limit_header_size");
@@ -63,66 +62,3 @@ int find_key(const std::string &key) {
     }
     return (-1);
 }
-
-// void config_parsing(std::vector<std::string> lists, Base_block &config_base) //, Config_base config_base)
-// {
-// 	std::vector<std::string>::iterator it;
-// 	for (it = lists.begin(); it != lists.end(); it++)
-// 	{
-// 		std::cout << find_key(*it) << std::endl;
-// 		switch (find_key(*it))
-// 		{
-// 		case 0:
-// 			config_base.set_client_limit_body_size(atoi((*(++it)).c_str()));
-// 			break;
-// 		case 1:
-// 			config_base.set_request_limit_header_size(atoi((*(++it)).c_str()));
-// 			break;
-// 		case 2:
-// 			config_base.set_user(*(++it));
-// 			break;
-// 		case 3:
-// 			config_base.set_worker_processes(*(++it));
-// 			break;
-// 		// case 4:
-// 		// 	config_base.set_listen(*(++it));
-// 		// 	break;
-// 		// case 5:
-// 		// 	config_base.set_server_name(*(++it));
-// 		// 	break;
-// 		case 6:
-// 			config_base.set_root(*(++it));
-// 			break;
-// 		case 7:
-// 			config_base.set_index(*(++it));
-// 			break;
-// 		case 8:
-// 			config_base.set_autoindex(*(++it));
-// 			break;
-// 		case 9:
-// 			config_base.set_return_n(*(++it));
-// 			break;
-// 		case 10:
-// 			config_base.set_error_page(*(++it));
-// 			break;
-// 		case 11:
-// 			config_base.set_cgi_info(*(++it));
-// 			break;
-// 		case 12:
-// 			config_base.set_allow_methods(*(++it));
-// 			break;
-// 		case 13:
-// 			config_base.set_auth_key(*(++it));
-// 			break;
-// 		case 14: // server
-// 			config_base.set_auth_key(*(++it));
-// 			break;
-// 			// case 15: // location
-// 			// 	config_base.set_auth_key(*(++it));
-// 			// 	break;
-
-// 		default:
-// 			break;
-// 		}
-// 	}
-// }

@@ -24,6 +24,7 @@ class Base_block {
     std::string cgi_info;
     std::string allow_methods;
     std::string auth_key;
+    // std::string limit_except; //
 
   public:
     const std::string &get_user(void) const;

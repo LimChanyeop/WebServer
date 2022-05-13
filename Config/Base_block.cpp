@@ -51,6 +51,7 @@ void Base_block::print_all(void) const {
 void Base_block::config_parsing(std::vector<std::string> lists) //, Config_base config_base)
 {
     std::vector<std::string>::iterator it;
+    int i = 0;
     for (it = lists.begin(); it != lists.end(); it++) {
         std::cout << "(" << *it << ")" << find_key(*it) << std::endl;
         switch (find_key(*it)) {
@@ -96,13 +97,10 @@ void Base_block::config_parsing(std::vector<std::string> lists) //, Config_base 
         case 13:
             this->set_auth_key(*(++it));
             break;
-        case 14: // server
-            this->set_auth_key(*(++it));
+        case 14:
+            servers.push_back(Server_block(*this));                // vec servers push_back
+            servers[servers.size() - 1].config_parsing(it, lists); // servers[i].server_block_parsing((&)it, conf_lists)
             break;
-            // case 15: // location
-            // 	this->set_auth_key(*(++it));
-            // 	break;
-
         default:
             break;
         }
