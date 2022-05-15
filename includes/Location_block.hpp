@@ -1,10 +1,13 @@
-#ifndef CONFIG_LOCATION_HPP
-#define CONFIG_LOCATION_HPP
+#ifndef LOCATION_BLOCK_HPP
+#define LOCATION_BLOCK_HPP
 
-#include "parseUtils.hpp"
 #include <iostream>
 
-class Location_block {
+class Http_block;
+class Config_block;
+class Server_block;
+
+class Location_block : public Server_block {
   public:
     int client_limit_body_size;
     int request_limit_header_size;

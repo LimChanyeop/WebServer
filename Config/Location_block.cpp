@@ -1,4 +1,6 @@
 #include "../includes/Location_block.hpp"
+#include "../includes/Server_block.hpp"
+#include "../includes/parseUtils.hpp"
 #include <vector>
 
 const std::string &Location_block::get_user(void) const { return user; }

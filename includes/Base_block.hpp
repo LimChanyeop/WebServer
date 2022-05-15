@@ -1,14 +1,11 @@
 #ifndef BASE_BLOCK_HPP
 #define BASE_BLOCK_HPP
 
-// #include "Config_location.hpp"
-#include "Server_block.hpp"
-#include "parseUtils.hpp"
 class Server_block;
 
 class Base_block {
   public:
-    std::vector<Server_block> servers;
+    // std::vector<Server_block> servers;
 
     int client_limit_body_size;
     int request_limit_header_size;
@@ -24,7 +21,7 @@ class Base_block {
     std::string cgi_info;
     std::string allow_methods;
     std::string auth_key;
-    // std::string limit_except; //
+    // std::string limit_except;
 
   public:
     const std::string &get_user(void) const;

@@ -1,4 +1,8 @@
 #include "../includes/Server_block.hpp"
+#include "../includes/Http_block.hpp"
+#include "../includes/Location_block.hpp"
+#include "../includes/parseUtils.hpp"
+#include <vector>
 
 const std::string &Server_block::get_user(void) const { return user; }
 const std::string &Server_block::get_worker_processes(void) const { return worker_processes; }
@@ -100,8 +104,8 @@ void Server_block::config_parsing(std::vector<std::string>::iterator &it, std::v
         //     this->set_auth_key(*(++it));
         //     break;
         case 15: // location
-            locations.push_back(Location_block());
-            locations[locations.size() - 1].config_parsing(it, lists);
+            // locations.push_back(Location_block());
+            // locations[locations.size() - 1].config_parsing(it, lists);
             break;
         default:
             break;
