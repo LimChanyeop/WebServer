@@ -1,7 +1,8 @@
 #include "../includes/ServerSocket.hpp"
 
 ServerSocket::ServerSocket() {}
-void ServerSocket::set_sockaddr() {
+void ServerSocket::set_sockaddr()
+{
     memset((char *)&address, 0, sizeof(address));
     address.sin_family = AF_INET; // tcp
     address.sin_port = htons(PORT);
