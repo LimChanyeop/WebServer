@@ -2,7 +2,7 @@
 
 void split_config(std::string lines, std::vector<std::string> &vec_attr)
 {
-	std::string delim = " \t{};";
+	std::string delim = " \t;";
 	std::string::iterator it;
 	std::string attr = "";
 	for (it = lines.begin(); it != lines.end(); it++)
