@@ -8,7 +8,8 @@ SFILE = ./Server/Webserv.cpp \
 		./utils/debug.cpp \
 		./Config/Base_block.cpp \
 		./Config/Location_block.cpp \
-		./Config/Server_block.cpp
+		./Config/Server_block.cpp \
+		./Request/Request.cpp
 		
 
 # SOBJ = $(SFILE:.c=.o)

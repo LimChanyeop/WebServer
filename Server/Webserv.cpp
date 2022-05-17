@@ -5,6 +5,7 @@
 #include "../includes/ClientSocket.hpp"
 #include "../includes/ServerSocket.hpp"
 #include "../includes/Socket.hpp"
+#include "../includes/Request.hpp"
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,
 				   void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
@@ -98,11 +99,24 @@ int main(int argc, char *argv[])
 				}
 				else if (clients.find(event_list[i].ident) != clients.end())
 				{
-					char request[1024] = {0};
-					int valread = read(event_list[i].ident, request, 1024);
+					char READ[1024] = {0};
+					int valread = read(event_list[i].ident, READ, 1024);
+					std::string request = READ;
 					// int valread = recv(acc_socket, request, 1024, 0);
-					str_buf = request;
-					std::cout << str_buf << std::endl;
+					Request rq;
+					rq.split_request(request);
+					rq.request_parsing(rq.requests);
+					rq.print_request();
+					try
+					{
+						for (std::vector<std::string>::iterator it = rq.requests.begin(); it != rq.requests.end(); it++)
+							std::cout
+								<< *it << std::endl;
+					}
+					catch (std::exception &e)
+					{
+						std::cout << e.what() << std::endl;
+					}
 				}
 			}
 			else if (event_list[i].filter == EVFILT_WRITE)

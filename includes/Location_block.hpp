@@ -59,7 +59,7 @@ public:
 	void set_request_limit_header_size(int i);
 
 	void print_all(void) const;
-	void config_parsing(std::vector<std::string>::iterator &it, std::vector<std::string> &lists); //, Config_base config_base)
+	void config_parsing(std::vector<std::string>::iterator &it, std::vector<std::string> &lists);
 };
 
 #endif
