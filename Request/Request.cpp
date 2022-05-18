@@ -48,7 +48,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 			break;
 		case 13:
 			break;
-		case 14: // server
+		case 14:
 			break;
 		default:
 			std::cerr << "Invalid input\n";
@@ -61,19 +61,19 @@ int Request::find_key(std::string key)
 {
 	std::vector<std::string> keys;
 	int result = 0;
-	keys.push_back("method");
-	keys.push_back("protocol");
-	keys.push_back("host");
-	keys.push_back("connection");
-	keys.push_back("upgradeInSecureRequest");
-	keys.push_back("userAgent");
-	keys.push_back("accept");
-	keys.push_back("acceptEncoding");
-	keys.push_back("acceptLanguage");
-	keys.push_back("cookie");
-	keys.push_back("referer");
-	keys.push_back("contentLength");
-	keys.push_back("contentType");
+	keys.push_back("Method:");
+	keys.push_back("Protocol:");
+	keys.push_back("Host:");
+	keys.push_back("Connection:");
+	keys.push_back("Upgrade-InSecure-Request:");
+	keys.push_back("User-Agent:");
+	keys.push_back("Accept:");
+	keys.push_back("Accept-Encoding:");
+	keys.push_back("Accept-Language:");
+	keys.push_back("Cookie:");
+	keys.push_back("Referer:");
+	keys.push_back("Content-Length:");
+	keys.push_back("Content-Type:");
 	std::vector<std::string>::iterator it;
 	for (it = keys.begin(); it != keys.end(); it++)
 	{
@@ -88,27 +88,29 @@ int Request::find_key(std::string key)
 
 void Request::split_request(std::string lines)
 {
-	std::string delim = " \t;";
-	std::string::iterator it;
+	std::string delim = "\n \t";
+	std::string::iterator it = lines.begin();
 	std::string attr = "";
-	for (it = lines.begin(); it != lines.end(); it++)
+	while (it != lines.end())
 	{
-		if (delim.find(*it) == std::string::npos)
+		while (*it != ' ' && it != lines.end())
 		{
 			attr += *it;
+			++it;
 		}
-		else
-		{
-			if (attr != "")
-			{
-				requests.push_back(attr);
-				attr.clear();
-			}
-		}
-	}
-	if (attr.length() > 0)
-	{
 		requests.push_back(attr);
+		attr.clear();
+		if (it != lines.end())
+			++it;
+		while (*it != '\n' && it != lines.end())
+		{
+			attr += *it;
+			++it;
+		}
+		requests.push_back(attr);
+		attr.clear();
+		if (it != lines.end())
+			++it;
 	}
 }
 

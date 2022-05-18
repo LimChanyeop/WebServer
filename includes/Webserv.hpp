@@ -19,6 +19,9 @@
 #include <sys/event.h> // for kqueue
 #include <time.h>	   // for time
 
+class Base_block;
+#include "Base_block.hpp"
+
 #define PORT 4242
 
 class Webserv
@@ -48,4 +51,5 @@ public:
 };
 
 void print_event(struct kevent event_list);
+int request_checker(std::string &request, const Base_block &bb);
 #endif

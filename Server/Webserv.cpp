@@ -6,6 +6,7 @@
 #include "../includes/ServerSocket.hpp"
 #include "../includes/Socket.hpp"
 #include "../includes/Request.hpp"
+#include <sys/socket.h>
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,
 				   void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
@@ -26,7 +27,7 @@ int main(int argc, char *argv[])
 	// {
 	// 	std::cout << *it << std::endl;
 	// }
-	base_block.print_all();
+	// base_block.print_all();
 	Webserv webserv;
 	ServerSocket serv_sock;
 	serv_sock.set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
@@ -95,13 +96,20 @@ int main(int argc, char *argv[])
 					// fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 					change_events(change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 					change_events(change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-					clients[acc_fd] = "";
+					// getsockname(acc_fd, (sockaddr *)&serv_sock.get_address(), (socklen_t *)&serv_sock.get_address_len());
+					clients[acc_fd] = "ok";
 				}
 				else if (clients.find(event_list[i].ident) != clients.end())
 				{
 					char READ[1024] = {0};
+					std::cout << "SOCK NAME: " << clients[event_list[i].ident] << "\n";
 					int valread = read(event_list[i].ident, READ, 1024);
 					std::string request = READ;
+					if (request_checker(request, base_block) < 0)
+					{
+						std::cerr << "Invalid Request\n";
+						// exit(0);
+					}
 					// int valread = recv(acc_socket, request, 1024, 0);
 					Request rq;
 					rq.split_request(request);
@@ -109,9 +117,9 @@ int main(int argc, char *argv[])
 					rq.print_request();
 					try
 					{
-						for (std::vector<std::string>::iterator it = rq.requests.begin(); it != rq.requests.end(); it++)
-							std::cout
-								<< *it << std::endl;
+						// for (std::vector<std::string>::iterator it = rq.requests.begin(); it != rq.requests.end(); it++)
+						// 	std::cout
+						// 		<< *it << std::endl;
 					}
 					catch (std::exception &e)
 					{
@@ -129,6 +137,23 @@ int main(int argc, char *argv[])
 				close(event_list[i].ident);
 			}
 		}
+	}
+	return 0;
+}
+
+int request_checker(std::string &request, const Base_block &bb)
+{
+	// std::string::iterator it
+	int find_n;
+	if ((find_n = request.find("\n\n")) == std::string::npos)
+	{
+		std::cerr << "No body No body wants you\n";
+		return -1;
+	}
+	if (find_n > bb.get_request_limit_header_size())
+	{
+		std::cerr << "431 Error\n";
+		return -1;
 	}
 	return 0;
 }
