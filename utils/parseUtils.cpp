@@ -2,7 +2,7 @@
 
 void split_config(std::string lines, std::vector<std::string> &vec_attr)
 {
-	std::string delim = " \t;";
+	std::string delim = " \t";
 	std::string::iterator it;
 	std::string attr = "";
 	for (it = lines.begin(); it != lines.end(); it++)
@@ -45,6 +45,14 @@ std::string remove_annotaion(char *argv)
 	}
 	config_file.close();
 	return file_str;
+}
+
+int find_semi(const std::string str)
+{
+	if (*(str.end() - 1) == ';')
+		return 0;
+	else
+		return 1;
 }
 
 int find_key(const std::string &key)

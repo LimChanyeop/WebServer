@@ -27,7 +27,15 @@ int main(int argc, char *argv[])
 	// {
 	// 	std::cout << *it << std::endl;
 	// }
+	// std::cout << "========================\n";
 	// base_block.print_all();
+	// std::cout << "========================\n";
+	// for (std::vector<Server_block>::iterator it = base_block.servers.begin(); it != base_block.servers.end(); it++)
+	// {
+	// 	it->print_all();
+	// 	std::cout << it - base_block.servers.begin();
+	// 	std::cout << "===========ser==============\n";
+	// }
 	Webserv webserv;
 	ServerSocket serv_sock;
 	serv_sock.set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
@@ -144,8 +152,8 @@ int main(int argc, char *argv[])
 int request_checker(std::string &request, const Base_block &bb)
 {
 	// std::string::iterator it
-	int find_n;
-	if ((find_n = request.find("\n\n")) == std::string::npos)
+	int find_n = request.find("\n\n");
+	if (find_n == std::string::npos)
 	{
 		std::cerr << "No body No body wants you\n";
 		return -1;

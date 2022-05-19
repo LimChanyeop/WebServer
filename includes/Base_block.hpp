@@ -9,7 +9,7 @@ class Server_block;
 
 class Base_block
 {
-private:
+public:
 	std::vector<Server_block> servers;
 
 	int client_limit_body_size;

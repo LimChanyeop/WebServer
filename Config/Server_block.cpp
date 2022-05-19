@@ -72,7 +72,7 @@ void Server_block::config_parsing(std::vector<std::string>::iterator &it, std::v
 {
 	for (; it != lists.end() && *it != "}"; it++)
 	{
-		std::cout << "ser(" << *it << ")" << find_key(*it) << std::endl;
+		std::string temp = "";
 		switch (find_key(*it))
 		{
 		case 0:
@@ -82,40 +82,94 @@ void Server_block::config_parsing(std::vector<std::string>::iterator &it, std::v
 			this->set_request_limit_header_size(atoi((*(++it)).c_str()));
 			break;
 		case 2:
-			this->set_user(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_user(temp);
 			break;
 		case 3:
-			this->set_worker_processes(*(++it));
-			break;
-		case 4:
-			this->set_listen(*(++it));
-			break;
-		case 5:
-			this->set_server_name(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_worker_processes(temp);
 			break;
 		case 6:
-			this->set_root(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_root(temp);
 			break;
 		case 7:
-			this->set_index(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_index(temp);
 			break;
 		case 8:
-			this->set_autoindex(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_autoindex(temp);
 			break;
 		case 9:
-			this->set_return_n(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_return_n(temp);
 			break;
 		case 10:
-			this->set_error_page(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_error_page(temp);
 			break;
 		case 11:
-			this->set_cgi_info(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_cgi_info(temp);
 			break;
 		case 12:
-			this->set_allow_methods(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_allow_methods(temp);
 			break;
 		case 13:
-			this->set_auth_key(*(++it));
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_auth_key(temp);
 			break;
 		case 14: // server
 			std::cerr << "double server!\n";
