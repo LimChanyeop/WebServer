@@ -32,8 +32,7 @@ void Base_block::print_all(void) const
 	std::cout << "client_limit_body_size " << client_limit_body_size << std::endl
 			  << "request_limit_header_size " << request_limit_header_size << std::endl
 			  << "user " << user << std::endl
-			  << "worker_processes " << worker_processes
-			  << std::endl
+			  << "worker_processes " << worker_processes << std::endl
 			  << "root " << root << std::endl
 			  << "index " << index << std::endl
 			  << "autoindex " << autoindex << std::endl
