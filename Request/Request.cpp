@@ -1,7 +1,10 @@
 #include "../includes/Request.hpp"
 
+Request::Request() : referer("/") {}
+
 void Request::request_parsing(std::vector<std::string> &lists)
 {
+	this->i = 1;
 	std::vector<std::string>::iterator it;
 	for (it = lists.begin(); it != lists.end(); it++)
 	{
@@ -15,7 +18,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 			protocol = *(++it);
 			break;
 		case Ehost:
-			host = *(++it);
+			this->set_host(*(++it));
 			break;
 		case Econnection:
 			connection = *(++it);
@@ -44,9 +47,11 @@ void Request::request_parsing(std::vector<std::string> &lists)
 		case EcontentLength:
 			contentLength = *(++it);
 			break;
-		case 12:
+		case 12: // GET
+			start_line = "GET";
 			break;
-		case 13:
+		case 13: // POST
+			start_line = "POST";
 			break;
 		case 14:
 			break;
@@ -74,6 +79,8 @@ int Request::find_key(std::string key)
 	keys.push_back("Referer:");
 	keys.push_back("Content-Length:");
 	keys.push_back("Content-Type:");
+	keys.push_back("GET");
+	keys.push_back("POST");
 	std::vector<std::string>::iterator it;
 	for (it = keys.begin(); it != keys.end(); it++)
 	{
@@ -116,7 +123,21 @@ void Request::split_request(std::string lines)
 
 void Request::set_method(std::string method) { Request::method = method; }
 void Request::set_protocol(std::string protocol) { this->protocol = protocol; }
-void Request::set_host(std::string host) { this->host = host; }
+void Request::set_host(std::string host)
+{
+	std::string::iterator it = host.begin();
+	while (it != host.end())
+	{
+		if (isnumber(*it))
+		{
+			host.erase(host.begin(), it);
+			break;
+		}
+		it++;
+	}
+	this->host = host;
+	std::cout << "TEST-host:" << host << std::endl;
+}
 void Request::set_connection(std::string connection) { this->connection = connection; }
 void Request::set_upgradeInSecureRequest(std::string upgradeInSecureRequest) { this->upgradeInSecureRequest = upgradeInSecureRequest; }
 void Request::set_userAgent(std::string userAgent) { this->userAgent = userAgent; }
@@ -157,4 +178,9 @@ void Request::print_request()
 	std::cout << "referer: " << referer << std::endl;
 	std::cout << "contentLength: " << contentLength << std::endl;
 	std::cout << "contentType: " << contentType << std::endl;
+}
+
+void Request::clear_request()
+{
+	requests.clear();
 }

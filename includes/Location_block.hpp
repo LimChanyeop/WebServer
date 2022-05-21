@@ -10,7 +10,8 @@ class Server_block;
 
 class Location_block
 {
-private:
+public:
+	std::string location;
 	int client_limit_body_size;
 	int request_limit_header_size;
 	std::string user;

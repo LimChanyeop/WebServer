@@ -99,6 +99,24 @@ void Server_block::config_parsing(std::vector<std::string>::iterator &it, std::v
 			temp += *it;
 			this->set_worker_processes(temp);
 			break;
+		case 4:
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_listen(temp);
+			break;
+		case 5:
+			while (find_semi(*(++it)))
+			{
+				temp += *it;
+				temp += ' ';
+			}
+			temp += *it;
+			this->set_server_name(temp);
+			break;
 		case 6:
 			while (find_semi(*(++it)))
 			{

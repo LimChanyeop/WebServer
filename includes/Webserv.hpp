@@ -42,11 +42,11 @@ public:
 
 	void set_response(int i, std::string str_buf)
 	{
-		response_str = "HTTP/1.1 200 OK\nContent-Type: "
-					   "text/plain\nContent-Length: ";
-		response_str += std::to_string(str_buf.length() + 10000);
-		response_str += "\n\ndsad<!DOCTYPE html><h1>TITLE</h1></html>\n";
-		response_str += str_buf; // IMPORTANT!!
+		response_str = "HTTP/1.1 200 OK\r\nContent-Type: "
+					   "text/plain\r\nContent-Length: ";
+		response_str += std::to_string(str_buf.length() + 1);
+		response_str += "\r\n\r\n";
+		response_str += str_buf + "\r\n";
 	}
 };
 

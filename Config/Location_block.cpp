@@ -68,6 +68,7 @@ void Location_block::print_all(void) const
 
 void Location_block::config_parsing(std::vector<std::string>::iterator &it, std::vector<std::string> &lists) //, Config_base config_base)
 {
+	this->location = *it;
 	for (; it != lists.end() && *it != "}"; it++)
 	{
 		std::string temp = "";

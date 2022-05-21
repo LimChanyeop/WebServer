@@ -29,7 +29,9 @@ enum RQ
 class Request
 {
 public:
+	int i;
 	std::vector<std::string> requests;
+	std::string start_line;
 	std::string method;
 	std::string protocol;
 	std::string host;
@@ -44,7 +46,10 @@ public:
 	std::string contentLength;
 	std::string contentType;
 
+	std::string response;
+
 public:
+	Request();
 	void request_parsing(std::vector<std::string> &lists);
 	int find_key(std::string key);
 	void split_request(std::string lines);
@@ -78,6 +83,7 @@ public:
 	std::string get_contentType();
 
 	void print_request();
+	void clear_request();
 };
 
 #endif
