@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 		std::string str_buf;
 		Request rq;
 
-		// std::cout << "waiting for new connection...\n";
+		std::cout << "waiting for new connection...\n";
 
 		int n_changes = change_list.size(); // number of changes = 등록하고자 하는 이벤트 수
 		int n_event_list = 8;
@@ -108,9 +108,7 @@ int main(int argc, char *argv[])
 			// 		// disconnect_client(event_list[i].ident, clients);
 			// 	}
 			// }
-			switch (event_list[i].filter)
-			{
-			case EVFILT_READ:
+			if (event_list[i].filter == EVFILT_READ)
 			{
 				std::cout << "accept READ Event / ident :" << event_list[i].ident << std::endl;
 				if (event_list[i].ident == serv_sock.get_socket_fd())
@@ -126,7 +124,7 @@ int main(int argc, char *argv[])
 					change_events(change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 					change_events(change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 					// getsockname(acc_fd, (sockaddr *)&serv_sock.get_address(), (socklen_t *)&serv_sock.get_address_len());
-					clients[acc_fd] = "ok";
+					clients[acc_fd] = "server";
 				}
 				else if (clients.find(event_list[i].ident) != clients.end())
 				{
@@ -151,23 +149,29 @@ int main(int argc, char *argv[])
 					rq.request_parsing(rq.requests);
 					std::cout << "\n\nreq:\n\n";
 					rq.print_request();
-					clients[event_list[i].ident] = "request";
+					clients[event_list[i].ident] = "client";
 				}
 			}
-			case EVFILT_WRITE:
+			else if (event_list[i].filter == EVFILT_WRITE)
 			{
-				if (rq.i < 0)
-					break;
+				// if (rq.i < 0)
+				// 	break;
 				std::string port = "4242"; // 왜 포트를 못찾았을까? -> 포트를 파싱 안했었넹~ok -> 근데도 못찾네~
-				std::cout << rq.get_host() << std::endl;
-				for (i = 0; i < base_block.servers.size(); i++)
+				// std::cout << rq.get_host() << std::endl;
+				if (clients.find(event_list[i].ident) != clients.end())
 				{
-					std::cout << "listen:" << base_block.servers[i].get_listen() << "vs" << rq.get_host() << std::endl;
-					if (base_block.servers[i].get_listen().c_str() == rq.get_host().c_str()) // 못찾는게,, 이게 다르데;;
+					int i = 0;
+					while (i < base_block.servers.size())
 					{
-						std::cout << "same\n";
-						port = rq.get_host();
-						break;
+						std::cout << "listen:" << base_block.servers[i].get_listen() << "vs" << rq.get_host() << std::endl;
+						// 왜 for문 끼워놓으면 무한루프돌까~~ㅡㅡ while문은 또 왜 되는것인가~
+						if (base_block.servers[i].get_listen().c_str() == rq.get_host().c_str()) // 못찾는게,, 이게 다르데;;
+						{																		 //
+							std::cout << "same\n";
+							port = rq.get_host();
+							break;
+						}
+						i++;
 					}
 				}
 				std::string temp;
@@ -178,11 +182,11 @@ int main(int argc, char *argv[])
 				}
 				else
 					rq.referer.erase(0, it);
-				std::cout << "TEST-"
-						  << "port:" << port << "it:" << it << "rq.referer:" << rq.referer << "referer:" << rq.referer << std::endl;
+				// std::cout << "TEST-"
+				// 		  << "port:" << port << "it:" << it << "rq.referer:" << rq.referer << "referer:" << rq.referer << std::endl;
 
 				int j;
-				std::cout << base_block.servers[i].locations.size() << std::endl; // 엄청 큰값이 나온다?? i = 1로 가정(4242)
+				// std::cout << base_block.servers[i].locations.size() << std::endl; // 엄청 큰값이 나온다?? i = 1로 가정(4242)
 				for (j = 0; j < 2; j++)
 				{
 					std::cout << "TEST-location:" << base_block.servers[1].locations[j].location << std::endl;
@@ -191,7 +195,7 @@ int main(int argc, char *argv[])
 						break;
 					}
 				}
-				if (clients.find(event_list[i].ident) != clients.end() && clients[event_list[i].ident] == "request")
+				if (clients.find(event_list[i].ident) != clients.end() && clients[event_list[i].ident] == "client")
 				{
 					std::cout << "accept WRITE Event / ident :" << event_list[i].ident << std::endl;
 
@@ -217,7 +221,6 @@ int main(int argc, char *argv[])
 					ifs.close();
 					// exit(0);
 				}
-			}
 			}
 			rq.clear_request();
 		}
