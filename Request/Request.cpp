@@ -8,7 +8,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 	std::vector<std::string>::iterator it;
 	for (it = lists.begin(); it != lists.end(); it++)
 	{
-		std::cout << "(" << *it << ")" << find_key(*it) << std::endl;
+		// std::cout << "it [" << *it << "] " << find_key(*it) << "\n\n";
 		switch (find_key(*it))
 		{
 		case Emethod:
@@ -19,6 +19,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 			break;
 		case Ehost:
 			this->set_host(*(++it));
+			std::cout << *it << std::endl;
 			break;
 		case Econnection:
 			connection = *(++it);
@@ -41,22 +42,19 @@ void Request::request_parsing(std::vector<std::string> &lists)
 		case Ecookie:
 			cookie = *(++it);
 			break;
-		case Ereferer:
-			referer = *(++it);
-			break;
 		case EcontentLength:
 			contentLength = *(++it);
 			break;
-		case 12: // GET
+		case 13: // GET
 			start_line = "GET";
+			referer = *(++it);
+			std::cout << "referer:" << referer << std::endl;
 			break;
-		case 13: // POST
+		case 14: // POST
 			start_line = "POST";
 			break;
-		case 14:
-			break;
 		default:
-			std::cerr << "Invalid input\n";
+			// std::cerr << "Invalid input\n";
 			break;
 		}
 	}
@@ -95,31 +93,55 @@ int Request::find_key(std::string key)
 
 void Request::split_request(std::string lines)
 {
-	std::string delim = "\n \t";
-	std::string::iterator it = lines.begin();
+	std::string delim = " \t\n";
+	std::string::iterator it;
 	std::string attr = "";
-	while (it != lines.end())
+	for (it = lines.begin(); it != lines.end(); it++)
 	{
-		while (*it != ' ' && it != lines.end())
+		if (delim.find(*it) == std::string::npos)
 		{
 			attr += *it;
-			++it;
 		}
-		requests.push_back(attr);
-		attr.clear();
-		if (it != lines.end())
-			++it;
-		while (*it != '\n' && it != lines.end())
+		else
 		{
-			attr += *it;
-			++it;
+			if (attr != "")
+			{
+				requests.push_back(attr);
+				attr.clear();
+			}
 		}
+	}
+	if (attr.length() > 0)
+	{
 		requests.push_back(attr);
-		attr.clear();
-		if (it != lines.end())
-			++it;
 	}
 }
+// void Request::split_request(std::string lines)
+// {
+// 	std::string::iterator it = lines.begin();
+// 	std::string attr = "";
+// 	while (it != lines.end())
+// 	{
+// 		while (*it != ' ' && it != lines.end())
+// 		{
+// 			attr += *it;
+// 			++it;
+// 		}
+// 		requests.push_back(attr);
+// 		attr.clear();
+// 		if (it != lines.end())
+// 			++it;
+// 		while (*it != '\n' && it != lines.end())
+// 		{
+// 			attr += *it;
+// 			++it;
+// 		}
+// 		requests.push_back(attr);
+// 		attr.clear();
+// 		if (it != lines.end())
+// 			++it;
+// 	}
+// }
 
 void Request::set_method(std::string method) { Request::method = method; }
 void Request::set_protocol(std::string protocol) { this->protocol = protocol; }

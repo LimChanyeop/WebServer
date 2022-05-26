@@ -72,121 +72,134 @@ void Server_block::config_parsing(std::vector<std::string>::iterator &it, std::v
 {
 	for (; it != lists.end() && *it != "}"; it++)
 	{
+		std::cout << "ser it (" << *it << ")"<< std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{
 		case 0:
-			this->set_client_limit_body_size(atoi((*(++it)).c_str()));
+			this->set_client_limit_body_size(atoi((*(it + 1)).c_str()));
 			break;
 		case 1:
-			this->set_request_limit_header_size(atoi((*(++it)).c_str()));
+			this->set_request_limit_header_size(atoi((*(it + 1)).c_str()));
 			break;
 		case 2:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_user(temp);
 			break;
 		case 3:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_worker_processes(temp);
 			break;
 		case 4:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_listen(temp);
 			break;
 		case 5:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_server_name(temp);
 			break;
 		case 6:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_root(temp);
 			break;
 		case 7:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_index(temp);
 			break;
 		case 8:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_autoindex(temp);
 			break;
 		case 9:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_return_n(temp);
 			break;
 		case 10:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_error_page(temp);
 			break;
 		case 11:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_cgi_info(temp);
 			break;
 		case 12:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_allow_methods(temp);
 			break;
 		case 13:
-			while (find_semi(*(++it)))
+			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
-			temp += *it;
+			temp += *(it + 1);
 			this->set_auth_key(temp);
 			break;
 		case 14: // server

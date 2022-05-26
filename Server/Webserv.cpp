@@ -31,9 +31,9 @@ int main(int argc, char *argv[])
 	// {
 	// 	std::cout << *it << std::endl;
 	// }
-	// std::cout << "========================\n";
-	// base_block.print_all();
-	// std::cout << "========================\n";
+	std::cout << "========================\n";
+	base_block.servers[1].print_all();
+	std::cout << "========================\n";
 	// for (std::vector<Server_block>::iterator it = base_block.servers.begin(); it != base_block.servers.end(); it++)
 	// {
 	// 	it->print_all();
@@ -81,11 +81,11 @@ int main(int argc, char *argv[])
 	int num_of_event;
 	while (1)
 	{
-		std::string str_buf;
 		Request rq;
+		std::string str_buf;
 
-		std::cout << "waiting for new connection...\n";
-
+		// std::cout << "waiting for new connection...\n";
+		// sleep(3);
 		int n_changes = change_list.size(); // number of changes = 등록하고자 하는 이벤트 수
 		int n_event_list = 8;
 		if ((num_of_event = kevent(kq_fd, &change_list[0], n_changes, event_list, n_event_list, NULL)) == -1)
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 			exit(0);
 		}
 		change_list.clear(); // 등록 이벤트 목록 초기화
-
+		std::cout << "NOE:"<< num_of_event << std::endl;
 		for (int i = 0; i < num_of_event; i++)
 		{
 			// // print_event(event_list[i]);
@@ -139,6 +139,7 @@ int main(int argc, char *argv[])
 					{
 						request += READ;
 					}
+					std::cout << "*request*\n" << request << std::endl;
 					// if (request_checker(request, base_block) < 0)
 					// {
 					// 	std::cerr << "Invalid Request\n";
@@ -147,62 +148,78 @@ int main(int argc, char *argv[])
 					// int valread = recv(acc_socket, request, 1024, 0);
 					rq.split_request(request);
 					rq.request_parsing(rq.requests);
-					std::cout << "\n\nreq:\n\n";
-					rq.print_request();
+
+					// std::cout << "\n\nreq:\n\n";
+					// rq.print_request();
 					clients[event_list[i].ident] = "client";
+					std::cout << "rq requests[0]: " << rq.requests[0] << std::endl;
 				}
 			}
-			else if (event_list[i].filter == EVFILT_WRITE)
+			else if (event_list[i].filter == EVFILT_WRITE && clients[event_list[i].ident] == "client")// && rq.requests[0] != "")
 			{
+				std::cout << "accept WRITE Event / ident :" << event_list[i].ident << std::endl;
 				// if (rq.i < 0)
 				// 	break;
-				std::string port = "4242"; // 왜 포트를 못찾았을까? -> 포트를 파싱 안했었넹~ok -> 근데도 못찾네~
-				// std::cout << rq.get_host() << std::endl;
+				std::string port = ""; // 왜 포트를 못찾았을까? -> 포트를 파싱 안했었넹~ok -> 근데도 못찾네~
+				int sb;
+				std::cout << "*find*" << clients.find(event_list[i].ident)->second << std::endl;
 				if (clients.find(event_list[i].ident) != clients.end())
 				{
-					int i = 0;
-					while (i < base_block.servers.size())
+					sb = 0;
+					while (sb < base_block.servers.size())
 					{
-						std::cout << "listen:" << base_block.servers[i].get_listen() << "vs" << rq.get_host() << std::endl;
+						std::cout << "listen:" << base_block.servers[sb].get_listen() << "vs" << rq.host << std::endl;
 						// 왜 for문 끼워놓으면 무한루프돌까~~ㅡㅡ while문은 또 왜 되는것인가~
-						if (base_block.servers[i].get_listen().c_str() == rq.get_host().c_str()) // 못찾는게,, 이게 다르데;;
-						{																		 //
+						if (atoi(base_block.servers[sb].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
+						{				
+							std::cout << "==================\n";														 //
 							std::cout << "same\n";
+							std::cout << "==================\n";
 							port = rq.get_host();
 							break;
 						}
-						i++;
+						sb++;
+					}
+					if (sb == base_block.servers.size())
+					{
+						std::cerr << "Host not found, Are you Favicon?\n";
+						// i = 1;
+						// exit(0);
+						// clients.erase(event_list[i].ident);
 					}
 				}
 				std::string temp;
-				int it = rq.referer.find(port);
+				int it = rq.referer.find(port.c_str());
 				if (it == rq.referer.size() || it < 0)
 				{
-					std::cerr << "Cant find port\n";
+					std::cerr << "Cant find ref in port\n";
 				}
 				else
 					rq.referer.erase(0, it);
-				// std::cout << "TEST-"
-				// 		  << "port:" << port << "it:" << it << "rq.referer:" << rq.referer << "referer:" << rq.referer << std::endl;
+				std::cout << "TEST-"
+						  << "port:" << port << "sb:" << sb << "referer:" << rq.referer << std::endl;
 
-				int j;
-				// std::cout << base_block.servers[i].locations.size() << std::endl; // 엄청 큰값이 나온다?? i = 1로 가정(4242)
-				for (j = 0; j < 2; j++)
+				int lb;
+				std::cout << base_block.servers[sb].locations.size() << std::endl; // 엄청 큰값이 나온다?? i = 1로 가정(4242)
+				for (lb = 0; lb < base_block.servers[sb].locations.size(); lb++)
 				{
-					std::cout << "TEST-location:" << base_block.servers[1].locations[j].location << std::endl;
-					if (base_block.servers[1].locations[j].location == rq.referer)
+					std::cout << "TEST-location:" << base_block.servers[sb].locations[lb].location << std::endl;
+					if (base_block.servers[sb].locations[lb].location == rq.referer)
 					{
+						std::cout << "same!!!" << std::endl;
 						break;
 					}
 				}
-				if (clients.find(event_list[i].ident) != clients.end() && clients[event_list[i].ident] == "client")
+				if (clients.find(event_list[i].ident) != clients.end())
 				{
-					std::cout << "accept WRITE Event / ident :" << event_list[i].ident << std::endl;
-
-					std::string route = base_block.servers[1].get_root() + base_block.servers[1].locations[j].location + base_block.servers[1].locations[j].get_index();
+					// if (*(base_block.servers[i].locations[lb].location.end() - 1) != '/')
+					// 	base_block.servers[i].locations[lb].location += '/';
+					std::cout<< "sb = " << sb << "lb = " << lb << std::endl;
+					std::cout << "|" <<  base_block.servers[sb].locations[lb].get_index() << "|\n";
+					std::string route = base_block.servers[sb].get_root() + '/' + remove_delim(base_block.servers[sb].locations[lb].get_index());
 					//	/Users/minsikkim/Desktop/WeL0ve42Seoul/WebServer/View + / + Default.html
 					std::ifstream ifs(route.c_str());
-					std::cout << route << std::endl;
+					std::cout << "route: "<<route << std::endl;
 					// std::ifstream ifs("/Users/minsikkim/Desktop/WeL0ve42Seoul/WebServer/View/NAVER.html");
 					if (ifs.is_open() == ifs.bad())
 						std::cerr
@@ -214,15 +231,21 @@ int main(int argc, char *argv[])
 					}
 
 					webserv.set_response(i, rq.response);
-					write(event_list[i].ident, webserv.get_response().c_str(), webserv.get_response().length());
 					// write(event_list[i].ident, rq.response.c_str(), rq.response.size());
+					write(event_list[i].ident, webserv.get_response().c_str(), webserv.get_response().length());
 					clients.erase(event_list[i].ident);
 					close(event_list[i].ident);
 					ifs.close();
 					// exit(0);
 				}
+				else
+				{
+					write(event_list[i].ident, rq.response.c_str(), rq.response.size());
+					clients.erase(event_list[i].ident);
+					close(event_list[i].ident);
+				}
 			}
-			rq.clear_request();
+			// rq.clear_request();
 		}
 	}
 	exit(0);
@@ -244,4 +267,17 @@ int request_checker(std::string &request, const Base_block &bb)
 		return -1;
 	}
 	return 0;
+}
+
+
+std::string remove_delim(const std::string &str)
+{
+	std::string temp = str;
+	std::string::iterator it = temp.begin();
+	while (*it == ' ')
+		it++;
+	temp.erase(temp.begin(), it);
+	// if (temp.end() - 1 == ';')
+	// 	temp.erase(temp.end() - 1);
+	return temp;
 }

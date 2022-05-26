@@ -43,7 +43,7 @@ public:
 	void set_response(int i, std::string str_buf)
 	{
 		response_str = "HTTP/1.1 200 OK\r\nContent-Type: "
-					   "text/plain\r\nContent-Length: ";
+					   "text/html\r\nContent-Length: ";
 		response_str += std::to_string(str_buf.length() + 1);
 		response_str += "\r\n\r\n";
 		response_str += str_buf + "\r\n";
@@ -52,4 +52,6 @@ public:
 
 void print_event(struct kevent event_list);
 int request_checker(std::string &request, const Base_block &bb);
+std::string remove_delim(const std::string &str);
+
 #endif
