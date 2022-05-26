@@ -79,12 +79,12 @@ int main(int argc, char *argv[])
 	change_events(change_list, serv_sock.get_socket_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 
 	int num_of_event;
+		Request rq;
 	while (1)
 	{
-		Request rq;
 		std::string str_buf;
 
-		// std::cout << "waiting for new connection...\n";
+		std::cout << "waiting for new connection...\n";
 		// sleep(3);
 		int n_changes = change_list.size(); // number of changes = 등록하고자 하는 이벤트 수
 		int n_event_list = 8;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 			exit(0);
 		}
 		change_list.clear(); // 등록 이벤트 목록 초기화
-		std::cout << "NOE:"<< num_of_event << std::endl;
+		// std::cout << "NOE:"<< num_of_event << std::endl;
 		for (int i = 0; i < num_of_event; i++)
 		{
 			// // print_event(event_list[i]);
@@ -222,28 +222,34 @@ int main(int argc, char *argv[])
 					std::cout << "route: "<<route << std::endl;
 					// std::ifstream ifs("/Users/minsikkim/Desktop/WeL0ve42Seoul/WebServer/View/NAVER.html");
 					if (ifs.is_open() == ifs.bad())
-						std::cerr
-							<< "open error!\n";
+						std::cerr << "open error!\n";
+					// else
+						// change_events(change_list, , EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 					std::string line;
-					while (getline(ifs, line))
+					while (getline(ifs, line).good())
 					{
 						rq.response += line;
 					}
-
-					webserv.set_response(i, rq.response);
+					if (rq.referer.find("favicon.ico"))
+						webserv.set_response(1, rq.response); // 42
+					else
+						webserv.set_response(1, rq.response);
 					// write(event_list[i].ident, rq.response.c_str(), rq.response.size());
+					// std::cout << "***********response:" << webserv.get_response() << webserv.get_response().size() << std::endl;
 					write(event_list[i].ident, webserv.get_response().c_str(), webserv.get_response().length());
 					clients.erase(event_list[i].ident);
 					close(event_list[i].ident);
 					ifs.close();
+					rq.set_response("");
+					webserv.clear_response();
 					// exit(0);
 				}
-				else
-				{
-					write(event_list[i].ident, rq.response.c_str(), rq.response.size());
-					clients.erase(event_list[i].ident);
-					close(event_list[i].ident);
-				}
+				// else
+				// {
+				// 	write(event_list[i].ident, rq.response.c_str(), rq.response.size());
+				// 	clients.erase(event_list[i].ident);
+				// 	close(event_list[i].ident);
+				// }
 			}
 			// rq.clear_request();
 		}

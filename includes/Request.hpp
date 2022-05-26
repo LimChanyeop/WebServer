@@ -67,6 +67,7 @@ public:
 	void set_referer(std::string referer);
 	void set_contentLength(std::string contentLength);
 	void set_contentType(std::string contentType);
+	void set_response(std::string request);
 
 	std::string get_method();
 	std::string get_protocol();
