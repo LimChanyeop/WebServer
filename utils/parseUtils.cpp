@@ -47,10 +47,13 @@ std::string remove_annotaion(char *argv)
 	return file_str;
 }
 
-int find_semi(const std::string str)
+int find_semi(std::string &str)
 {
 	if (*(str.end() - 1) == ';')
+	{
+		str.erase(str.end() - 1);
 		return 0;
+	}
 	else
 		return 1;
 }

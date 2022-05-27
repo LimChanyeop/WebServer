@@ -11,7 +11,7 @@ class Base_block;
 
 class Server_block
 {
-private:
+public:
 	std::vector<Location_block> locations;
 
 	int client_limit_body_size;

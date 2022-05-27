@@ -10,7 +10,7 @@ std::string remove_annotaion(char *argv);
 
 int find_key(const std::string &key);
 
-int find_semi(const std::string str);
+int find_semi(std::string &str);
 
 void split_config(std::string lines, std::vector<std::string> &vec_attr);
 

@@ -42,7 +42,12 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	std::string bo = argv[1];
+	std::string bo;
+	for (int i =1; i < argc; i++)
+	{
+		bo += argv[i];
+		bo += '\n';
+	}
 
 	send(sock, bo.c_str(), bo.length(), 0);
 	std::cout << "message '" << bo << "' send!" << std::endl;
