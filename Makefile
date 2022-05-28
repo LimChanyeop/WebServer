@@ -1,14 +1,16 @@
 CC = c++
 
-SFILE = ./Server/Webserv.cpp \
-		./Socket/Socket.cpp \
-		./Socket/ServerSocket.cpp \
-		./Socket/ClientSocket.cpp \
-		./utils/parseUtils.cpp \
-		./utils/debug.cpp \
-		./Config/Base_block.cpp \
-		./Config/Location_block.cpp \
-		./Config/Server_block.cpp
+# MAIN = main.cpp
+
+SFILE = ./srcs/Webserv.cpp \
+		./srcs/Fd.cpp \
+		./srcs/ParseUtils.cpp \
+		./srcs/Config.cpp \
+		./srcs/Location.cpp \
+		./srcs/Server.cpp \
+		./srcs/Request.cpp \
+		./srcs/Response.cpp \
+		main.cpp
 		
 
 # SOBJ = $(SFILE:.c=.o)
