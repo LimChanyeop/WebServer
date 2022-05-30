@@ -3,6 +3,20 @@
 #include "./includes/Fd.hpp"
 #include <netinet/in.h>
 
+int find_server(Config Config, int fd, std::vector<Server>::iterator &server_it)
+{
+	server_it = Config.v_server.begin();
+	for (; server_it != Config.v_server.end(); server_it++)
+	{
+		// std::cout << "fd:" << server_it->get_socket_fd() << std::endl;
+		if (fd == server_it->get_socket_fd())
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int main(int argc, char *argv[]) {
 	Webserv webserv;
 	std::vector<std::string> vec_attr;
@@ -26,22 +40,24 @@ int main(int argc, char *argv[]) {
 	while (1) {
 		std::string str_buf;
 
-		// std::cout << "waiting for new connection...\n";
-
-		for (std::vector<Server>::iterator server_it = Config.v_server.begin(); server_it != Config.v_server.end(); server_it++)
-		{
-			// std::cout << "********IT-" << server_it - Config.v_server.begin() << std::endl;
+		std::cout << "waiting for new connection...\n";
+			std::vector<Server>::iterator server_it;
 			int num_of_event = kq.set_event();
+			// std::cout << "********IT-" << server_it - Config.v_server.begin() << std::endl;
 			for (int i = 0; i < num_of_event; i++)
 			{
-				std::cout << "rq listen::::::" << server_it->request.get_host() << std::endl;
+				// std::cout << "rq listen::::::" << server_it->request.get_host() << std::endl;
 				// print_event(server_it->event_list[i]);
 				if (kq.event_list[i].filter == EVFILT_READ)
 				{
 					std::cout << "accept READ Event / ident :" << kq.event_list[i].ident << std::endl;
-					std::cout << "client_id:" << kq.event_list[i].ident << " vs server_id:" << server_it->get_socket_fd() << std::endl;
-					if (kq.event_list[i].ident == server_it->get_socket_fd())
+					// std::cout << find_server(Config, kq.event_list[i].ident)->get_socket_fd() << std::endl;
+					// std::cout << "TF:" << (find_server(Config, kq.event_list[i].ident, server_it)) << std::endl;
+					if (find_server(Config, kq.event_list[i].ident, server_it)) // 이벤트 주체가 server
 					{
+						std::cout << "1\n";
+						std::cout << "client_id:" << kq.event_list[i].ident << " vs server_id:" << server_it->get_socket_fd() << std::endl;
+					
 						int acc_fd;
 						if ((acc_fd = accept(server_it->get_socket_fd(), (sockaddr *)&(server_it->get_address()),
 											(socklen_t *)&(server_it->get_address_len()))) == -1) //
@@ -52,10 +68,19 @@ int main(int argc, char *argv[]) {
 						fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 						change_events(kq.change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 						change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-						kq.clients[acc_fd] = "server";
+						kq.clients[acc_fd].set_server_sock( kq.event_list[i].ident);
 					}
-					else if (kq.clients.find(kq.event_list[i].ident) != kq.clients.end())
-					{ // client
+					else if (kq.clients.find(kq.event_list[i].ident) != kq.clients.end()) // 이벤트 주체가 client
+					{
+						std::cout << "2\n";
+
+						// kq.clients[kq.event_list[i].ident] -> server sock_fd로 v_server[?]를 알아내면 됨
+						// iterator로 v_server.get_fd() == kq.clients[kq.event_list[i].ident] 맞는것 찾아내면 됨
+						for (std::vector<Server>::iterator it = Config.v_server.begin(); it != Config.v_server.end(); it++)
+						{
+							if (it->get_socket_fd() == kq.clients[kq.event_list[i].ident].get_server_sock())
+								server_it = it; // 드디어 어떤 서버인지 찾음
+						}
 						char READ[1024] = {0};
 						int valread;
 						std::string request;
@@ -79,12 +104,14 @@ int main(int argc, char *argv[]) {
 
 						// std::cout << "\n\nreq:\n\n";
 						// rq.print_request();
-						kq.clients[kq.event_list[i].ident] = "client";
 						// std::cout << "rq requests[0]: " << server_it->request.requests[0] << std::endl;
 						// std::cout << "rq listen::::::" << server_it->request.get_host() << std::endl;
+						kq.clients[kq.event_list[i].ident].set_status(42);
 					}
 				}
-				else if (kq.event_list[i].filter == EVFILT_WRITE && kq.clients[kq.event_list[i].ident] == "client" && server_it->request.get_host() != "")
+				else if (kq.event_list[i].filter == EVFILT_WRITE && \
+					kq.clients[kq.event_list[i].ident].get_server_sock() == server_it->get_socket_fd() && \
+					kq.clients[kq.event_list[i].ident].get_status() > 0)// && server_it->request.get_host() != "")
 				{
 					std::cout << "accept WRITE Event / ident :" << kq.event_list[i].ident << std::endl;
 
@@ -99,6 +126,8 @@ int main(int argc, char *argv[]) {
 
 					if (kq.clients.find(kq.event_list[i].ident) != kq.clients.end())
 					{
+						std::cout << "3\n";
+
 						std::cout<< "server_id = " << server_id << "location_id = " << location_id << std::endl;
 						std::cout << "|" <<  Config.v_server[server_id].v_location[location_id].get_index() << "|\n";
 						std::string route = Config.v_server[server_id].get_root() + '/' + remove_delim(Config.v_server[server_id].v_location[location_id].get_index());
@@ -116,7 +145,7 @@ int main(int argc, char *argv[]) {
 							server_it->response.get_response() += line;
 						}
 						if (server_it->request.referer.find("favicon.ico") != std::string::npos)
-							server_it->response.set_response(1, server_it->response.get_response()); // 42
+							server_it->response.set_response(42, server_it->response.get_response()); // 42
 						else
 							server_it->response.set_response(1, server_it->response.get_response());
 						// write(kq.event_list[i].ident, rq.response.c_str(), rq.response.size());
@@ -131,7 +160,6 @@ int main(int argc, char *argv[]) {
 					}
 				}
 			}
-		}
 	}
 	exit(0);
 	return 0;

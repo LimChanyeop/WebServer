@@ -42,6 +42,8 @@ void Webserv::ready_webserv(Config &Config)
         int optvalue = 1;
         setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_REUSEADDR, &optvalue,
                 sizeof(optvalue)); // to solve bind error
+		setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_REUSEPORT, &optvalue,
+			   sizeof(optvalue)); // to solve bind error
 
         int ret;
         if ((ret = bind(it->get_socket_fd(), (sockaddr *)&address, (socklen_t)sizeof(address))) == -1) {
@@ -59,7 +61,7 @@ int Webserv::find_server_id(int i, Config config, Request rq, Kqueue kq)
 {
     std::string port = ""; // 왜 포트를 못찾았을까? -> 포트를 파싱 안했었넹~ok -> 근데도 못찾네~
 	int server_id;
-	std::cout << "*find*" << kq.clients.find(kq.event_list[i].ident)->second << std::endl;
+	// std::cout << "*find*" << kq.clients.find(kq.event_list[i].ident)->second << std::endl;
 	if (kq.clients.find(kq.event_list[i].ident) != kq.clients.end())
 	{
 		server_id = 0;
