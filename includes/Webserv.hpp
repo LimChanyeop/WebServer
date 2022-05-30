@@ -14,8 +14,8 @@
 #include <string>
 #include <vector>
 
-#include "ParseUtils.hpp"
 #include "Config.hpp"
+#include "Kqueue.hpp"
 
 #include <fstream>	   // for file io
 #include <sys/event.h> // for kqueue
@@ -32,8 +32,10 @@ public:
 	~Webserv();
 
 	void ready_webserv(Config &Config);
+	int find_server_id(int i, Config config, Request rq, Kqueue kq);
+	int find_location_id(int server_id, Config config, Request rq, Kqueue kq);
 
-	int set_event(Config &config);
+	// int set_event(Config &config, Kq kq);
 };
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata);

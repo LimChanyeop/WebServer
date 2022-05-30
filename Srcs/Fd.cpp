@@ -1,7 +1,8 @@
 #include "../includes/Fd.hpp"
 
-Fd::Fd(/* args */)
+Fd::Fd(/* args */)// : fd(0), socket_type(0), address_len(0)
 {
+
 }
 
 Fd::~Fd()
@@ -18,12 +19,17 @@ const int &Fd::get_socket_fd(void) const
 	return fd;
 }
 
-void Fd::set_kq_fd(int fd_)
+void Fd::set_address_len(unsigned int len)
 {
-	fd = fd_;
+	this->address_len = len;
 }
 
-const int &Fd::get_kq_fd(void) const
+sockaddr_in &Fd::get_address(void)
 {
-	return fd;
+	return this->address;
+}
+
+unsigned int &Fd::get_address_len(void)
+{
+	return this->address_len;
 }

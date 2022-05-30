@@ -15,19 +15,16 @@ class Config;
 
 class Server : virtual public Fd
 {
-protected: // Fd
-	int fd;
-	int kq_fd;
-	int status;
-	unsigned int address_len;
+// protected: // Fd
+// 	int fd;
+// 	int socket_type;
+// 	unsigned int address_len;
 
 public:
 	std::vector<Location> v_location;
-	std::vector<struct kevent> change_list;
-	struct kevent event_list[8];
+
 	Request request;
 	Response response;
-	sockaddr_in address;
 
 	int client_limit_body_size;
 	int request_limit_header_size;
@@ -61,8 +58,6 @@ public:
 	const int &get_client_limit_body_size(void) const;
 	const int &get_request_limit_header_size(void) const;
 
-	struct kevent *get_event_list(void);
-
 	void set_user(std::string str);
 	void set_worker_processes(std::string str);
 	void set_listen(std::string str);
@@ -78,14 +73,12 @@ public:
 	void set_client_limit_body_size(int i);
 	void set_request_limit_header_size(int i);
 
-	void set_socket_fd(int fd_); ////////// fd
-	const int &get_socket_fd(void) const;
-	void set_kq_fd(int fd_);
-	const int &get_kq_fd(void) const; ///// /fd
+	// void set_socket_fd(int fd_); ////////// fd
+	// const int &get_socket_fd(void) const;
 
-	void set_address_len(unsigned int len) { address_len = len; }
-	sockaddr_in &get_address(void) { return (address); }
-	unsigned int &get_address_len(void) { return address_len; }
+	// void set_address_len(unsigned int len) { address_len = len; }
+	// sockaddr_in &get_address(void) { return (address); }
+	// unsigned int &get_address_len(void) { return address_len; } ///////// /fd
 
 	void print_all(void) const;
 	void config_parsing(std::vector<std::string>::iterator &it, std::vector<std::string> &lists); //, Config_base config_base)

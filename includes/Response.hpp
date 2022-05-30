@@ -13,8 +13,8 @@ public:
 	~Response();
 
 	void set_response(int i, std::string str_buf);
+	std::string &get_response(void);
 	void clear_response(void);
-	const std::string &get_response(void) const;
 };
 
 #endif

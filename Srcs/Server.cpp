@@ -31,8 +31,6 @@ const std::string &Server::get_auth_key(void) const { return auth_key; }
 const int &Server::get_client_limit_body_size(void) const { return client_limit_body_size; }
 const int &Server::get_request_limit_header_size(void) const { return request_limit_header_size; }
 
-struct kevent *Server::get_event_list(void) {return event_list;}
-
 void Server::set_user(std::string str)
 {
 	user = str;
@@ -217,24 +215,3 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 		}
 	}
 }
-
-void Server::set_socket_fd(int fd_)
-{
-	fd = fd_;
-}
-
-const int &Server::get_socket_fd(void) const
-{
-	return fd;
-}
-
-void Server::set_kq_fd(int fd_)
-{
-	fd = fd_;
-}
-
-const int &Server::get_kq_fd(void) const
-{
-	return fd;
-}
-

@@ -10,6 +10,7 @@ SFILE = ./srcs/Webserv.cpp \
 		./srcs/Server.cpp \
 		./srcs/Request.cpp \
 		./srcs/Response.cpp \
+		./srcs/Kqueue.cpp \
 		main.cpp
 		
 

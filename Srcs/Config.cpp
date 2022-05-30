@@ -149,7 +149,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			temp += *(it + 1);
 			this->set_auth_key(temp);
 			break;
-		case 14:													 // server
+		case 14:												 // server
 			v_server.push_back(Server(*this));					 // vec serverpush_back
 			v_server[v_server.size() - 1].config_parsing(++it, lists); // v_server[i].server_block_parsing((&)it, conf_lists)
 			break;													 // location
