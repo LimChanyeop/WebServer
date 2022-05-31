@@ -22,6 +22,7 @@
 #include <time.h>
 
 class Config;
+class Kqueue;
 
 class Webserv
 {

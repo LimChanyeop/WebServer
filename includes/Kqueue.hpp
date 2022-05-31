@@ -10,6 +10,8 @@
 
 #define NOE 100
 
+class Client;
+
 class Kqueue
 {
 public:
