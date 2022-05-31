@@ -71,7 +71,7 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 	this->location = *it;
 	for (; it != lists.end() && *it != "}"; it++)
 	{
-		std::cout << "lo it (" << *it << ")"<< std::endl;
+		// std::cout << "lo it (" << *it << ")"<< std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{

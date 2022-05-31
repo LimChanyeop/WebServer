@@ -72,7 +72,7 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 {
 	for (; it != lists.end() && *it != "}"; it++)
 	{
-		std::cout << "ser it (" << *it << ")"<< std::endl;
+		// std::cout << "ser it (" << *it << ")"<< std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{

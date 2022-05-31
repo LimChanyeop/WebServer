@@ -67,13 +67,13 @@ int Webserv::find_server_id(int i, Config config, Request rq, Kqueue kq)
 		server_id = 0;
 		while (server_id < config.v_server.size())
 		{
-			std::cout << "listen:" << config.v_server[server_id].get_listen() << "vs" << rq.host << std::endl;
+			// std::cout << "listen:" << config.v_server[server_id].get_listen() << "vs" << rq.host << std::endl;
 			// 왜 for문 끼워놓으면 무한루프돌까~~ㅡㅡ while문은 또 왜 되는것인가~
 			if (atoi(config.v_server[server_id].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
 			{				
-				std::cout << "==================\n";														 //
-				std::cout << "same - " << server_id << "\n";
-				std::cout << "==================\n";
+				// std::cout << "==================\n";														 //
+				// std::cout << "same - " << server_id << "\n";
+				// std::cout << "==================\n";
 				port = rq.get_host();
 				break;
 			}
@@ -87,26 +87,26 @@ int Webserv::find_server_id(int i, Config config, Request rq, Kqueue kq)
 			// kq.clients.erase(kq.event_list[i].ident);
 		}
 	}
-	std::string temp;
-	int it = rq.referer.find(port.c_str());
-	if (it == rq.referer.size() || it < 0)
-	{
-		std::cerr << "Cant find ref in port\n";
-	}
-	else
-		rq.referer.erase(0, it);
+	// std::string temp;
+	// int it = rq.referer.find(port.c_str());
+	// if (it == rq.referer.size() || it < 0)
+	// {
+	// 	std::cerr << "Cant find ref in port\n";
+	// }
+	// else
+	// 	rq.referer.erase(0, it);
     return server_id;
 }
 
 int Webserv::find_location_id(int server_id, Config config, Request rq, Kqueue kq){
     int location_id;
-	std::cout << config.v_server[server_id].v_location.size() << std::endl;
+	// std::cout << config.v_server[server_id].v_location.size() << std::endl;
 	for (location_id = 0; location_id < config.v_server[server_id].v_location.size(); location_id++)
 	{
-		std::cout << "TEST-location:" << config.v_server[server_id].v_location[location_id].location << "vs" << rq.referer << std::endl;
+		// std::cout << "TEST-location:" << config.v_server[server_id].v_location[location_id].location << "vs" << rq.referer << std::endl;
 		if (config.v_server[server_id].v_location[location_id].location == rq.referer)
 		{
-			std::cout << "same!!!" << std::endl;
+			// std::cout << "same!!!" << std::endl;
 			break;
 		}
 	}

@@ -18,7 +18,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 			break;
 		case Ehost:
 			this->set_host(*(++it));
-			std::cout << *it << std::endl;
+			// std::cout << *it << std::endl;
 			break;
 		case Econnection:
 			connection = *(++it);
@@ -47,7 +47,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 		case 13: // GET
 			start_line = "GET";
 			referer = *(++it);
-			std::cout << "referer:" << referer << std::endl;
+			// std::cout << "referer:" << referer << std::endl;
 			break;
 		case 14: // POST
 			start_line = "POST";
@@ -157,7 +157,7 @@ void Request::set_host(std::string host)
 		it++;
 	}
 	this->host = host;
-	std::cout << "TEST-host:" << host << std::endl;
+	// std::cout << "TEST-host:" << host << std::endl;
 }
 void Request::set_connection(std::string connection) { this->connection = connection; }
 void Request::set_upgradeInSecureRequest(std::string upgradeInSecureRequest) { this->upgradeInSecureRequest = upgradeInSecureRequest; }

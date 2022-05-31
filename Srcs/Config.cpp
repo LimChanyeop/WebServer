@@ -48,7 +48,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 	std::vector<std::string>::iterator it;
 	for (it = lists.begin(); it != lists.end(); it++)
 	{
-		std::cout << "con it (" << *it << ")"<< std::endl;
+		// std::cout << "con it (" << *it << ")"<< std::endl;
 		// std::cout << "(" << *it << ")" << find_key(*it) << std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
