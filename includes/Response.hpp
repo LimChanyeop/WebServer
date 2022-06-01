@@ -14,7 +14,7 @@ public:
 	~Response();
 
 	void set_response(int i, std::string str_buf);
-	void set_autoindex(std::string &str_buf, std::vector<std::string> root);
+	void set_autoindex(std::string &str_buf, std::string root);
 	std::string &get_response(void);
 	void clear_response(void);
 };

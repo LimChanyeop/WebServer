@@ -8,20 +8,20 @@ Response::~Response()
 {
 }
 
-void Response::set_autoindex(std::string &str_buf, std::vector<std::string> root) // opendir != NULL, readdir, closedir 
+void Response::set_autoindex(std::string &str_buf, std::string root) // opendir != NULL, readdir, closedir 
 {
-	std::vector<std::string>::iterator it = root.begin();
-	for (; it != root.end(); it++)
-	{
+	// std::vector<std::string>::iterator it = root.begin();
+	// for (; it != root.end(); it++)
+	// {
 		str_buf += "<!DOCTYPE html>\n";
 		str_buf += "<html>\n";
 		str_buf += "<head>\n</head>\n";
 		str_buf += "<body>\n";
-		str_buf += "<h1> Index of " + *it + "</h1>\n";
-		str_buf += "<a href=" + *it + ">";
-		str_buf += *it;
+		str_buf += "<h1> Index of " + root + "</h1>\n";
+		str_buf += "<a href=" + root + ">";
+		str_buf += root;
 		str_buf += "</a><br>\n";
-	}
+	// }
 }
 
 void Response::set_response(int i, std::string str_buf)

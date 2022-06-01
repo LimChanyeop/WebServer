@@ -179,9 +179,9 @@ int main(int argc, char *argv[], char *envp[]) {
 					for (; it != server_it->v_location.end(); it++) ////// why root no?
 					{
 						// std::cout << "root:" << it->location << std::endl;
-						root.push_back(it->location);
+						server_it->response.set_autoindex(server_it->response.get_response(), it->location);
+						// root.push_back(it->location);
 					}
-					server_it->response.set_autoindex(server_it->response.get_response(), root);
 				}
 				if (kq.clients[kq.event_list[i].ident].get_status() == ok)// && server_it->request.get_host() != "")
 				{
