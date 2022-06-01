@@ -94,7 +94,12 @@ int main(int argc, char *argv[], char *envp[]) {
 					}
 					server_it->request.split_request(request);
 					server_it->request.request_parsing(server_it->request.requests);
-					// kq.clients[kq.event_list[i].ident].set_status(request_ok); // request_ok
+					// kq.clients[kq.event_list[i].ident].set_status(ok); // request_ok
+
+					int server_id;
+					int location_id;						
+					server_id = webserv.find_server_id(i, Config, server_it->request, kq);
+					location_id = webserv.find_location_id(server_id, Config, server_it->request, kq);
 
 					if (server_it->request.get_referer().find("php") != std::string::npos) /////////////////// cgi
 					{
@@ -110,6 +115,8 @@ int main(int argc, char *argv[], char *envp[]) {
 						}
 						pipe(write_fd);
 
+							std::cout << "ar[0]" << server_it->get_cgi_path().c_str() << std::endl;
+							std::cout << "ar[1]" << Config.v_server[server_id].v_location[location_id].get_root() + "/" + Config.v_server[server_id].v_location[location_id].get_index() << std::endl;
 						int pid = fork();
 						if (pid == -1)
 						{
@@ -121,12 +128,12 @@ int main(int argc, char *argv[], char *envp[]) {
 							dup2(write_fd[0], STDIN_FILENO);
          				    dup2(read_fd[1], STDOUT_FILENO);
 							char *ar[3];
-							ar[0] = strdup("cat");
-							ar[1] = strdup("./Makefile");
+							ar[0] = strdup(server_it->get_cgi_path().c_str());//"./cgiBinary/php-cgi"); // cat
+							ar[1] = strdup((Config.v_server[server_id].get_root() + "/" + Config.v_server[server_id].v_location[location_id].get_index()).c_str()); // file name(./file)
 							ar[2] = 0;
 							// ar[0] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.drawio");
 							// ar[1] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.png");
-							int ret = execve("/bin/cat", ar, 0);
+							int ret = execve("/bin/cat", ar, envp); // "/bin/cat"
 							exit(ret);
 						}
 						close(write_fd[0]);
@@ -145,14 +152,9 @@ int main(int argc, char *argv[], char *envp[]) {
 					}
 					else
 					{
-						int server_id;
-						int location_id;						
-						server_id = webserv.find_server_id(i, Config, server_it->request, kq);
-						location_id = webserv.find_location_id(server_id, Config, server_it->request, kq);
-
 						// std::cout<< "server_id = " << server_id << "location_id = " << location_id << std::endl;
 						// std::cout << "|" <<  Config.v_server[server_id].v_location[location_id].get_index() << "|\n";
-						std::string route = Config.v_server[server_id].get_root() + '/' + remove_delim(Config.v_server[server_id].v_location[location_id].get_index());
+						std::string route = Config.v_server[server_id].get_root() + '/' + Config.v_server[server_id].v_location[location_id].get_index();
 						//	/Users/minsikkim/Desktop/WeL0ve42Seoul/WebServer/View + / + Default.html
 						// std::cout << "route: "<<route << std::endl;
 

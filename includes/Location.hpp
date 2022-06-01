@@ -22,7 +22,7 @@ public:
 	std::string autoindex;
 	std::string return_n;
 	std::string error_page;
-	std::string cgi_info;
+	std::string cgi_path;
 	std::string allow_methods;
 	std::string auth_key;
 
@@ -37,7 +37,7 @@ public:
 	const std::string &get_autoindex(void) const;
 	const std::string &get_return_n(void) const;
 	const std::string &get_error_page(void) const;
-	const std::string &get_cgi_info(void) const;
+	const std::string &get_cgi_path(void) const;
 	const std::string &get_allow_methods(void) const;
 	const std::string &get_auth_key(void) const;
 	const int &get_client_limit_body_size(void) const;
@@ -52,7 +52,7 @@ public:
 	void set_autoindex(std::string str);
 	void set_return_n(std::string str);
 	void set_error_page(std::string str);
-	void set_cgi_info(std::string str);
+	void set_cgi_path(std::string str);
 	void set_allow_methods(std::string str);
 	void set_auth_key(std::string str);
 	void set_client_limit_body_size(int i);

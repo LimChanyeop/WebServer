@@ -14,7 +14,7 @@ Location::Location(Server sb)
 	sb.set_return_n(this->get_return_n());
 	sb.set_error_page(this->get_error_page());
 	sb.set_auth_key(this->get_auth_key());
-	sb.set_cgi_info(this->get_cgi_info());
+	sb.set_cgi_path(this->get_cgi_path());
 	sb.set_allow_methods(this->get_allow_methods());
 }
 
@@ -27,7 +27,7 @@ const std::string &Location::get_index(void) const { return index; }
 const std::string &Location::get_autoindex(void) const { return autoindex; }
 const std::string &Location::get_return_n(void) const { return return_n; }
 const std::string &Location::get_error_page(void) const { return error_page; }
-const std::string &Location::get_cgi_info(void) const { return cgi_info; }
+const std::string &Location::get_cgi_path(void) const { return cgi_path; }
 const std::string &Location::get_allow_methods(void) const { return allow_methods; }
 const std::string &Location::get_auth_key(void) const { return auth_key; }
 const int &Location::get_client_limit_body_size(void) const { return client_limit_body_size; }
@@ -42,7 +42,7 @@ void Location::set_index(std::string str) { index = str; }
 void Location::set_autoindex(std::string str) { autoindex = str; }
 void Location::set_return_n(std::string str) { return_n = str; }
 void Location::set_error_page(std::string str) { error_page = str; }
-void Location::set_cgi_info(std::string str) { cgi_info = str; }
+void Location::set_cgi_path(std::string str) { cgi_path = str; }
 void Location::set_allow_methods(std::string str) { allow_methods = str; }
 void Location::set_auth_key(std::string str) { auth_key = str; }
 void Location::set_client_limit_body_size(int i) { client_limit_body_size = i; }
@@ -61,7 +61,7 @@ void Location::print_all(void) const
 			  << "autoindex " << autoindex << std::endl
 			  << "return_n " << return_n << std::endl
 			  << "error_page " << error_page << std::endl
-			  << "cgi_info " << cgi_info << std::endl
+			  << "cgi_path " << cgi_path << std::endl
 			  << "allow_methods " << allow_methods << std::endl
 			  << "auth_key " << auth_key << std::endl;
 }
@@ -159,7 +159,7 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 				it++;
 			}
 			temp += *(it + 1);
-			this->set_cgi_info(temp);
+			this->set_cgi_path(temp);
 			break;
 		case 12:
 			while (find_semi(*(it + 1)))

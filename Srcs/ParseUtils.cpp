@@ -72,7 +72,7 @@ int find_key(const std::string &key)
 	keys.push_back("autoindex");
 	keys.push_back("return_n");
 	keys.push_back("error_page");
-	keys.push_back("chi_info");
+	keys.push_back("cgi_path");
 	keys.push_back("allow_nethods");
 	keys.push_back("auth_key");
 	keys.push_back("server");

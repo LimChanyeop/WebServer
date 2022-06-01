@@ -8,7 +8,7 @@ const std::string &Config::get_index(void) const { return index; }
 const std::string &Config::get_autoindex(void) const { return autoindex; }
 const std::string &Config::get_return_n(void) const { return return_n; }
 const std::string &Config::get_error_page(void) const { return error_page; }
-const std::string &Config::get_cgi_info(void) const { return cgi_info; }
+const std::string &Config::get_cgi_path(void) const { return cgi_path; }
 const std::string &Config::get_allow_methods(void) const { return allow_methods; }
 const std::string &Config::get_auth_key(void) const { return auth_key; }
 const int &Config::get_client_limit_body_size(void) const { return client_limit_body_size; }
@@ -21,7 +21,7 @@ void Config::set_index(std::string str) { index = str; }
 void Config::set_autoindex(std::string str) { autoindex = str; }
 void Config::set_return_n(std::string str) { return_n = str; }
 void Config::set_error_page(std::string str) { error_page = str; }
-void Config::set_cgi_info(std::string str) { cgi_info = str; }
+void Config::set_cgi_path(std::string str) { cgi_path = str; }
 void Config::set_allow_methods(std::string str) { allow_methods = str; }
 void Config::set_auth_key(std::string str) { auth_key = str; }
 void Config::set_client_limit_body_size(int i) { client_limit_body_size = i; }
@@ -38,7 +38,7 @@ void Config::print_all(void) const
 			  << "autoindex " << autoindex << std::endl
 			  << "return_n " << return_n << std::endl
 			  << "error_page " << error_page << std::endl
-			  << "cgi_info " << cgi_info << std::endl
+			  << "cgi_path " << cgi_path << std::endl
 			  << "allow_methods " << allow_methods << std::endl
 			  << "auth_key " << auth_key << std::endl;
 }
@@ -129,7 +129,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 				temp += ' ';
 			}
 			temp += *(it + 1);
-			this->set_cgi_info(temp);
+			this->set_cgi_path(temp);
 			break;
 		case 12:
 			while (find_semi(*(it + 1)))
