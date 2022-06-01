@@ -8,8 +8,24 @@ Response::~Response()
 {
 }
 
+void Response::set_autoindex(std::string &str_buf, std::vector<std::string> root) // opendir != NULL, readdir, closedir 
+{
+	std::vector<std::string>::iterator it = root.begin();
+	for (; it != root.end(); it++)
+	{
+		str_buf += "<!DOCTYPE html>\n";
+		str_buf += "<html>\n";
+		str_buf += "<head>\n</head>\n";
+		str_buf += "<body>\n";
+		str_buf += "<h1> Index of " + *it + "</h1>\n";
+		str_buf += "<a href=" + *it + ">";
+		str_buf += *it;
+		str_buf += "</a><br>\n";
+	}
+}
+
 void Response::set_response(int i, std::string str_buf)
-{	
+{
 	if (i == 1)
 	{
 		response_str = "HTTP/1.1 200 OK\r\nContent-Type: "
@@ -17,6 +33,7 @@ void Response::set_response(int i, std::string str_buf)
 		response_str += std::to_string(str_buf.length() + 1);
 		response_str += "\r\n\r\n";
 		response_str += str_buf + "\r\n";
+		// std::cout << str_buf;
 	}
 	else if (i == 2)
 	{

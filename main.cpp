@@ -96,7 +96,7 @@ int main(int argc, char *argv[], char *envp[]) {
 					server_it->request.request_parsing(server_it->request.requests);
 					// kq.clients[kq.event_list[i].ident].set_status(request_ok); // request_ok
 
-					if (server_it->request.get_referer().find("php") != std::string::npos)
+					if (server_it->request.get_referer().find("php") != std::string::npos) /////////////////// cgi
 					{
 						// std::cout << "Find php\n";
 
@@ -122,7 +122,7 @@ int main(int argc, char *argv[], char *envp[]) {
          				    dup2(read_fd[1], STDOUT_FILENO);
 							char *ar[3];
 							ar[0] = strdup("cat");
-							ar[1] = strdup("./View/index.html");
+							ar[1] = strdup("./Makefile");
 							ar[2] = 0;
 							// ar[0] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.drawio");
 							// ar[1] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.png");
@@ -172,7 +172,17 @@ int main(int argc, char *argv[], char *envp[]) {
 				kq.clients[kq.event_list[i].ident].get_server_sock() == server_it->get_socket_fd())// && server_it->request.get_host() != "")
 			{
 				// std::cout << "accept WRITE Event / ident :" << kq.event_list[i].ident << std::endl;
-
+				if (server_it->get_autoindex() == "on") // location on?
+				{
+					std::vector<std::string> root;
+					std::vector<Location>::iterator it = server_it->v_location.begin();
+					for (; it != server_it->v_location.end(); it++) ////// why root no?
+					{
+						// std::cout << "root:" << it->location << std::endl;
+						root.push_back(it->location);
+					}
+					server_it->response.set_autoindex(server_it->response.get_response(), root);
+				}
 				if (kq.clients[kq.event_list[i].ident].get_status() == ok)// && server_it->request.get_host() != "")
 				{
 					if (server_it->request.referer.find("favicon.ico") != std::string::npos)

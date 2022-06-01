@@ -3,12 +3,12 @@
 
 #include "Config.hpp"
 #include "Request.hpp"
-#include "Response.hpp"
 #include "Fd.hpp"
 #include "Location.hpp"
 #include "ParseUtils.hpp"
 #include <vector>
 #include <sys/event.h>
+#include "Response.hpp"
 
 class Location;
 class Config;
