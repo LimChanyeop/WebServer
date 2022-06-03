@@ -25,7 +25,7 @@ CNAME = TestClient
 all : $(SNAME) $(CNAME)
 
 $(SNAME) : $(SFILE)
-	$(CC) $(SFILE) -o $(SNAME)
+	$(CC) $(SFILE) -o $(SNAME) -g
 
 $(CNAME) : $(CFILE)
 	$(CC) $(CFILE) -o $(CNAME)
