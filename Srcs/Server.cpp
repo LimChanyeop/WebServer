@@ -42,9 +42,9 @@ void Server::set_return_n(std::string str) { return_n = str; }
 void Server::set_error_page(std::string str) { error_page = str; }
 void Server::set_cgi_path(std::string str) 
 {
-	std::cout << "before cgi path-" << str << std::endl;
+	// std::cout << "before cgi path-" << str << std::endl;
 	str.erase(0, str.find("./"));
-	std::cout << "after cgi path-" << str << std::endl;
+	// std::cout << "after cgi path-" << str << std::endl;
 	cgi_path = str;
 }
 void Server::set_allow_methods(std::string str) { allow_methods = str; }
@@ -75,7 +75,7 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 {
 	for (; it != lists.end() && *it != "}"; it++)
 	{
-		std::cout << "ser it (" << *it << ")" << find_key(*it) << std::endl;
+		// std::cout << "ser it (" << *it << ")" << find_key(*it) << std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{

@@ -1,6 +1,8 @@
 #include "./includes/Webserv.hpp"
 #include "./includes/Kqueue.hpp"
 #include "./includes/Fd.hpp"
+#include "./includes/Client.hpp"
+
 #include <netinet/in.h>
 
 int find_server(Config Config, int fd, std::vector<Server>::iterator &server_it)
@@ -8,7 +10,7 @@ int find_server(Config Config, int fd, std::vector<Server>::iterator &server_it)
 	server_it = Config.v_server.begin();
 	for (; server_it != Config.v_server.end(); server_it++)
 	{
-		// std::cout << "fd:" << server_it->get_socket_fd() << std::endl;
+		// std::cout << "server fd:" << server_it->get_socket_fd() << std::endl;
 		if (fd == server_it->get_socket_fd())
 		{
 			return 1;
@@ -30,6 +32,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
 	webserv.ready_webserv(Config);
 	Kqueue kq;
+	std::map<int, Client> clients;
 	// kq.setting();
 	kq.kq = kqueue();
 	for (std::vector<Server>::iterator it = Config.v_server.begin(); it != Config.v_server.end(); it++)
@@ -41,139 +44,93 @@ int main(int argc, char *argv[], char *envp[]) {
 		std::string str_buf;
 
 		// std::cout << "waiting for new connection...\n";
-		std::vector<Server>::iterator server_it; // kq.clients[kq.event_list[i].ident].get_server_it()
+		std::vector<Server>::iterator server_it; // clients[kq.event_list[i].ident].get_server_it()
 		int num_of_event = kq.set_event();
-		// std::cout << "n_o_e:" << num_of_event << " event_ident:" << kq.event_list[0].ident << " filter:" << kq.event_list[0].filter << std::endl;
-		// std::cout << "********IT-" << server_it - Config.v_server.begin() << std::endl;
 		for (int i = 0; i < num_of_event; i++)
 		{
+			int id = kq.event_list[i].ident;
 			// std::cout << "rq listen::::::" << server_it->request.get_host() << std::endl;
 			if (kq.event_list[i].filter == EVFILT_READ)
 			{
-				std::cout << "accept READ Event / ident :" << kq.event_list[i].ident << std::endl;
-				if (find_server(Config, kq.event_list[i].ident, server_it)) // 이벤트 주체가 server
+				std::cout << "accept READ Event / ident :" << id << std::endl;
+				if (clients[id].get_status() == need_to_read) // 이벤트 주체가 READ open
 				{
-					// std::cout << "client_id:" << kq.event_list[i].ident << " vs server_id:" << server_it->get_socket_fd() << std::endl;					
-					int acc_fd;
-					if ((acc_fd = accept(server_it->get_socket_fd(), (sockaddr *)&(server_it->get_address()),
-										(socklen_t *)&(server_it->get_address_len()))) == -1) //
-					{
-						std::cerr << "accept error " << acc_fd << std::endl;
-						exit(0);
-					}
-					fcntl(acc_fd, F_SETFL, O_NONBLOCK);
-					change_events(kq.change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-					change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-					kq.clients[acc_fd].set_server_sock( kq.event_list[i].ident);
-				}
-				else if (kq.clients.find(kq.event_list[i].ident) != kq.clients.end()) // 이벤트 주체가 client
-				{
-					// kq.clients[kq.event_list[i].ident] -> server sock_fd로 v_server[?]를 알아내면 됨
-					// iterator로 v_server.get_fd() == kq.clients[kq.event_list[i].ident] 맞는것 찾아내면 됨
-					for (std::vector<Server>::iterator it = Config.v_server.begin(); it != Config.v_server.end(); it++)
-					{
-						if (it->get_socket_fd() == kq.clients[kq.event_list[i].ident].get_server_sock())
-							server_it = it; // 드디어 어떤 서버인지 찾음
-					}
-					if (server_it == Config.v_server.end())
-					{
-						std::cerr << "Can not found Server\n";
-						exit(-1);
-					}
+					std::cout << "FILE READ\n";
 					char READ[1024] = {0};
 					int valread;
-					std::string request;
-					// int valread = recv(acc_socket, request, 1024, 0);
-					while ((valread = read(kq.event_list[i].ident, READ, 1023)) == 1023)
+					std::string read_for_open;
+					// int valread = recv(acc_socket, read_for_open, 1024, 0);
+
+					while ((valread = read(id, READ, 1023)) == 1023)
 					{
-						request += READ;
+						read_for_open += READ;
 					}
 					if (valread >= 0)
 					{
-						request += READ;
+						read_for_open += READ;
 					}
-					server_it->request.split_request(request);
-					server_it->request.request_parsing(server_it->request.requests);
-					// kq.clients[kq.event_list[i].ident].set_status(ok); // request_ok
+					int read_fd = clients[id].get_read_fd(); // 6
+					clients[read_fd].response.response_str = read_for_open;
+					clients[read_fd].set_status(READ_ok);
+					close(id);
+				}
+				else if (find_server(Config, id, server_it)) // 이벤트 주체가 server
+				{
+					webserv.accept_add_events(id, server_it, kq, clients);
+				}
+				else if (clients.find(id) != clients.end()) // 이벤트 주체가 client
+				{
+					server_it = webserv.find_server_it(Config, clients[id]);
 
-					int server_id;
-					int location_id;						
-					server_id = webserv.find_server_id(i, Config, server_it->request, kq);
-					location_id = webserv.find_location_id(server_id, Config, server_it->request, kq);
+					clients[id].request_parsing(id, server_it);
+					clients[id].set_status(request_ok); // request_ok
 
-					if (server_it->request.get_referer().find("php") != std::string::npos) /////////////////// cgi
+					int server_id = webserv.find_server_id(id, Config, clients[id].request, clients);
+					clients[id].set_server_id(server_id);
+					// int server_id = server_it - Config.v_server.begin();
+					int location_id = webserv.find_location_id(server_id, Config, clients[id].request, kq);
+					clients[id].set_location_id(location_id);
+
+					if (clients[id].request.get_method() == "GET")
 					{
-						// std::cout << "Find php\n";
+						std::cout << server_id << " " << location_id << std::endl;
+						std::cout << "there is index?" << Config.v_server[server_id].v_location[location_id].get_index() << std::endl;
+						if (Config.v_server[server_id].v_location[location_id].get_index() != "")
+						{
+							// if (autoindex)
+							clients[id].set_route(Config.v_server[server_id].get_root() + '/' + Config.v_server[server_id].v_location[location_id].get_index());
+							//																		   /View + / + Default.html
+							std::cout << "route: " << clients[id].get_route() << std::endl;
 
-						char READ[1024] = {0};
-						int read_fd[2];
-						int write_fd[2];
-						if (pipe(read_fd) == -1)
-						{
-							std::cerr << "pipe error\n";
-							exit(-1);
+							int open_fd = open(clients[id].get_route().c_str(), O_RDONLY);
+							if (open_fd < 0)
+								std::cerr << "open error - " << clients[id].get_route() << std::endl;
+							// std::cout << "my fd::" << id << ", open fd::" << fd << std::endl;
+							clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
+							clients[open_fd].set_status(need_to_read);
+							change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 						}
-						pipe(write_fd);
-
-							std::cout << "ar[0]" << server_it->get_cgi_path().c_str() << std::endl;
-							std::cout << "ar[1]" << Config.v_server[server_id].v_location[location_id].get_root() + "/" + Config.v_server[server_id].v_location[location_id].get_index() << std::endl;
-						int pid = fork();
-						if (pid == -1)
+						else if (clients[id].request.get_referer().find("php") != std::string::npos)
 						{
-							std::cerr << "fork error\n";
-							exit(-1);
+							clients[id].set_status(READ_ok);
 						}
-						else if (pid == 0) // child
-						{
-							dup2(write_fd[0], STDIN_FILENO);
-         				    dup2(read_fd[1], STDOUT_FILENO);
-							char *ar[3];
-							ar[0] = strdup(server_it->get_cgi_path().c_str());//"./cgiBinary/php-cgi"); // cat
-							ar[1] = strdup((Config.v_server[server_id].get_root() + "/" + Config.v_server[server_id].v_location[location_id].get_index()).c_str()); // file name(./file)
-							ar[2] = 0;
-							// ar[0] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.drawio");
-							// ar[1] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.png");
-							int ret = execve("/bin/cat", ar, envp); // "/bin/cat"
-							exit(ret);
-						}
-						close(write_fd[0]);
-            			close(read_fd[1]);
-						int ret;
-						while ((ret = read(read_fd[0], READ, 1023)) == 1023)
-						{
-							server_it->response.get_response() += READ;
-						}
-						if (ret >= 0)
-						{
-							server_it->response.get_response() += READ;
-						}
-						// std::cout << "buffer:" << server_it->response.get_response() << std::endl;
-						kq.clients[kq.event_list[i].ident].set_status(ok);
 					}
-					else
-					{
-						// std::cout<< "server_id = " << server_id << "location_id = " << location_id << std::endl;
-						// std::cout << "|" <<  Config.v_server[server_id].v_location[location_id].get_index() << "|\n";
-						std::string route = Config.v_server[server_id].get_root() + '/' + Config.v_server[server_id].v_location[location_id].get_index();
-						//	/Users/minsikkim/Desktop/WeL0ve42Seoul/WebServer/View + / + Default.html
-						// std::cout << "route: "<<route << std::endl;
 
-						std::ifstream ifs(route.c_str());
-						if (ifs.is_open() == ifs.bad())
-							std::cerr << "open error!\n";
-						std::string line;
-						while (getline(ifs, line).good())
-						{
-							server_it->response.get_response() += line;
-						}
-						kq.clients[kq.event_list[i].ident].set_status(ok);
-					}
+					// if (server_it->request.get_referer().find("php") != std::string::npos) /////////////////// cgi
+					// {
+						
+					// }
+					// else
+					// {
+					// 	clients[id].set_route(Config.v_server[server_id].get_root() + '/' + Config.v_server[server_id].v_location[location_id].get_index());
+					// }
 				}
 			} // if /READ
 			else if (kq.event_list[i].filter == EVFILT_WRITE && \
-				kq.clients[kq.event_list[i].ident].get_server_sock() == server_it->get_socket_fd())// && server_it->request.get_host() != "")
+				clients[id].get_server_sock() == server_it->get_socket_fd() && \
+				clients[id].get_status() == READ_ok)
 			{
-				// std::cout << "accept WRITE Event / ident :" << kq.event_list[i].ident << std::endl;
+				std::cout << "accept WRITE Event / ident :" << id << std::endl;
 				if (server_it->get_autoindex() == "on") // location on?
 				{
 					std::vector<std::string> root;
@@ -181,25 +138,24 @@ int main(int argc, char *argv[], char *envp[]) {
 					for (; it != server_it->v_location.end(); it++) ////// why root no?
 					{
 						// std::cout << "root:" << it->location << std::endl;
-						server_it->response.set_autoindex(server_it->response.get_response(), it->location);
+						clients[id].response.set_autoindex(it->location);
 						// root.push_back(it->location);
 					}
 				}
-				if (kq.clients[kq.event_list[i].ident].get_status() == ok)// && server_it->request.get_host() != "")
+				if (clients[id].get_status() == READ_ok)// && server_it->request.get_host() != "")
 				{
-					if (server_it->request.referer.find("favicon.ico") != std::string::npos)
-						server_it->response.set_response(42, server_it->response.get_response()); // 42
+					if (clients[id].request.referer.find("favicon.ico") == std::string::npos && clients[id].request.get_method() == "GET")
+						clients[id].response.set_header(200, clients[id].response.response_str, ""); // OK
 					else
-						server_it->response.set_response(1, server_it->response.get_response());
-					// std::cout << "***********response:" << webserv.get_response() << webserv.get_response().size() << std::endl;
-					write(kq.event_list[i].ident, server_it->response.get_response().c_str(), server_it->response.get_response().length());
+                        clients[id].response.set_header(42, clients[id].response.response_str, ""); //
+					std::cout << clients[id].response.get_send_to_response() << std::endl;
+					write(id, clients[id].response.get_send_to_response().c_str(), clients[id].response.get_send_to_response().length());
 
-					kq.clients.erase(kq.event_list[i].ident);
-					close(kq.event_list[i].ident);
-					close(kq.clients[kq.event_list[i].ident].get_read_fd()); //ifs.close();
-					server_it->request.clear_request();
-					server_it->response.set_response(2, "");
-					std::cout << "response..\n\n";
+					clients.erase(id);
+					close(id);
+					clients[id].request.clear_request();
+                    clients[id].response.response_str = "";
+                    std::cout << "response..\n\n";
 				}
 			} // else if /WRITE
 		}

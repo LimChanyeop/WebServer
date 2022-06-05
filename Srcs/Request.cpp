@@ -46,11 +46,14 @@ void Request::request_parsing(std::vector<std::string> &lists)
 			break;
 		case 13: // GET
 			start_line = "GET";
+			set_method("GET");
 			referer = *(++it);
 			// std::cout << "referer:" << referer << std::endl;
 			break;
 		case 14: // POST
 			start_line = "POST";
+			set_method("POST");
+			referer = *(++it);
 			break;
 		default:
 			// std::cerr << "Invalid input\n";
