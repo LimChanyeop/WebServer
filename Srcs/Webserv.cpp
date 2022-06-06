@@ -147,8 +147,10 @@ void Webserv::accept_add_events(int event_ident, std::vector<Server>::iterator s
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	change_events(kq.change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	std::cout << "hi\n";
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
+	std::cout << "hi2\n";
 }
 
 // int Webserv::set_event(Config &config, Kq kq)

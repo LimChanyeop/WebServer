@@ -25,7 +25,7 @@
 class Config;
 class Kqueue;
 class Client;
-
+class Request;
 
 class Webserv
 {

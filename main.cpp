@@ -2,8 +2,10 @@
 #include "./includes/Kqueue.hpp"
 #include "./includes/Fd.hpp"
 #include "./includes/Client.hpp"
-
+#include <errno.h>
+#include <dirent.h>
 #include <netinet/in.h>
+#include <exception>
 
 int find_server(Config Config, int fd, std::vector<Server>::iterator &server_it)
 {
@@ -80,6 +82,7 @@ int main(int argc, char *argv[], char *envp[]) {
 				}
 				else if (clients.find(id) != clients.end()) // 이벤트 주체가 client
 				{
+					std::cout << "Clienttttt\n";
 					server_it = webserv.find_server_it(Config, clients[id]);
 
 					clients[id].request_parsing(id, server_it);
@@ -115,7 +118,34 @@ int main(int argc, char *argv[], char *envp[]) {
 							clients[id].set_status(READ_ok);
 						}
 					}
-
+					if (clients[id].request.get_method() == "POST")
+					{
+						std::cout << "POST\n" << std::endl;
+						std::cout << "OPENDIR: " << opendir(("." + clients[id].request.get_referer()).c_str()) << std::endl;					
+					}
+					// std::cout << EACCES << " " << EBADF << " " << EMFILE << " " << ENFILE << " " << ENOENT << " " << ENOMEM << " " << ENOTDIR << std::endl;
+					if (errno == ENOENT || errno == ENOTDIR) // 2 no file or directory exist
+					{
+						std::cout << "ISDIR\n";
+						std::ofstream file;
+						file.open(("." + clients[id].request.get_referer()).c_str(), std::ios::app);
+						file << "Post Body \n";
+						// clients[id].response.set_header(201, clients[id].response.response_str, "");
+						// write(id, clients[id].response.get_send_to_response().c_str(), clients[id].response.get_send_to_response().length());
+						std::cout << strerror(errno) << std::endl;
+						clients.erase(id);
+						close(id);
+						clients[id].request.clear_request();
+                    	clients[id].response.response_str = "";
+					}
+					// if (errno == ENOTDIR)//20 is not dir name = file
+					// {
+					// 	std::ofstream file;
+					// 	file.open(("." + clients[id].request.get_referer()).c_str(), std::ios::out);
+					// 	file << "Post Body \n";
+					// }
+					// std::cout << errno << std::endl;
+					// if (errno == )
 					// if (server_it->request.get_referer().find("php") != std::string::npos) /////////////////// cgi
 					// {
 						

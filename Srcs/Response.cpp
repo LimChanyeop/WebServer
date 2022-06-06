@@ -42,26 +42,26 @@ void Response::set_header(int i, std::string str_buf, std::string route)
 	else if (i == 201) // POST
 	{
 		std::cout << "POST 201!!\n";
-		DIR	*dir_ptr = NULL;
-		struct dirent *file = NULL;
-		std::cout << route << std::endl;
-		if ((dir_ptr = opendir(route.c_str())) != NULL)
-		{
-			std::cerr << "It is directory, 400\n";
-		}
+		// DIR	*dir_ptr = NULL;
+		// struct dirent *file = NULL;
+		// std::cout << route << std::endl;
+		// if ((dir_ptr = opendir(route.c_str())) != NULL)
+		// {
+		// 	std::cerr << "It is directory, 400\n";
+		// }
 		// while((file = readdir(dir_ptr)) != NULL)
 		// {
 		// 	std::cout << file->d_name << std::endl;
 		// }
 
-		std::ofstream ofs(route);
-		if (ofs.is_open() != 1)
-		{
-			std::cerr << "not opened";
-			exit(-1);
-		}
-		ofs.write("hi", 2);
-		ofs.close();
+		// std::ofstream ofs(route);
+		// if (ofs.is_open() != 1)
+		// {
+		// 	std::cerr << "not opened";
+		// 	exit(-1);
+		// }
+		// ofs.write("hi", 2);
+		// ofs.close();
 		
 		this->send_to_response = "HTTP/1.1 201 Created\r\nContent-Type: "
 					   "text/html\r\nContent-Length: ";
