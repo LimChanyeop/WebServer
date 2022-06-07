@@ -44,6 +44,7 @@ public:
 	std::string referer;
 	std::string contentLength;
 	std::string contentType;
+	std::string post_body;
 
 public:
 	Request();

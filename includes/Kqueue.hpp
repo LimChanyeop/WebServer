@@ -5,8 +5,6 @@
 #include <map>
 #include <vector>
 #include <sys/event.h>
-#include "Client.hpp"
-
 
 #define NOE 100
 
@@ -18,7 +16,6 @@ public:
 	int kq;
 	std::vector<struct kevent> change_list;
 	struct kevent event_list[NOE];
-	std::map<int, Client> clients;
 
 public:
 	Kqueue(/* args */);

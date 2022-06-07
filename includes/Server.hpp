@@ -2,13 +2,11 @@
 #define SERVER_HPP
 
 #include "Config.hpp"
-#include "Request.hpp"
 #include "Fd.hpp"
 #include "Location.hpp"
 #include "ParseUtils.hpp"
 #include <vector>
 #include <sys/event.h>
-#include "Response.hpp"
 
 class Location;
 class Config;
@@ -23,8 +21,8 @@ class Server : virtual public Fd
 public:
 	std::vector<Location> v_location;
 
-	Request request;
-	Response response;
+	// Request request;
+	// Response response;
 
 	int client_limit_body_size;
 	int request_limit_header_size;
