@@ -49,8 +49,8 @@ public:
 public:
 	Request();
 	void request_parsing(std::vector<std::string> &lists);
-	int find_key(std::string key);
-	void split_request(std::string lines);
+	int find_key(const std::string &key);
+	void split_request(const std::string &lines);
 
 	void set_method(std::string method);
 	void set_protocol(std::string protocol);
@@ -66,19 +66,19 @@ public:
 	void set_contentLength(std::string contentLength);
 	void set_contentType(std::string contentType);
 
-	std::string get_method();
-	std::string get_protocol();
-	std::string get_host();
-	std::string get_connection();
-	std::string get_upgradeInSecureRequest();
-	std::string get_userAgent();
-	std::string get_accept();
-	std::string get_acceptEncoding();
-	std::string get_acceptLanguage();
-	std::string get_cookie();
-	std::string get_referer();
-	std::string get_contentLength();
-	std::string get_contentType();
+	const std::string &get_method() const;
+	const std::string &get_protocol() const;
+	const std::string &get_host() const;
+	const std::string &get_connection() const;
+	const std::string &get_upgradeInSecureRequest() const;
+	const std::string &get_userAgent() const;
+	const std::string &get_accept() const;
+	const std::string &get_acceptEncoding() const;
+	const std::string &get_acceptLanguage() const;
+	const std::string &get_cookie() const;
+	const std::string &get_referer() const;
+	const std::string &get_contentLength() const;
+	const std::string &get_contentType() const;
 
 	void print_request();
 	void clear_request();

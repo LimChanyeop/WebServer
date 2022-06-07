@@ -23,12 +23,10 @@ void Client::request_parsing(int event_ident)
 	{
 		request += READ;
 	}
-	std::cout << "Client::request:" << request << std::endl;
+	// std::cout << "Client::request:" << request << std::endl;
 	this->request.split_request(request);
 	this->request.request_parsing(this->request.requests);
 }
-
-
 
 const int &Client::get_server_sock(void) const
 {
@@ -38,10 +36,10 @@ std::vector<Server>::iterator &Client::get_server_it(void) // not const
 {
 	return this->server_it;
 }
-	const int &Client::get_status(void) const
-	{
-		return this->status;
-	}
+const int &Client::get_status(void) const
+{
+	return this->status;
+}
 const int &Client::get_read_fd(void) const
 {
 	return this->read_fd;
@@ -59,15 +57,14 @@ const int &Client::get_location_id(void) const
 	return this->location_id;
 }
 
-
 void Client::set_server_sock(int fd)
 {
 	this->server_sock = fd;
 }
-	void Client::set_status(int ok)
-	{
-		this->status = ok;
-	}
+void Client::set_status(int ok)
+{
+	this->status = ok;
+}
 void Client::set_read_fd(int fd)
 {
 	this->read_fd = fd;

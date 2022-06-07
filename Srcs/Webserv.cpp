@@ -6,55 +6,57 @@
 #include "../includes/Request.hpp"
 #include "../includes/ParseUtils.hpp"
 
+Webserv::Webserv(/* args */) {}
 
-Webserv::Webserv(/* args */){}
-
-Webserv::~Webserv(){}
+Webserv::~Webserv() {}
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,
-                   void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
+				   void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
 {
-    struct kevent temp_event;
+	struct kevent temp_event;
 
-    EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
-    change_list.push_back(temp_event);
+	EV_SET(&temp_event, ident, filter, flags, fflags, data, udata);
+	change_list.push_back(temp_event);
 }
 
 void Webserv::ready_webserv(Config &Config)
 {
-    std::vector<Server>::iterator it = Config.v_server.begin();
-    for (; it != Config.v_server.end(); it++)
-    {
-        (*it).set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
-        if (it->get_socket_fd() <= 0) {
-            std::cerr << "socket error" << std::endl;
-            exit(0);
-        }
+	std::vector<Server>::iterator it = Config.v_server.begin();
+	for (; it != Config.v_server.end(); it++)
+	{
+		(*it).set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
+		if (it->get_socket_fd() <= 0)
+		{
+			std::cerr << "socket error" << std::endl;
+			exit(0);
+		}
 
 		sockaddr_in &address = it->get_address();
-        memset((char *)&address, 0, sizeof(address));
-        address.sin_family = AF_INET; // tcp
-    	address.sin_port = htons(atoi(it->get_listen().c_str()));
-    	address.sin_addr.s_addr = htonl(INADDR_ANY); // open inbound restriction
-    	memset(address.sin_zero, 0, sizeof(address.sin_zero));
-        // std::cout << "port::" << ntohs(it->address.sin_port) << std::endl; // 4242 ok
+		memset((char *)&address, 0, sizeof(address));
+		address.sin_family = AF_INET; // tcp
+		address.sin_port = htons(atoi(it->get_listen().c_str()));
+		address.sin_addr.s_addr = htonl(INADDR_ANY); // open inbound restriction
+		memset(address.sin_zero, 0, sizeof(address.sin_zero));
+		// std::cout << "port::" << ntohs(it->address.sin_port) << std::endl; // 4242 ok
 
-        int optvalue = 1;
-        setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_REUSEADDR, &optvalue,
-                sizeof(optvalue)); // to solve bind error
+		int optvalue = 1;
+		setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_REUSEADDR, &optvalue,
+				   sizeof(optvalue)); // to solve bind error
 		setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_REUSEPORT, &optvalue,
-			   sizeof(optvalue)); // to solve bind error
+				   sizeof(optvalue)); // to solve bind error
 
-        int ret;
-        if ((ret = bind(it->get_socket_fd(), (sockaddr *)&address, (socklen_t)sizeof(address))) == -1) {
-            std::cerr << "bind error : return value = " << ret << std::endl;
-            exit(0);
-        }
-        if ((listen(it->get_socket_fd(), 10)) < 0) {
-            std::cerr << "listen error" << std::endl;
-            exit(0); // why exit?
-        }
-    }
+		int ret;
+		if ((ret = bind(it->get_socket_fd(), (sockaddr *)&address, (socklen_t)sizeof(address))) == -1)
+		{
+			std::cerr << "bind error : return value = " << ret << std::endl;
+			exit(0);
+		}
+		if ((listen(it->get_socket_fd(), 10)) < 0)
+		{
+			std::cerr << "listen error" << std::endl;
+			exit(0); // why exit?
+		}
+	}
 }
 
 std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &client)
@@ -62,7 +64,7 @@ std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &cl
 	std::vector<Server>::iterator it;
 	for (it = Config.v_server.begin(); it != Config.v_server.end(); it++)
 	{
-		std::cout << "listen:" << it->get_socket_fd() << " vs " << client.get_server_sock() << std::endl;
+		// std::cout << "listen:" << it->get_socket_fd() << " vs " << client.get_server_sock() << std::endl;
 		if (it->get_socket_fd() == client.get_server_sock())
 		{
 			client.set_server_it(it);
@@ -77,9 +79,9 @@ std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &cl
 	return it;
 }
 
-int Webserv::find_server_id(int event_ident, Config config, Request rq, std::map<int, Client> &clients)
+int Webserv::find_server_id(const int &event_ident, const Config &config, const Request &rq, std::map<int, Client> &clients)
 {
-    std::string port = ""; // 왜 포트를 못찾았을까? -> 포트를 파싱 안했었넹~ok -> 근데도 못찾네~
+	std::string port = ""; // 왜 포트를 못찾았을까? -> 포트를 파싱 안했었넹~ok -> 근데도 못찾네~
 	int server_id;
 	// std::cout << "*find*" << clients.find(event_ident)->second << std::endl;
 	if (clients.find(event_ident) != clients.end())
@@ -87,13 +89,13 @@ int Webserv::find_server_id(int event_ident, Config config, Request rq, std::map
 		server_id = 0;
 		while (server_id < config.v_server.size())
 		{
-			std::cout << "Webserv::PORT:" << config.v_server[server_id].get_listen() << "vs" << rq.host << std::endl;
+			// std::cout << "Webserv::PORT:" << config.v_server[server_id].get_listen() << "vs" << rq.host << std::endl;
 			// 왜 for문 끼워놓으면 무한루프돌까~~ㅡㅡ while문은 또 왜 되는것인가~
 			if (atoi(config.v_server[server_id].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
-			{				
-				std::cout << "==================\n";														 //
-				std::cout << "same, server_id - " << server_id << "\n";
-				std::cout << "==================\n";
+			{
+				// std::cout << "==================\n";														 //
+				// std::cout << "same, server_id - " << server_id << "\n";
+				// std::cout << "==================\n";
 				port = rq.get_host(); // ?
 				return server_id;
 			}
@@ -115,45 +117,46 @@ int Webserv::find_server_id(int event_ident, Config config, Request rq, std::map
 	// }
 	// else
 	// 	rq.referer.erase(0, it);
-    return server_id;
+	return server_id;
 }
 
-int Webserv::find_location_id(int server_id, Config config, Request rq, Kqueue kq){
-    int location_id;
-	std::cout << server_id << std::endl;
-	std::cout << "Webserv::" << config.v_server[server_id].v_location.size() << std::endl;
+int Webserv::find_location_id(const int &server_id, const Config &config, const Request &rq, const Kqueue &kq)
+{
+	int location_id;
+	// std::cout << server_id << std::endl;
+	// std::cout << "Webserv::" << config.v_server[server_id].v_location.size() << std::endl;
 	for (location_id = 0; location_id < config.v_server[server_id].v_location.size(); location_id++)
 	{
-		std::cout << "Webserv::TEST-location:" << config.v_server[server_id].v_location[location_id].location << "vs" << rq.referer << std::endl;
+		// std::cout << "Webserv::TEST-location:" << config.v_server[server_id].v_location[location_id].location << "vs" << rq.referer << std::endl;
 		if (config.v_server[server_id].v_location[location_id].location == rq.referer)
 		{
 			return location_id;
 		}
 	}
-    return location_id;
+	return location_id;
 }
 
-void Webserv::accept_add_events(int event_ident, Server server, Kqueue &kq, std::map<int, Client> &clients)
+void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients)
 {
 	// std::cout << "client_id:" << event_ident << " vs server_id:" << server_it->get_socket_fd() << std::endl;
 	int acc_fd;
 	if ((acc_fd = accept(server.get_socket_fd(), (sockaddr *)&(server.get_address()),
-		(socklen_t *)&(server.get_address_len()))) == -1) //
+						 (socklen_t *)&(server.get_address_len()))) == -1) //
 	{
 		std::cerr << "accept error " << acc_fd << std::endl;
 		exit(0);
 	}
-	std::cout << "acc_fd: " << acc_fd << std::endl;
+	// std::cout << "acc_fd: " << acc_fd << std::endl;
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	change_events(kq.change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
-	std::cout << "hi\n";
+	// std::cout << "hi\n";
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
-	std::cout << "hi2\n";
+	// std::cout << "hi2\n";
 }
 
-int Webserv::run_cgi(Server server, int location_id, char **envp)
+int Webserv::run_cgi(const Server &server, int location_id, char **envp)
 {
 	char READ[1024] = {0};
 	int read_fd[2];
@@ -165,8 +168,8 @@ int Webserv::run_cgi(Server server, int location_id, char **envp)
 	}
 	pipe(write_fd);
 
-	std::cout << "ar[0]" << server.get_cgi_path().c_str() << std::endl;
-	std::cout << "ar[1]" << server.v_location[location_id].get_root() + "/" + server.v_location[location_id].get_index() << std::endl;
+	// std::cout << "ar[0]" << server.get_cgi_path().c_str() << std::endl;
+	// std::cout << "ar[1]" << server.v_location[location_id].get_root() + "/" + server.v_location[location_id].get_index() << std::endl;
 	int pid = fork();
 	if (pid == -1)
 	{
@@ -178,7 +181,7 @@ int Webserv::run_cgi(Server server, int location_id, char **envp)
 		dup2(write_fd[0], STDIN_FILENO);
 		dup2(read_fd[1], STDOUT_FILENO);
 		char *ar[3];
-		ar[0] = strdup(server.get_cgi_path().c_str());//"./cgiBinary/php-cgi"); // cat
+		ar[0] = strdup(server.get_cgi_path().c_str());													//"./cgiBinary/php-cgi"); // cat
 		ar[1] = strdup((server.get_root() + "/" + server.v_location[location_id].get_index()).c_str()); // file name(./file)
 		ar[2] = 0;
 		// ar[0] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.drawio");

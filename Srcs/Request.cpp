@@ -53,7 +53,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 		case 14: // POST
 			start_line = "POST";
 			set_method("POST");
-			
+
 			referer = *(++it);
 			break;
 		default:
@@ -63,7 +63,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 	}
 }
 
-int Request::find_key(std::string key)
+int Request::find_key(const std::string &key)
 {
 	std::vector<std::string> keys;
 	int result = 0;
@@ -94,20 +94,20 @@ int Request::find_key(std::string key)
 	return -42;
 }
 
-void Request::split_request(std::string lines)
+void Request::split_request(const std::string &lines)
 {
 	int idx;
-	if ((idx = lines.find("\r\n\r\n")) != std::string::npos || \
+	if ((idx = lines.find("\r\n\r\n")) != std::string::npos ||
 		(idx = lines.find("\n\n")) != std::string::npos)
 	{
 		std::string temp = lines;
 		this->post_body = temp.erase(0, idx + 2);
-		std::cout << "Request::body : " << this->post_body << std::endl;
+		// std::cout << "Request::body : " << this->post_body << std::endl;
 	}
 	else
-		std::cout << "cant found body\n";
+		; // std::cout << "cant found body\n";
 	std::string delim = " \t\n";
-	std::string::iterator it;
+	std::string::const_iterator it;
 	std::string attr = "";
 	for (it = lines.begin(); it != lines.end(); it++)
 	{
@@ -184,19 +184,19 @@ void Request::set_referer(std::string referer) { this->referer = referer; }
 void Request::set_contentLength(std::string contentLength) { this->contentLength = contentLength; }
 void Request::set_contentType(std::string contentType) { this->contentType = contentType; }
 
-std::string Request::get_method() { return method; }
-std::string Request::get_protocol() { return protocol; }
-std::string Request::get_host() { return host; }
-std::string Request::get_connection() { return connection; }
-std::string Request::get_upgradeInSecureRequest() { return upgradeInSecureRequest; }
-std::string Request::get_userAgent() { return userAgent; }
-std::string Request::get_accept() { return accept; }
-std::string Request::get_acceptEncoding() { return acceptEncoding; }
-std::string Request::get_acceptLanguage() { return acceptLanguage; }
-std::string Request::get_cookie() { return cookie; }
-std::string Request::get_referer() { return referer; }
-std::string Request::get_contentLength() { return contentLength; }
-std::string Request::get_contentType() { return contentType; }
+const std::string &Request::get_method() const { return method; }
+const std::string &Request::get_protocol() const { return protocol; }
+const std::string &Request::get_host() const { return host; }
+const std::string &Request::get_connection() const { return connection; }
+const std::string &Request::get_upgradeInSecureRequest() const { return upgradeInSecureRequest; }
+const std::string &Request::get_userAgent() const { return userAgent; }
+const std::string &Request::get_accept() const { return accept; }
+const std::string &Request::get_acceptEncoding() const { return acceptEncoding; }
+const std::string &Request::get_acceptLanguage() const { return acceptLanguage; }
+const std::string &Request::get_cookie() const { return cookie; }
+const std::string &Request::get_referer() const { return referer; }
+const std::string &Request::get_contentLength() const { return contentLength; }
+const std::string &Request::get_contentType() const { return contentType; }
 
 void Request::print_request()
 {

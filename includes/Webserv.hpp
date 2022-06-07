@@ -31,17 +31,16 @@ class Request;
 class Webserv
 {
 private:
-
 public:
 	Webserv(/* args */);
 	~Webserv();
 
 	void ready_webserv(Config &Config);
 	std::vector<Server>::iterator find_server_it(Config &Config, Client &client);
-	int find_server_id(int event_ident, Config config, Request rq, std::map<int, Client> &clients);
-	int find_location_id(int server_id, Config config, Request rq, Kqueue kq);
-	void accept_add_events(int event_ident, Server server, Kqueue &kq, std::map<int, Client> &clients);
-	int run_cgi(Server server, int location_id, char **envp);
+	int find_server_id(const int &event_ident, const Config &config, const Request &rq, std::map<int, Client> &clients);
+	int find_location_id(const int &server_id, const Config &config, const Request &rq, const Kqueue &kq);
+	void accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients);
+	int run_cgi(const Server &server, int location_id, char **envp);
 	// int set_event(Config &config, Kq kq);
 };
 
