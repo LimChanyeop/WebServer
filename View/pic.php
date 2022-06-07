@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <head>
 	<meta charset="utf-8">
-	<link rel="stylesheet" type="text/css" href="http://localhost/style.css">
 </head>
 <header>
 	<img src="https://velog.velcdn.com/images%2Fwuriae%2Fpost%2F9e9efa8c-7d6f-436b-b6aa-9be03b6e29e7%2FKakaoTalk_20210623_005843711_02.jpg" alt="minsikim">

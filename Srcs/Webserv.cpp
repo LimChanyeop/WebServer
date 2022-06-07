@@ -133,12 +133,12 @@ int Webserv::find_location_id(int server_id, Config config, Request rq, Kqueue k
     return location_id;
 }
 
-void Webserv::accept_add_events(int event_ident, std::vector<Server>::iterator server_it, Kqueue &kq, std::map<int, Client> &clients)
+void Webserv::accept_add_events(int event_ident, Server server, Kqueue &kq, std::map<int, Client> &clients)
 {
 	// std::cout << "client_id:" << event_ident << " vs server_id:" << server_it->get_socket_fd() << std::endl;
 	int acc_fd;
-	if ((acc_fd = accept(server_it->get_socket_fd(), (sockaddr *)&(server_it->get_address()),
-	(socklen_t *)&(server_it->get_address_len()))) == -1) //
+	if ((acc_fd = accept(server.get_socket_fd(), (sockaddr *)&(server.get_address()),
+		(socklen_t *)&(server.get_address_len()))) == -1) //
 	{
 		std::cerr << "accept error " << acc_fd << std::endl;
 		exit(0);
@@ -149,6 +149,45 @@ void Webserv::accept_add_events(int event_ident, std::vector<Server>::iterator s
 	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
+}
+
+int Webserv::run_cgi(Server server, int location_id, char **envp)
+{
+	char READ[1024] = {0};
+	int read_fd[2];
+	int write_fd[2];
+	if (pipe(read_fd) == -1)
+	{
+		std::cerr << "pipe error\n";
+		exit(-1);
+	}
+	pipe(write_fd);
+
+	std::cout << "ar[0]" << server.get_cgi_path().c_str() << std::endl;
+	std::cout << "ar[1]" << server.v_location[location_id].get_root() + "/" + server.v_location[location_id].get_index() << std::endl;
+	int pid = fork();
+	if (pid == -1)
+	{
+		std::cerr << "fork error\n";
+		exit(-1);
+	}
+	else if (pid == 0) // child
+	{
+		dup2(write_fd[0], STDIN_FILENO);
+		dup2(read_fd[1], STDOUT_FILENO);
+		char *ar[3];
+		ar[0] = strdup(server.get_cgi_path().c_str());//"./cgiBinary/php-cgi"); // cat
+		ar[1] = strdup((server.get_root() + "/" + server.v_location[location_id].get_index()).c_str()); // file name(./file)
+		ar[2] = 0;
+		// ar[0] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.drawio");
+		// ar[1] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.png");
+		int ret = execve("/bin/cat", ar, envp); // "/bin/cat"
+		exit(ret);
+	}
+	close(write_fd[0]);
+	close(read_fd[1]);
+
+	return read_fd[0];
 }
 
 // int Webserv::set_event(Config &config, Kq kq)

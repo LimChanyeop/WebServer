@@ -8,7 +8,7 @@ Client::~Client()
 {
 }
 
-void Client::request_parsing(int event_ident, std::vector<Server>::iterator &server_it)
+void Client::request_parsing(int event_ident)
 {
 	char READ[1024] = {0};
 	int valread;

@@ -14,9 +14,11 @@ enum status
 	server_READ_ok,
 	request_ok,
 	open_READ_ok,
+	need_to_read,
+	need_to_cgi_read,
+	POST_ok,
 	READ_ok,
-	ok,
-	need_to_read
+	ok
 };
 
 class Client
@@ -37,7 +39,7 @@ public:
 	Client(/* args */);
 	~Client();
 
-	void request_parsing(int event_ident, std::vector<Server>::iterator &server_it);
+	void request_parsing(int event_ident);
 
 	const int &get_server_sock(void) const;
 	std::vector<Server>::iterator &get_server_it(void); // not const
