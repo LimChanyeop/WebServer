@@ -2,7 +2,8 @@
 #include "./includes/Kqueue.hpp"
 #include "./includes/Fd.hpp"
 #include "./includes/Client.hpp"
-
+#include <errno.h>
+#include <dirent.h>
 #include <netinet/in.h>
 #include <dirent.h>
 
@@ -133,13 +134,13 @@ int main(int argc, char *argv[], char *envp[]) {
 						}
 					}
 					else if (clients[id].request.get_method() == "POST") {
-                        // std::cout << "\nPOST\n" << clients[id].request.body << std::endl;
+                        std::cout << "\nPOST\n" << clients[id].request.post_body << std::endl;
                         std::cout << "OPENDIR: " << opendir(("." + clients[id].request.get_referer()).c_str()) << std::endl;
                         std::ofstream file;
                         if (errno == ENOENT || errno == ENOTDIR) // 2 no file or directory exist
                         {
                             file.open(("." + clients[id].request.get_referer()).c_str(), std::ios::app);
-                            file << "Post Body \n";
+                            file << clients[id].request.post_body;
                             // clients[id].response.set_header(201, clients[id].response.response_str, "");
                             // write(id, clients[id].response.get_send_to_response().c_str(), clients[id].response.get_send_to_response().length());
                             std::cout << strerror(errno) << std::endl;
@@ -151,18 +152,10 @@ int main(int argc, char *argv[], char *envp[]) {
 							std::cout << "ISDIR\n";
 							std::string route = "." + clients[id].request.get_referer() + "NEW_FILE";
 							file.open(route.c_str(), std::ios::app);
+							file << clients[id].request.post_body;
 							clients[id].set_status(POST_ok);
 						}
                     }
-					//if (post)
-					{
-						// 경로를찾아서 경로가 파일인지 디렉토리인지 아니면 없는지 opendir, readdir
-						// 파일 -> 그 파일에 덮어씌우기?
-						// 디렉토리 -> 그 경로에 뉴 파일 쓰기
-						// 없으면 -> 마지막 경로 이름으로 파일 쓰기 /하이/바이
-
-						// 경로--request.referer
-					}
 					// if (server_it->request.get_referer().find("php") != std::string::npos) /////////////////// cgi
 					// {
 						

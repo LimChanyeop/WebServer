@@ -28,7 +28,6 @@ class Kqueue;
 class Client;
 class Request;
 
-
 class Webserv
 {
 private:

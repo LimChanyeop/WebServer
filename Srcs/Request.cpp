@@ -53,6 +53,7 @@ void Request::request_parsing(std::vector<std::string> &lists)
 		case 14: // POST
 			start_line = "POST";
 			set_method("POST");
+			
 			referer = *(++it);
 			break;
 		default:
@@ -95,6 +96,16 @@ int Request::find_key(std::string key)
 
 void Request::split_request(std::string lines)
 {
+	int idx;
+	if ((idx = lines.find("\r\n\r\n")) != std::string::npos || \
+		(idx = lines.find("\n\n")) != std::string::npos)
+	{
+		std::string temp = lines;
+		this->post_body = temp.erase(0, idx + 2);
+		std::cout << "Request::body : " << this->post_body << std::endl;
+	}
+	else
+		std::cout << "cant found body\n";
 	std::string delim = " \t\n";
 	std::string::iterator it;
 	std::string attr = "";
