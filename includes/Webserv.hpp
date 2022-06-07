@@ -14,72 +14,31 @@
 #include <string>
 #include <vector>
 
-#include "parseUtils.hpp"
+#include "Config.hpp"
+#include "Kqueue.hpp"
+
 #include <fstream>	   // for file io
 #include <sys/event.h> // for kqueue
-#include <time.h>	   // for time
+#include <time.h>
 
-class Base_block;
-#include "Base_block.hpp"
-
-#define PORT 4242
+class Config;
+class Kqueue;
 
 class Webserv
 {
 private:
-	const int port;
-	int socket;
-	int server_socket;
-	int connection_socket;
-	std::string response_str;
 
 public:
-	Webserv() : port(PORT){};
-	~Webserv(){};
-	void set_sockaddr(sockaddr_in *address);
-	std::string get_response(void) { return response_str; }
-	// void setServer(int port, );
+	Webserv(/* args */);
+	~Webserv();
 
-	void set_response(int i, std::string str_buf)
-	{
-		if (i == 1)
-		{
-			response_str = "HTTP/1.1 200 OK\r\nContent-Type: "
-						   "text/html\r\nContent-Length: ";
-			response_str += std::to_string(str_buf.length() + 1);
-			response_str += "\r\n\r\n";
-			response_str += str_buf + "\r\n";
-		}
-		else if (i == 2)
-		{
-			response_str = str_buf;
-		}
-		else if (i == 42)
-		{
-			response_str = "HTTP/1.1 200 OK\r\n";
-			response_str += "cache-control: max-age=31536000\r\n";
-			response_str += "content-encoding: gzip\r\n";
-			response_str += "content-length: ";
-			response_str += std::to_string(str_buf.size());
-			response_str += "\r\ncontent-type: image/vnd.microsoft.icon\r\n";
-			response_str += "referrer-policy: unsafe-url";
-			response_str += "server: NWS\r\n";
-			response_str += "strict-transport-security: max-age=63072000; includeSubdomains\r\n";
-			response_str += "vary: Accept-Encoding,User-Agent\r\n";
-			
-			response_str += "\r\n\r\n";
-			response_str += str_buf + "\r\n";
-		}
-	}
+	void ready_webserv(Config &Config);
+	int find_server_id(int i, Config config, Request rq, Kqueue kq);
+	int find_location_id(int server_id, Config config, Request rq, Kqueue kq);
 
-	void clear_response(void)
-	{
-		response_str.clear();
-	}
+	// int set_event(Config &config, Kq kq);
 };
 
-void print_event(struct kevent event_list);
-int request_checker(std::string &request, const Base_block &bb);
-std::string remove_delim(const std::string &str);
+void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data, void *udata);
 
 #endif
