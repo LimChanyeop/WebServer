@@ -15,9 +15,13 @@ enum status
 	request_ok,
 	open_READ_ok,
 	need_to_read,
+	need_to_is_file_read,
 	need_to_cgi_read,
+	need_error_read,
+	error_read_ok, //////////// WRITE
 	POST_ok,
 	READ_ok,
+	is_file_read_ok,
 	ok
 };
 
@@ -30,6 +34,7 @@ public:
 	int location_id;
 	int read_fd;
 	int status;
+	int is_file;
 	// std::string request;
 	Response response;
 	Request request;

@@ -6,6 +6,8 @@
 #include "../includes/Request.hpp"
 #include "../includes/ParseUtils.hpp"
 
+#include <dirent.h>
+
 Webserv::Webserv(/* args */) {}
 
 Webserv::~Webserv() {}
@@ -89,7 +91,7 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 		server_id = 0;
 		while (server_id < config.v_server.size())
 		{
-			// std::cout << "Webserv::PORT:" << config.v_server[server_id].get_listen() << "vs" << rq.host << std::endl;
+			std::cout << "Webserv::PORT:" << config.v_server[server_id].get_listen() << "vs" << rq.host << std::endl;
 			// 왜 for문 끼워놓으면 무한루프돌까~~ㅡㅡ while문은 또 왜 되는것인가~
 			if (atoi(config.v_server[server_id].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
 			{
@@ -117,10 +119,10 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 	// }
 	// else
 	// 	rq.referer.erase(0, it);
-	return server_id;
+	return -1;
 }
 
-int Webserv::find_location_id(const int &server_id, const Config &config, const Request &rq, const Kqueue &kq)
+int Webserv::find_location_id(const int &server_id, const Config &config, const Request &rq, Client &client)
 {
 	int location_id;
 	// std::cout << server_id << std::endl;
@@ -128,12 +130,24 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	for (location_id = 0; location_id < config.v_server[server_id].v_location.size(); location_id++)
 	{
 		// std::cout << "Webserv::TEST-location:" << config.v_server[server_id].v_location[location_id].location << "vs" << rq.referer << std::endl;
-		if (config.v_server[server_id].v_location[location_id].location == rq.referer)
+		if (config.v_server[server_id].v_location[location_id].location == rq.get_referer())
 		{
 			return location_id;
 		}
 	}
-	return location_id;
+	FILE *file; // file exist?
+	std::string referer = rq.get_referer();
+	if (*referer.begin() == '/')
+		referer.erase(referer.begin(), referer.begin() + 1);
+	std::string route = "." + config.v_server[server_id].get_root() + referer;
+	std::cout << "route-" << route << std::endl;
+    if ((file = fopen(route.c_str(), "r")) != NULL)
+	{
+		fclose(file);
+		client.is_file = 1;
+		return -1;
+	}
+	return 404; // 404에러
 }
 
 void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients)
@@ -146,7 +160,7 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 		std::cerr << "accept error " << acc_fd << std::endl;
 		exit(0);
 	}
-	// std::cout << "acc_fd: " << acc_fd << std::endl;
+	std::cout << "acc_fd: " << acc_fd << std::endl;
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	change_events(kq.change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);

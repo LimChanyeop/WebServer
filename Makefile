@@ -24,11 +24,12 @@ CNAME = TestClient
 
 all : $(SNAME) $(CNAME)
 
+#  -g -fsanitize=address
 $(SNAME) : $(SFILE)
-	$(CC) $(SFILE) -o $(SNAME) -g -fsanitize=address
+	$(CC) $(SFILE) -o $(SNAME)
 
 $(CNAME) : $(CFILE)
-	$(CC) $(CFILE) -o $(CNAME) -g -fsanitize=address
+	$(CC) $(CFILE) -o $(CNAME)
 
 fclean :
 	rm -f $(SNAME) $(CNAME)

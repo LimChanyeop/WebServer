@@ -180,7 +180,7 @@ void Request::set_accept(std::string accept) { this->accept = accept; }
 void Request::set_acceptEncoding(std::string acceptEncoding) { this->acceptEncoding = acceptEncoding; }
 void Request::set_acceptLanguage(std::string acceptLanguage) { this->acceptLanguage = acceptLanguage; }
 void Request::set_cookie(std::string cookie) { this->cookie = cookie; }
-void Request::set_referer(std::string referer) { this->referer = referer; }
+void Request::set_referer(std::string referer) {this->referer = referer; }
 void Request::set_contentLength(std::string contentLength) { this->contentLength = contentLength; }
 void Request::set_contentType(std::string contentType) { this->contentType = contentType; }
 

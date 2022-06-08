@@ -1,6 +1,6 @@
 #include "../includes/Client.hpp"
 
-Client::Client(/* args */) : server_sock(-1), status(no), read_fd(-1)
+Client::Client(/* args */) : server_sock(-1), status(no), read_fd(-1), server_id(-1)
 {
 }
 
@@ -23,7 +23,7 @@ void Client::request_parsing(int event_ident)
 	{
 		request += READ;
 	}
-	// std::cout << "Client::request:" << request << std::endl;
+	std::cout << "Client::request:" << request << std::endl;
 	this->request.split_request(request);
 	this->request.request_parsing(this->request.requests);
 }

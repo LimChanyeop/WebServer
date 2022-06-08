@@ -38,7 +38,7 @@ public:
 	void ready_webserv(Config &Config);
 	std::vector<Server>::iterator find_server_it(Config &Config, Client &client);
 	int find_server_id(const int &event_ident, const Config &config, const Request &rq, std::map<int, Client> &clients);
-	int find_location_id(const int &server_id, const Config &config, const Request &rq, const Kqueue &kq);
+	int find_location_id(const int &server_id, const Config &config, const Request &rq, Client &client);
 	void accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients);
 	int run_cgi(const Server &server, int location_id, char **envp);
 	// int set_event(Config &config, Kq kq);
