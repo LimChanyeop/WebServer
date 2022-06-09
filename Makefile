@@ -26,10 +26,10 @@ all : $(SNAME) $(CNAME)
 
 #  -g -fsanitize=address
 $(SNAME) : $(SFILE)
-	$(CC) $(SFILE) -o $(SNAME)
+	$(CC) $(SFILE) -o $(SNAME) -g -fsanitize=address
 
 $(CNAME) : $(CFILE)
-	$(CC) $(CFILE) -o $(CNAME)
+	$(CC) $(CFILE) -o $(CNAME) -g -fsanitize=address
 
 fclean :
 	rm -f $(SNAME) $(CNAME)
