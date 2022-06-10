@@ -17,6 +17,8 @@ enum status {
     need_to_is_file_read,
     need_to_cgi_read,
     need_error_read,
+    need_to_POST_write,
+    WAIT,
     WRITE_LINE, //////////// WRITE
     GET_read_ok,
     is_file_read_ok,
@@ -53,6 +55,7 @@ class Client {
     std::vector<Server>::iterator &get_server_it(void); // not const
     const int &get_status(void) const;
     const int &get_read_fd(void) const;
+    const int &get_write_fd(void) const;
     const std::string &get_route(void) const;
     const int &get_server_id(void) const;
     const int &get_location_id(void) const;
@@ -62,6 +65,7 @@ class Client {
     void set_server_it(std::vector<Server>::iterator server_it_);
     void set_status(int y_n);
     void set_read_fd(int fd);
+    void set_write_fd(int fd);
     void set_route(std::string str);
     void set_server_id(int i);
     void set_location_id(int i);
