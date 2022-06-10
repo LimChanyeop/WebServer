@@ -27,8 +27,12 @@ void Response::set_autoindex(std::string root) // opendir != NULL, readdir, clos
 	// }
 }
 
-void Response::set_header(int status, std::string route)
+void Response::set_header(int status, std::string cgi)
 {
+	if (cgi == "cgi")
+	{
+		;
+	}
 	if (status == 200)
 	{
 		std::cout << "GET 200!!\n";

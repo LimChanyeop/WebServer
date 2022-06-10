@@ -13,14 +13,16 @@ enum status {
     server_READ_ok,
     request_ok,
     open_READ_ok,
-    need_to_read,
+    need_to_GET_read,
     need_to_is_file_read,
     need_to_cgi_read,
     need_error_read,
-    error_read_ok, //////////// WRITE
-    POST_ok,
-    READ_ok,
+    WRITE_LINE, //////////// WRITE
+    GET_read_ok,
     is_file_read_ok,
+    cgi_read_ok,
+    error_read_ok,
+    POST_ok,
     ok
 };
 
@@ -31,8 +33,10 @@ class Client {
     int server_id;
     int location_id;
     int read_fd;
+    int write_fd;
     int status;
     int is_file;
+    int RETURN;
     // std::string request;
     Response response;
     Request request;

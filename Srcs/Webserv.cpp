@@ -124,9 +124,15 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
         referer.erase(referer.begin(), referer.begin() + 1);
     std::string route = "." + config.v_server[server_id].get_root() + referer;
     std::cout << "route-" << route << std::endl;
-    if ((file = fopen(route.c_str(), "r")) != NULL) {
+    if ((file = fopen(route.c_str(), "r")) != NULL) { // exist
         fclose(file);
         client.is_file = 1;
+        client.RETURN = 200;
+        return -1;
+    }
+    else if (client.request.get_method() == POST) // no file
+    {
+        client.RETURN = 201;
         return -1;
     }
     return 404; // 404에러

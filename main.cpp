@@ -55,7 +55,7 @@ int main(int argc, char *argv[], char *envp[]) {
             int id = kq.event_list[i].ident;
             if (kq.event_list[i].filter == EVFILT_READ) {
                 std::cout << "accept READ Event / ident :" << id << std::endl;
-                if (clients[id].get_status() == need_to_read || clients[id].get_status() == need_to_is_file_read ||
+                if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
                     clients[id].get_status() == need_to_cgi_read || clients[id].get_status() == need_error_read) // 이벤트 주체가 READ open
                 {
                     std::cout << "FILE READ\n";
@@ -79,8 +79,10 @@ int main(int argc, char *argv[], char *envp[]) {
                         clients[read_fd].set_status(error_read_ok);
                     else if (clients[id].get_status() == need_to_is_file_read)
                         clients[read_fd].set_status(is_file_read_ok);
+					else if (clients[id].get_status() == need_to_cgi_read)
+						clients[read_fd].set_status(cgi_read_ok);
                     else
-                        clients[read_fd].set_status(READ_ok);
+                        clients[read_fd].set_status(GET_read_ok);
                     std::cout << "READ_ok\n";
                     close(id);
                     clients.erase(id);
@@ -173,9 +175,12 @@ int main(int argc, char *argv[], char *envp[]) {
 
                             std::cout << "my fd::" << id << ", open fd::" << open_fd << std::endl;
                             clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
-                            clients[open_fd].set_status(need_to_read);
+                            clients[open_fd].set_status(need_to_GET_read);
                             change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
-                        } else                                                                                   /////////////////// cgi
+                        } else if ((clients[id].request.get_referer().find("php") == std::string::npos ||
+                             clients[id].request.get_referer().find("py") == std::string::npos)) {
+							clients[id].set_status(ok);
+						} else /////////////////// cgi
                         {
                             int cgi_fd = webserv.run_cgi(Config.v_server[server_id], location_id, clients[id]); // envp have to fix
 
@@ -213,15 +218,18 @@ int main(int argc, char *argv[], char *envp[]) {
                 continue;
             if (kq.event_list[i].filter == EVFILT_WRITE &&
                 clients[id].get_server_sock() == Config.v_server[clients[id].get_server_id()].get_socket_fd() &&
-                clients[id].get_status() >= error_read_ok) {
+                clients[id].get_status() >= WRITE_LINE) {
                 // std::cout << "accept WRITE Event / ident :" << id << std::endl;
-                if (clients[id].get_status() >= error_read_ok) // && server_it->request.get_host() != "")
+                if (clients[id].get_status() >= WRITE_LINE) // && server_it->request.get_host() != "")
                 {
                     if (clients[id].get_status() == error_read_ok) {
                         clients[id].response.set_header(404, "");
                     } else if (clients[id].get_status() == is_file_read_ok) {
-                        clients[id].response.set_header(200, "");
-                    } else if (clients[id].request.referer.find("favicon.ico") == std::string::npos && clients[id].request.get_method() == "GET") {
+                        clients[id].response.set_header(clients[id].RETURN, "");
+                    } else if (clients[id].get_status() == cgi_read_ok) {
+						clients[id].response.set_header(200, "cgi");
+					}
+					else if (clients[id].request.referer.find("favicon.ico") == std::string::npos && clients[id].request.get_method() == "GET") {
                         if (Config.v_server[clients[id].get_server_id()].get_autoindex() == "on") // location on?
                         {
                             std::string root;
@@ -239,8 +247,7 @@ int main(int argc, char *argv[], char *envp[]) {
                         }
                         clients[id].response.set_header(200, ""); // OK
                     } else
-                        clients[id].response.set_header(42, ""); //
-                                                                 // std::cout << clients[id].response.get_send_to_response() << std::endl;
+                        clients[id].response.set_header(200, ""); //
                     FILE *fp = fdopen(id, "wb");
                     if (fp == NULL) {
                         std::cout << "fdopen error" << std::endl;
