@@ -55,9 +55,9 @@ int main(int argc, char *argv[], char *envp[]) {
 		for (int i = 0; i < num_of_event; i++)
 		{
 			int id = kq.event_list[i].ident;
-			// std::cout << "event id:" << id << \
-			// 	" , event filter:" << kq.event_list[i].filter << \
-			// 	" , status:" << clients[id].get_status() << std::endl;
+			std::cout << "event id:" << id << \
+				" , event filter:" << kq.event_list[i].filter << \
+				" , status:" << clients[id].get_status() << std::endl;
 			if (kq.event_list[i].filter == EVFILT_READ && clients[id].status != WAIT)
 			{
 				std::cout << "accept READ Event / ident :" << id << std::endl;
@@ -225,8 +225,6 @@ int main(int argc, char *argv[], char *envp[]) {
 							clients[open_fd].request.post_body = clients[id].request.post_body;
 
 							clients[id].set_status(WAIT);
-							std::cout << "open id:" << open_fd << \
-								" , status:" << clients[open_fd].get_status() << std::endl;
 							change_events(kq.change_list, open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
 						}
 						else
@@ -255,7 +253,7 @@ int main(int argc, char *argv[], char *envp[]) {
 			} // if /READ
 
 			// std::cout << "clients[" << id << "].get_server_id():" << clients[id].get_server_id() << std::endl;
-			if (clients[id].get_server_id() < 0)
+			if (clients[id].get_server_id() < -1)
 				continue;
 			if (kq.event_list[i].filter == EVFILT_WRITE && clients[id].get_status() == need_to_POST_write)
 			{
@@ -271,16 +269,14 @@ int main(int argc, char *argv[], char *envp[]) {
 				int write_fd = clients[id].get_write_fd();
 				std::cout << "write-" << write_fd << ":" << clients[id].request.post_body << std::endl;
 				clients[write_fd].set_status(POST_ok);
-				std::cout << "clients[" << write_fd << "]\n";
 				clients.erase(id);
 				close(id);
 				// fclose(fp);
 				break;
 				// write(id, clients[id].response.get_send_to_response().c_str(), \
 					clients[id].response.get_send_to_response().length());
-			}
-			else if (kq.event_list[i].filter == EVFILT_WRITE &&
-				clients[id].get_server_sock() == Config.v_server[clients[id].get_server_id()].get_socket_fd() &&
+			} //clients[id].get_server_sock() == Config.v_server[clients[id].get_server_id()].get_socket_fd() &&
+			else if (kq.event_list[i].filter == EVFILT_WRITE && \
 				clients[id].get_status() >= WRITE_LINE) {
 				std::cout << "accept WRITE Event / ident :" << id << std::endl;
 				if (clients[id].get_status() >= WRITE_LINE) // && server_it->request.get_host() != "")
@@ -294,6 +290,7 @@ int main(int argc, char *argv[], char *envp[]) {
 						clients[id].response.set_header(200, "cgi");
 						std::cout << "CGI response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
 					} else if (clients[id].get_status() == POST_ok) {
+						std::cout << "POST RETURN:" << clients[id].RETURN << std::endl;
 						clients[id].response.set_header(clients[id].RETURN, "");
 						std::cout << "POST response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
 					}
@@ -318,19 +315,20 @@ int main(int argc, char *argv[], char *envp[]) {
 					{
 						clients[id].response.set_header(200, ""); // ok
 					}
-					FILE *fp = fdopen(id, "wb");
-					if (fp == NULL) {
-						std::cout << "fdopen error" << std::endl;
-						continue;
-					}
+					// FILE *fp = fdopen(id, "wb");
+					// if (fp == NULL) {
+					// 	std::cout << "fdopen error" << std::endl;
+					// 	continue;
+					// }
 					// std::cout << "response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
-					int count = fwrite(clients[id].response.get_send_to_response().c_str(), sizeof(char),
-									   clients[id].response.get_send_to_response().size(), fp);
-					std::cout << "count:" << count << std::endl;
-					// write(id, clients[id].response.get_send_to_response().c_str(), clients[id].response.get_send_to_response().length());
+					// int count = fwrite(clients[id].response.get_send_to_response().c_str(), sizeof(char),
+					// 				   clients[id].response.get_send_to_response().size(), fp);
+					// std::cout << "count:" << count << std::endl;
+					write(id, clients[id].response.get_send_to_response().c_str(), clients[id].response.get_send_to_response().length());
 
 					clients.erase(id);
-					fclose(fp);
+					// fclose(fp);
+					close(id);
 					// clients[id].request.clear_request();
 					// clients[id].response.response_str = "";
 					// std::cout << "response..\n\n";

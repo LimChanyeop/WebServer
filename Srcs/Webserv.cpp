@@ -123,19 +123,22 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 		std::cout << route << std::endl;
 		if ((dir_ptr = opendir(route.c_str())) != NULL)
 		{
-			std::cout << "It is directory, 400\n";
+			std::cout << "It is directory, 201\n";
+			client.RETURN = 201;
 			return 1;
 		}
 	}
-	FILE *file; // file exist?
-	if ((file = fopen(route.c_str(), "r")) != NULL) { // exist
-		fclose(file);
+	int fd;
+	if ((fd = open(route.c_str(), O_RDONLY)) != -1) { // exist
+		std::cout << "file exits!\n";
+		close(fd);
 		client.is_file = 1;
 		client.RETURN = 200;
 		return 0;
 	}
-	else if (client.request.get_method() == POST) // no file
+	else
 	{
+		std::cout << "file not exits!\n";
 		client.RETURN = 201; // created
 		return 0;
 	}
