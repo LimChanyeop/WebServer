@@ -27,9 +27,13 @@ void Response::set_autoindex(std::string root) // opendir != NULL, readdir, clos
 	// }
 }
 
-void Response::set_header(int i, std::string str_buf, std::string route)
+void Response::set_header(int status, std::string cgi)
 {
-	if (i == 200)
+	if (cgi == "cgi")
+	{
+		;
+	}
+	if (status == 200)
 	{
 		std::cout << "GET 200!!\n";
 		this->send_to_response = "HTTP/1.1 200 OK\r\nContent-Type: "
@@ -39,7 +43,7 @@ void Response::set_header(int i, std::string str_buf, std::string route)
 		this->send_to_response += this->response_str + "\r\n";
 		// std::cout << this->response_str;
 	}
-	else if (i == 201) // POST
+	else if (status == 201) // POST
 	{
 		std::cout << "POST 201!!\n";
 		// DIR	*dir_ptr = NULL;
@@ -69,7 +73,7 @@ void Response::set_header(int i, std::string str_buf, std::string route)
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
 	}
-	else if (i == 204) // POST
+	else if (status == 204) // POST
 	{
 		std::cout << "POST 204!!\n";
 		this->send_to_response = "HTTP/1.1 204 No Content\r\nContent-Type: "
@@ -78,7 +82,7 @@ void Response::set_header(int i, std::string str_buf, std::string route)
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
 	}
-	else if (i == 404)
+	else if (status == 404)
 	{
 		std::cout << "404!!\n";
 		this->send_to_response = "HTTP/1.1 404 Not Found\r\nContent-Type: "
@@ -88,7 +92,7 @@ void Response::set_header(int i, std::string str_buf, std::string route)
 		this->send_to_response += this->response_str + "\r\n";
 		// std::cout << this->response_str;
 	}
-	else if (i == 411)
+	else if (status == 411)
 	{
 		std::cout << "POST 411!!\n";
 		this->send_to_response = "HTTP/1.1 411 Not Found\r\nContent-Type: "
@@ -98,7 +102,7 @@ void Response::set_header(int i, std::string str_buf, std::string route)
 		this->send_to_response += this->response_str + "\r\n";
 		// std::cout << this->response_str;
 	}
-	else if (i == 42)
+	else if (status == 42)
 	{
 		this->send_to_response = "HTTP/1.1 200 OK\r\n";
 		this->send_to_response += "cache-control: max-age=31536000\r\n";

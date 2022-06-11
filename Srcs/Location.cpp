@@ -71,7 +71,7 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 	this->location = *it;
 	for (; it != lists.end() && *it != "}"; it++)
 	{
-		// std::cout << "lo it (" << *it << ")"<< std::endl;
+		// std::cout << "lo it (" << *it << ")" << find_key(*it) << std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{
@@ -110,6 +110,7 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 			}
 			temp += *(it + 1);
 			this->set_root(temp);
+			std::cout << "root:" << root << std::endl;
 			break;
 		case 7:
 			while (find_semi(*(it + 1)))
