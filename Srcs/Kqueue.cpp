@@ -29,7 +29,9 @@ int Kqueue::set_event(void)
     int num_of_event;
     int n_changes = this->change_list.size(); // number of changes = 등록하고자 하는 이벤트 수
     int n_event_list = NOE;
+    // std::cerr << "kqfd: " << this->get_kq_fd() << std::endl;
     if ((num_of_event = kevent(this->get_kq_fd(), &this->change_list[0], n_changes, this->get_event_list(), n_event_list, NULL)) == -1) {
+        std::cerr << strerror(errno) << std::endl;
         std::cerr << "kevent error\n";
         exit(0);
     }

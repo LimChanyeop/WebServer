@@ -19,8 +19,8 @@ SFILE = ./srcs/Webserv.cpp \
 CFILE = ./Client/testclient.cpp
 # COBJ = $(CFILE:.c=.o)
 
-SNAME = Webserv
-CNAME = TestClient
+SNAME = webserv
+CNAME = testClient
 
 all : $(SNAME) $(CNAME)
 
@@ -29,7 +29,7 @@ $(SNAME) : $(SFILE)
 	$(CC) $(SFILE) -o $(SNAME) -g -fsanitize=address
 
 $(CNAME) : $(CFILE)
-	$(CC) $(CFILE) -o $(CNAME) -g -fsanitize=address
+	$(CC) $(CFILE) -o $(CNAME)
 
 fclean :
 	rm -f $(SNAME) $(CNAME)

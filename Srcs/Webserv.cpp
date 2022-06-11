@@ -12,6 +12,42 @@ Webserv::Webserv(/* args */) {}
 
 Webserv::~Webserv() {}
 
+char **make_env(Client client)
+{
+	std::map<std::string, std::string> cgi_map;
+	// std::string extension = client.getRequest()->getPath().substr(client->getRequest()->getPath().rfind(".") + 1);
+	cgi_map["SERVER_PROTOCOL"] = "HTTP/1.1";
+	cgi_map["GATEWAY_INTERFACE"] = "CGI/1.1";
+	cgi_map["SERVER_SOFTWARE"] = "nginx server";
+	cgi_map["REQUEST_METHOD"] = client.request.get_method();
+	cgi_map["REQUEST_SCHEME"] = client.request.get_method();
+	cgi_map["SERVER_PORT"] = client.request.get_host();
+	// cgi_env["SERVER_NAME"] = client.getaRequest()->getServerName();
+	// cgi_env["DOCUMENT_ROOT"] = _location_info->getCommonDirective()._cgi_path[extension];
+	cgi_map["DOCUMENT_URI"] = client.request.get_referer();
+	cgi_map["REQUEST_URI"] = client.request.get_referer();
+	cgi_map["SCRIPT_NAME"] = "./cgiBinary/php-cgi";
+	cgi_map["SCRIPT_FILENAME"] = "./cgiBinary/php-cgi";
+	cgi_map["QUERY_STRING"] = client.request.get_query();
+	cgi_map["REMOTE_ADDR"] = client.ip;
+	cgi_map["REDIRECT_STATUS"] = "200";
+	// cgi_map["CONTENT_LENGTH"] = client.request.get_contentLength(); // GET은 노노
+	cgi_map["CONTENT_TYPE"] = client.request.get_contentType();
+
+	char **cgi_env;
+	cgi_env = new char*[cgi_map.size()+1];
+	
+	size_t i = 0;
+	for (std::map<std::string, std::string>::iterator it = cgi_map.begin(); it != cgi_map.end(); it++) {
+		
+		cgi_env[i] = new char[(it->first + "=" + it->second).size()];
+		cgi_env[i] = const_cast<char *>((it->first + "=" + it->second).c_str());
+		i++;
+	}
+	cgi_env[i] = NULL;
+	return cgi_env;
+}
+
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,
 				   void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
 {
@@ -61,7 +97,7 @@ std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &cl
 	for (it = Config.v_server.begin(); it != Config.v_server.end(); it++) {
 		// std::cout << "listen:" << it->get_socket_fd() << " vs " << client.get_server_sock() << std::endl;
 		if (it->get_socket_fd() == client.get_server_sock()) {
-			client.set_server_it(it);
+			// client.set_server_it(it);
 			return it; // 드디어 어떤 서버인지 찾음
 		}
 	}
@@ -208,6 +244,7 @@ int Webserv::run_cgi(const Server &server, int location_id, Client client) {
 
 	// std::cout << "ar[0]" << server.get_cgi_path().c_str() << std::endl;
 	// std::cout << "ar[1]" << server.v_location[location_id].get_root() + "/" + server.v_location[location_id].get_index() << std::endl;
+	cgi_env = make_env(client);
 	int pid = fork();
 	if (pid == -1) {
 		std::cerr << "fork error\n";
@@ -216,49 +253,27 @@ int Webserv::run_cgi(const Server &server, int location_id, Client client) {
 	{
 		dup2(write_fd[0], STDIN_FILENO);
 		dup2(read_fd[1], STDOUT_FILENO);
+		close(write_fd[1]);
+		close(read_fd[0]);
 		// ------------------
-		std::map<std::string, std::string> cgi_map;
-		// std::string extension = client.getRequest()->getPath().substr(client->getRequest()->getPath().rfind(".") + 1);
-		cgi_map["SERVER_PROTOCOL"] = "HTTP/1.1";
-		cgi_map["GATEWAY_INTERFACE"] = "CGI/1.1";
-		cgi_map["SERVER_SOFTWARE"] = "nginx server";
-		cgi_map["REQUEST_METHOD"] = client.request.get_method();
-		cgi_map["REQUEST_SCHEME"] = client.request.get_method();
-		cgi_map["SERVER_PORT"] = client.request.get_host();
-		// cgi_env["SERVER_NAME"] = client.getRequest()->getServerName();
-		// cgi_env["DOCUMENT_ROOT"] = _location_info->getCommonDirective()._cgi_path[extension];
-		cgi_map["DOCUMENT_URI"] = client.request.get_referer();
-		cgi_map["REQUEST_URI"] = client.request.get_referer();
-		cgi_map["SCRIPT_NAME"] = "./cgiBinary/php-cgi";
-		cgi_map["SCRIPT_FILENAME"] = "./cgiBinary/php-cgi";
-		cgi_map["QUERY_STRING"] = client.request.get_query();
-		cgi_map["REMOTE_ADDR"] = client.ip;
-		cgi_map["REDIRECT_STATUS"] = "200";
-		cgi_map["CONTENT_LENGTH"] = client.request.get_contentLength();
-		cgi_map["CONTENT_TYPE"] = client.request.get_contentType();
-
+		
 		char *ar[3];
-		ar[0] = const_cast<char *>(cgi_map["SCRIPT_NAME"].c_str());//server.get_cgi_path().c_str());												  //"./cgiBinary/php-cgi"); // cat
+		ar[0] = const_cast<char *>(server.get_cgi_path().c_str());												  //"./cgiBinary/php-cgi"); // cat
 		ar[1] = const_cast<char *>((server.get_root() + "/" + server.v_location[location_id].get_index()).c_str()); // file name(./file)
 		ar[2] = 0;
-		char **cgi_env;
-		size_t i = 0;
-		for (std::map<std::string, std::string>::iterator it = cgi_map.begin(); it != cgi_map.end(); it++) {
-			cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
-			i++;
-		}
-		cgi_env[i] = NULL;
-
 		// cgi_env->client.request_referer->url(parsing), client.request.get_ ~~
 		// ------------------
 		// ar[0] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.drawio");
 		// ar[1] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.png");
 		int ret = execve(ar[0], ar, cgi_env); // "/bin/cat"
-		exit(ret);
+
 	}
+	delete cgi_env;
+	int status;
+	client.pid = pid;
 	close(write_fd[0]);
 	close(read_fd[1]);
-
+	// std::cout << "Webserv::read_fd : " << read_fd[0] << std::endl;
 	return read_fd[0];
 }
 

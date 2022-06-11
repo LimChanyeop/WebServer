@@ -6,6 +6,17 @@
 #include <errno.h>
 #include <netinet/in.h>
 
+int is_client(Config config, int id)
+{
+	std::vector<Server>::iterator it = config.v_server.begin();
+	for (; it != config.v_server.end(); it++)
+	{
+		if (it->get_socket_fd() == id)
+			return 0;
+	}
+	return 1;
+}
+
 int find_server(Config Config, Client &client, int id) {
 	std::vector<Server>::iterator it;
 	for (it = Config.v_server.begin(); it != Config.v_server.end(); it++) {
@@ -26,10 +37,18 @@ int find_server(Config Config, Client &client, int id) {
 	return 0;
 }
 
-int main(int argc, char *argv[], char *envp[]) {
+int main(int argc, char *argv[]) {
 	Webserv webserv;
 	std::vector<std::string> vec_attr;
-	split_config(remove_annotaion(argv[1]), vec_attr);
+	std::string default_conf = "./conf/default.conf";
+	if (argc == 2)
+		split_config(remove_annotaion(argv[1]), vec_attr);
+	else if (argc == 1)
+		split_config(remove_annotaion(const_cast<char *>(default_conf.c_str())), vec_attr);
+	else {
+		std::cerr << "input error argc-(" << argc << ")\n";
+		exit(0);
+	}
 	Config Config;
 	Config.config_parsing(vec_attr);
 	// std::cout << "________________________________\n";
@@ -55,43 +74,84 @@ int main(int argc, char *argv[], char *envp[]) {
 		for (int i = 0; i < num_of_event; i++)
 		{
 			int id = kq.event_list[i].ident;
-			std::cout << "event id:" << id << \
-				" , event filter:" << kq.event_list[i].filter << \
-				" , status:" << clients[id].get_status() << std::endl;
-			if (kq.event_list[i].filter == EVFILT_READ && clients[id].status != WAIT)
+			// std::cout << "event id:" << id << \
+			// 	" , event filter:" << kq.event_list[i].filter << \
+			// 	" , status:" << clients[id].get_status() << std::endl;
+			if (kq.event_list[i].flags & EV_ERROR)
+			{
+				// clients[id]
+				
+				if (is_client(Config, id))
+				{
+					if (clients[id].pid == -1)
+					{
+						if (clients[id].request.requests.size() > 0)
+							close(clients[id].read_fd); // fclose by jwoo
+						if (clients[id].response.response_str.length() > 0)
+							close(clients[id].write_fd);
+					}
+				}
+				close(kq.event_list[i].ident);
+				continue;
+			}
+			else if (kq.event_list[i].filter == EVFILT_READ && clients[id].status != WAIT)
 			{
 				std::cout << "accept READ Event / ident :" << id << std::endl;
 				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
 					clients[id].get_status() == need_to_cgi_read || clients[id].get_status() == need_error_read) // 이벤트 주체가 READ open
 				{
 					std::cout << "FILE READ\n";
-					FILE *file_ptr = fdopen(id, "r");
-					fseek(file_ptr, 0, SEEK_END);
-					int file_size = ftell(file_ptr);
-					rewind(file_ptr);
-					int seek = 0;
-					int valfread = 0;
-					char READ[1024] = {0};
-					std::string read_for_open;
-					// int valread = recv(acc_socket, read_for_open, 1024, 0);
-
-					while (seek < file_size) {
-						seek += fread(READ, sizeof(char), 1023, file_ptr);
-						read_for_open += READ;
+					int status;
+					int ret = waitpid(clients[id].pid, &status, WNOHANG);
+					if (ret == 0)
+						continue;
+					else if (WIFSIGNALED(status) == true)
+					{
+						// cgi error
+						clients.erase(id);
+						close(id);
+						continue;
 					}
-					int read_fd = clients[id].get_read_fd(); //
-					clients[read_fd].response.response_str = read_for_open;
-					if (clients[id].get_status() == need_error_read)
-						clients[read_fd].set_status(error_read_ok);
-					else if (clients[id].get_status() == need_to_is_file_read)
-						clients[read_fd].set_status(is_file_read_ok);
-					else if (clients[id].get_status() == need_to_cgi_read)
-						clients[read_fd].set_status(cgi_read_ok);
-					else
-						clients[read_fd].set_status(GET_read_ok);
-					std::cout << "READ_ok\n";
-					close(id);
-					clients.erase(id);
+					else if (WIFEXITED(status) == true)
+					{
+						FILE *file_ptr = fdopen(id, "r");
+						fseek(file_ptr, 0, SEEK_END);
+						int file_size = ftell(file_ptr);
+						rewind(file_ptr);
+						int seek = 0;
+						int valfread = 0;
+						std::string read_for_open;
+						// int valread = recv(acc_socket, read_for_open, 1024, 0);
+						char READ[1024] = {0,};
+							memset(READ, 0, 1024);
+						// while(seek < file_size)
+						// {
+						// 	valfread = fread(READ, sizeof(char), 1023, file_ptr);
+						// 	seek += valfread;
+						// 	std::cout << "READ!!!:" << READ << std::endl;
+						// 	read_for_open += READ;
+						// }
+						while ((seek = read(id, READ, 1023)) == 1023) {
+							// seek += fread(READ, sizeof(char), 1023, file_ptr);
+							read_for_open += READ;
+							memset(READ, 0, 1024);
+						}
+						read_for_open += READ;
+						std::cout << "read)_for)open:" << read_for_open << std::endl;
+						int read_fd = clients[id].get_read_fd(); //
+						clients[read_fd].response.response_str = read_for_open;
+						if (clients[id].get_status() == need_error_read)
+							clients[read_fd].set_status(error_read_ok);
+						else if (clients[id].get_status() == need_to_is_file_read)
+							clients[read_fd].set_status(is_file_read_ok);
+						else if (clients[id].get_status() == need_to_cgi_read)
+							clients[read_fd].set_status(cgi_read_ok);
+						else
+							clients[read_fd].set_status(GET_read_ok);
+						std::cout << "READ_ok\n";
+						close(id);
+						clients.erase(id);
+					}
 				} else if (find_server(Config, clients[id], id)) // 이벤트 주체가 server
 				{
 					std::cout << "clients[" << id << "].get_server_id():" << clients[id].get_server_id() << std::endl;
@@ -160,7 +220,7 @@ int main(int argc, char *argv[], char *envp[]) {
 						clients[id].set_location_id(location_id);
 						std::cout << "there is index?" << Config.v_server[server_id].v_location[location_id].get_index() << std::endl;
 						if (Config.v_server[server_id].v_location[location_id].get_index() != "" &&
-							(clients[id].request.get_referer().find("php") == std::string::npos ||
+							(clients[id].request.get_referer().find("php") == std::string::npos &&
 							 clients[id].request.get_referer().find("py") == std::string::npos))
 						{
 							// if (autoindex)
@@ -191,11 +251,12 @@ int main(int argc, char *argv[], char *envp[]) {
 							clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
 							clients[open_fd].set_status(need_to_GET_read);
 							change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
-						} else if ((clients[id].request.get_referer().find("php") == std::string::npos ||
+						} else if ((clients[id].request.get_referer().find("php") == std::string::npos &&
 							 clients[id].request.get_referer().find("py") == std::string::npos)) {
 							clients[id].set_status(ok);
 						} else /////////////////// cgi
 						{
+							std::cout << "im cgi!!\n";
 							int cgi_fd = webserv.run_cgi(Config.v_server[server_id], location_id, clients[id]); // envp have to fix
 
 							clients[cgi_fd].set_read_fd(id);
@@ -338,6 +399,7 @@ int main(int argc, char *argv[], char *envp[]) {
 				}
 			} // else if /WRITE
 			  // std::cout << "while..\n";
+			// clients.erase(server_sock);
 		}
 	}
 	exit(0);

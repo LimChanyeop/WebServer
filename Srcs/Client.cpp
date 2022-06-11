@@ -1,6 +1,6 @@
 #include "../includes/Client.hpp"
 
-Client::Client(/* args */) : server_sock(-1), status(no), read_fd(-1), server_id(-1) {}
+Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(no), is_file(0), RETURN(0), pid(-1) {}
 
 Client::~Client() {}
 
@@ -22,10 +22,10 @@ void Client::request_parsing(int event_ident) {
 }
 
 const int &Client::get_server_sock(void) const { return this->server_sock; }
-std::vector<Server>::iterator &Client::get_server_it(void) // not const
-{
-	return this->server_it;
-}
+// std::vector<Server>::iterator &Client::get_server_it(void) // not const
+// {
+// 	return this->server_it;
+// }
 const int &Client::get_status(void) const { return this->status; }
 const int &Client::get_read_fd(void) const { return this->read_fd; }
 const int &Client::get_write_fd(void) const { return this->write_fd; }
@@ -49,7 +49,7 @@ void Client::set_status(int ok)
 }
 void Client::set_read_fd(int fd) { this->read_fd = fd; }
 void Client::set_write_fd(int fd) { this->write_fd = fd; }
-void Client::set_server_it(std::vector<Server>::iterator server_it_) { this->server_it = server_it_; }
+// void Client::set_server_it(std::vector<Server>::iterator server_it_) { this->server_it = server_it_; }
 void Client::set_route(std::string str) { this->route = str; }
 void Client::set_server_id(int i) { this->server_id = i; }
 void Client::set_location_id(int i) { this->location_id = i; }
