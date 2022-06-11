@@ -208,15 +208,18 @@ int main(int argc, char *argv[], char *envp[]) {
 						if (is_dir == 1) // is dir
 						{
 							std::cout << "ISDIR\n";
-							std::string route = "." + clients[id].request.get_referer() + "/NEW_FILE";
-							int open_fd = open(route.c_str(), O_RDWR | O_CREAT);
+							std::string referer = clients[id].request.get_referer();
+							if (*(referer.end() - 1) != '/')
+								referer += '/';
+							std::string route = "." + clients[id].request.get_referer() + "NEW_FILE";
+							FILE *file_ptr;
 							int i = 0;
-							while (open_fd == -1)
+							while ((file_ptr = fopen((route + std::to_string(i)).c_str(), "r")))
 							{
-								open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT);
-								std::cerr << "open error - " << route + std::to_string(i) << std::endl;
+								fclose(file_ptr);
 								i++;
 							}
+							int open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
 							if (open_fd < 0)
 								std::cerr << "open error - " << route << std::endl;
 							std::cout << "POST-my fd::" << id << ", open fd::" << open_fd << std::endl;
@@ -233,9 +236,9 @@ int main(int argc, char *argv[], char *envp[]) {
 							std::string route = "." + clients[id].request.get_referer();
 							int open_fd;
 							if (clients[id].RETURN == 200)
-								open_fd = open(route.c_str(), O_RDWR);
+								open_fd = open(route.c_str(), O_RDWR | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
 							else
-								open_fd = open(route.c_str(), O_RDWR | O_CREAT);
+								open_fd = open(route.c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
 							if (open_fd < 0)
 								std::cerr << "open error - " << route << std::endl;
 							std::cout << "POST-my fd!!" << id << ", open fd!!" << open_fd << std::endl;
@@ -258,20 +261,20 @@ int main(int argc, char *argv[], char *envp[]) {
 			if (kq.event_list[i].filter == EVFILT_WRITE && clients[id].get_status() == need_to_POST_write)
 			{
 				std::cout << "hi! im post write!\n";
-				// FILE *fp = fdopen(id, "w");
-				// if (fp == NULL) {
-				// 	std::cout << "fdopen error" << std::endl;
-				// 	continue;
-				// }
-				// fwrite(clients[id].request.post_body.c_str(), 1, \
-				// 	clients[id].request.post_body.length(), fp); // POST write
-				write(id, clients[id].request.post_body.c_str(), clients[id].request.post_body.length());
+				FILE *fp = fdopen(id, "w");
+				if (fp == NULL) {
+					std::cout << "fdopen error" << std::endl;
+					continue;
+				}
+				fwrite(clients[id].request.post_body.c_str(), 1, \
+					clients[id].request.post_body.length(), fp); // POST write
+				// write(id, clients[id].request.post_body.c_str(), clients[id].request.post_body.length());
 				int write_fd = clients[id].get_write_fd();
 				std::cout << "write-" << write_fd << ":" << clients[id].request.post_body << std::endl;
 				clients[write_fd].set_status(POST_ok);
-				clients.erase(id);
 				close(id);
-				// fclose(fp);
+				clients.erase(id);
+				fclose(fp);
 				break;
 				// write(id, clients[id].response.get_send_to_response().c_str(), \
 					clients[id].response.get_send_to_response().length());

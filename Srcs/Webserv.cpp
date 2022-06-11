@@ -125,15 +125,16 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 		{
 			std::cout << "It is directory, 201\n";
 			client.RETURN = 201;
+			closedir(dir_ptr);
 			return 1;
 		}
 	}
-	int fd;
-	if ((fd = open(route.c_str(), O_RDONLY)) != -1) { // exist
-		std::cout << "file exits!\n";
-		close(fd);
+	FILE *file_ptr;
+	if ((file_ptr = fopen(route.c_str(), "r"))) {  // wb
+		std::cout << "file exits!\n";// exist
 		client.is_file = 1;
 		client.RETURN = 200;
+		fclose(file_ptr);
 		return 0;
 	}
 	else
@@ -215,10 +216,6 @@ int Webserv::run_cgi(const Server &server, int location_id, Client client) {
 	{
 		dup2(write_fd[0], STDIN_FILENO);
 		dup2(read_fd[1], STDOUT_FILENO);
-		char *ar[3];
-		ar[0] = strdup(server.get_cgi_path().c_str());												  //"./cgiBinary/php-cgi"); // cat
-		ar[1] = strdup((server.get_root() + "/" + server.v_location[location_id].get_index()).c_str()); // file name(./file)
-		ar[2] = 0;
 		// ------------------
 		std::map<std::string, std::string> cgi_map;
 		// std::string extension = client.getRequest()->getPath().substr(client->getRequest()->getPath().rfind(".") + 1);
@@ -240,6 +237,10 @@ int Webserv::run_cgi(const Server &server, int location_id, Client client) {
 		cgi_map["CONTENT_LENGTH"] = client.request.get_contentLength();
 		cgi_map["CONTENT_TYPE"] = client.request.get_contentType();
 
+		char *ar[3];
+		ar[0] = const_cast<char *>(cgi_map["SCRIPT_NAME"].c_str());//server.get_cgi_path().c_str());												  //"./cgiBinary/php-cgi"); // cat
+		ar[1] = const_cast<char *>((server.get_root() + "/" + server.v_location[location_id].get_index()).c_str()); // file name(./file)
+		ar[2] = 0;
 		char **cgi_env;
 		size_t i = 0;
 		for (std::map<std::string, std::string>::iterator it = cgi_map.begin(); it != cgi_map.end(); it++) {
@@ -252,7 +253,7 @@ int Webserv::run_cgi(const Server &server, int location_id, Client client) {
 		// ------------------
 		// ar[0] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.drawio");
 		// ar[1] = strdup("/Users/minsikim/Desktop/42seoul/B2C/WebServer/View/CGI.png");
-		int ret = execve("/bin/cat", ar, cgi_env); // "/bin/cat"
+		int ret = execve(ar[0], ar, cgi_env); // "/bin/cat"
 		exit(ret);
 	}
 	close(write_fd[0]);
