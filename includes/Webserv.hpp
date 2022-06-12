@@ -40,7 +40,7 @@ class Webserv {
     int find_location_id(const int &server_id, const Config &config, const Request &rq, Client &client);
     int is_dir(const Server &server, const Request &rq, Client &client);
     void accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients);
-    int run_cgi(const Server &server, int location_id, Client client);
+    void run_cgi(const Server &server, const std::string &index_root, Client &client);
     // int set_event(Config &config, Kq kq);
 };
 

@@ -94,64 +94,68 @@ int main(int argc, char *argv[]) {
 				close(kq.event_list[i].ident);
 				continue;
 			}
-			else if (kq.event_list[i].filter == EVFILT_READ && clients[id].status != WAIT)
+			else if (kq.event_list[i].filter == EVFILT_READ)
 			{
 				std::cout << "accept READ Event / ident :" << id << std::endl;
 				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
 					clients[id].get_status() == need_to_cgi_read || clients[id].get_status() == need_error_read) // 이벤트 주체가 READ open
 				{
 					std::cout << "FILE READ\n";
-					int status;
-					int ret = waitpid(clients[id].pid, &status, WNOHANG);
-					if (ret == 0)
-						continue;
-					else if (WIFSIGNALED(status) == true)
+					if (clients[id].get_status() == need_to_cgi_read)
 					{
-						// cgi error
-						clients.erase(id);
-						close(id);
-						continue;
-					}
-					else if (WIFEXITED(status) == true)
-					{
-						FILE *file_ptr = fdopen(id, "r");
-						fseek(file_ptr, 0, SEEK_END);
-						int file_size = ftell(file_ptr);
-						rewind(file_ptr);
-						int seek = 0;
-						int valfread = 0;
-						std::string read_for_open;
-						// int valread = recv(acc_socket, read_for_open, 1024, 0);
-						char READ[1024] = {0,};
-							memset(READ, 0, 1024);
-						// while(seek < file_size)
-						// {
-						// 	valfread = fread(READ, sizeof(char), 1023, file_ptr);
-						// 	seek += valfread;
-						// 	std::cout << "READ!!!:" << READ << std::endl;
-						// 	read_for_open += READ;
-						// }
-						while ((seek = read(id, READ, 1023)) == 1023) {
-							// seek += fread(READ, sizeof(char), 1023, file_ptr);
-							read_for_open += READ;
-							memset(READ, 0, 1024);
+						int status;
+						int ret = waitpid(clients[id].pid, &status, WNOHANG);
+						if (ret == 0)
+							continue;
+						else if (WIFSIGNALED(status) == true)
+						{
+							// cgi error
+							clients.erase(id);
+							close(id);
+							continue;
 						}
-						read_for_open += READ;
-						std::cout << "read)_for)open:" << read_for_open << std::endl;
-						int read_fd = clients[id].get_read_fd(); //
-						clients[read_fd].response.response_str = read_for_open;
-						if (clients[id].get_status() == need_error_read)
-							clients[read_fd].set_status(error_read_ok);
-						else if (clients[id].get_status() == need_to_is_file_read)
-							clients[read_fd].set_status(is_file_read_ok);
-						else if (clients[id].get_status() == need_to_cgi_read)
-							clients[read_fd].set_status(cgi_read_ok);
-						else
-							clients[read_fd].set_status(GET_read_ok);
-						std::cout << "READ_ok\n";
-						close(id);
-						clients.erase(id);
+						else if (WIFEXITED(status) != true)
+						{
+							continue;
+						}
 					}
+					FILE *file_ptr = fdopen(id, "r");
+					fseek(file_ptr, 0, SEEK_END);
+					int file_size = ftell(file_ptr);
+					rewind(file_ptr);
+					int seek = 0;
+					int valfread = 0;
+					std::string read_for_open;
+					// int valread = recv(acc_socket, read_for_open, 1024, 0);
+					char READ[1024] = {0,};
+					memset(READ, 0, 1024);
+					while(seek < file_size)
+					{
+						valfread = fread(READ, sizeof(char), 1023, file_ptr);
+						seek += valfread;
+						std::cout << "READ!!!:" << READ << std::endl;
+						read_for_open += READ;
+					}
+					// while ((seek = read(id, READ, 1023)) == 1023) {
+					// 	// seek += fread(READ, sizeof(char), 1023, file_ptr);
+					// 	read_for_open += READ;
+					// 	memset(READ, 0, 1024);
+					// }
+					// read_for_open += READ;
+					std::cout << "read)_for)open:" << read_for_open << std::endl;
+					int read_fd = clients[id].get_read_fd(); //
+					clients[read_fd].response.response_str = read_for_open;
+					if (clients[id].get_status() == need_error_read)
+						clients[read_fd].set_status(error_read_ok);
+					else if (clients[id].get_status() == need_to_is_file_read)
+						clients[read_fd].set_status(is_file_read_ok);
+					else if (clients[id].get_status() == need_to_cgi_read)
+						clients[read_fd].set_status(cgi_read_ok);
+					else
+						clients[read_fd].set_status(GET_read_ok);
+					std::cout << "READ_ok\n";
+					close(id);
+					clients.erase(id);
 				} else if (find_server(Config, clients[id], id)) // 이벤트 주체가 server
 				{
 					std::cout << "clients[" << id << "].get_server_id():" << clients[id].get_server_id() << std::endl;
@@ -257,11 +261,12 @@ int main(int argc, char *argv[]) {
 						} else /////////////////// cgi
 						{
 							std::cout << "im cgi!!\n";
-							int cgi_fd = webserv.run_cgi(Config.v_server[server_id], location_id, clients[id]); // envp have to fix
+							std::string index_root = Config.v_server[server_id].get_root() + "/" + Config.v_server[server_id].v_location[location_id].get_index();
+							webserv.run_cgi(Config.v_server[server_id], index_root, clients[id]); // envp have to fix
 
-							clients[cgi_fd].set_read_fd(id);
-							change_events(kq.change_list, cgi_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-							clients[cgi_fd].set_status(need_to_cgi_read);
+							clients[clients[id].read_fd].set_read_fd(id);
+							clients[clients[id].read_fd].set_status(need_to_cgi_read);
+							change_events(kq.change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 						}
 					}
 					else if (clients[id].request.get_method() == "POST") {
@@ -286,7 +291,19 @@ int main(int argc, char *argv[]) {
 							std::cout << "POST-my fd::" << id << ", open fd::" << open_fd << std::endl;
 							clients[open_fd].set_status(need_to_POST_write);
 							clients[open_fd].write_fd = id;
-							clients[open_fd].request.post_body = clients[id].request.post_body;
+							if (clients[id].request.get_referer().find("php") != std::string::npos ||
+								clients[id].request.get_referer().find("py") != std::string::npos)
+							{
+								//cgi
+								std::string index_root = route + std::to_string(i);
+								webserv.run_cgi(Config.v_server[server_id], index_root, clients[id]);
+								clients[clients[id].read_fd].set_read_fd(id);
+								clients[clients[id].read_fd].set_status(need_to_cgi_write);
+								change_events(kq.change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
+								change_events(kq.change_list, clients[id].write_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi에 post_body 쓰기
+							}
+							else
+								clients[open_fd].request.post_body = clients[id].request.post_body;
 
 							clients[id].set_status(WAIT);
 							change_events(kq.change_list, open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
@@ -312,16 +329,18 @@ int main(int argc, char *argv[]) {
 							// fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(kq.change_list, open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
 						}
-					}
+					} // end POST
 				}
-			} // if /READ
+			} // end FILT READ
 
 			// std::cout << "clients[" << id << "].get_server_id():" << clients[id].get_server_id() << std::endl;
 			if (clients[id].get_server_id() < -1)
 				continue;
-			if (kq.event_list[i].filter == EVFILT_WRITE && clients[id].get_status() == need_to_POST_write)
+			if (kq.event_list[i].filter == EVFILT_WRITE && (\
+				clients[id].get_status() == need_to_POST_write || \
+				clients[clients[id].read_fd].get_status() == need_to_cgi_write))
 			{
-				std::cout << "hi! im post write!\n";
+				std::cout << "hi! im post body write!\n";
 				FILE *fp = fdopen(id, "w");
 				if (fp == NULL) {
 					std::cout << "fdopen error" << std::endl;
@@ -340,6 +359,10 @@ int main(int argc, char *argv[]) {
 				// write(id, clients[id].response.get_send_to_response().c_str(), \
 					clients[id].response.get_send_to_response().length());
 			} //clients[id].get_server_sock() == Config.v_server[clients[id].get_server_id()].get_socket_fd() &&
+			// else if (kq.event_list[i].filter == EVFILT_WRITE && clients[clients[id].read_fd].get_status() ==need_to_cgi_write)
+			// {
+			// 	std::cout << "hi! im cgi write!\n";
+			// }
 			else if (kq.event_list[i].filter == EVFILT_WRITE && \
 				clients[id].get_status() >= WRITE_LINE) {
 				std::cout << "accept WRITE Event / ident :" << id << std::endl;

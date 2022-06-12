@@ -18,6 +18,7 @@ enum status {
     need_to_cgi_read,
     need_error_read,
     need_to_POST_write,
+    need_to_cgi_write,
     WAIT,
     WRITE_LINE, //////////// WRITE
     GET_read_ok,

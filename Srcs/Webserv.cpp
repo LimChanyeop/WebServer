@@ -230,7 +230,7 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	// std::cout << "hi2\n";
 }
 
-int Webserv::run_cgi(const Server &server, int location_id, Client client) {
+void Webserv::run_cgi(const Server &server, const std::string &index_root, Client &client) {
 	char READ[1024] = {0};
 	int read_fd[2];
 	int write_fd[2];
@@ -259,7 +259,7 @@ int Webserv::run_cgi(const Server &server, int location_id, Client client) {
 		
 		char *ar[3];
 		ar[0] = const_cast<char *>(server.get_cgi_path().c_str());												  //"./cgiBinary/php-cgi"); // cat
-		ar[1] = const_cast<char *>((server.get_root() + "/" + server.v_location[location_id].get_index()).c_str()); // file name(./file)
+		ar[1] = const_cast<char *>(index_root.c_str()); // file name(./file)
 		ar[2] = 0;
 		// cgi_env->client.request_referer->url(parsing), client.request.get_ ~~
 		// ------------------
@@ -271,10 +271,11 @@ int Webserv::run_cgi(const Server &server, int location_id, Client client) {
 	delete cgi_env;
 	int status;
 	client.pid = pid;
+	client.read_fd = read_fd[0];
+	client.write_fd = write_fd[0];
 	close(write_fd[0]);
 	close(read_fd[1]);
 	// std::cout << "Webserv::read_fd : " << read_fd[0] << std::endl;
-	return read_fd[0];
 }
 
 // int Webserv::set_event(Config &config, Kq kq)
