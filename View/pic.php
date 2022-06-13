@@ -3,7 +3,7 @@
 	<meta charset="utf-8">
 </head>
 <header>
-	<img src="https://velog.velcdn.com/images%2Fwuriae%2Fpost%2F9e9efa8c-7d6f-436b-b6aa-9be03b6e29e7%2FKakaoTalk_20210623_005843711_02.jpg" alt="minsikim">
+	<img src="./View/test.jpeg" alt="minsikim">
 	<h1><a href="http://localhost:4242/">go to home</a></h1>
 </header>
 <nav>

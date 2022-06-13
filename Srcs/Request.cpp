@@ -91,12 +91,12 @@ int Request::find_key(const std::string &key) {
 
 void Request::split_request(const std::string &lines) {
     int idx;
-    if ((idx = lines.find("\r\n\r\n")) != std::string::npos || (idx = lines.find("\n\n")) != std::string::npos) {
-        std::string temp = lines;
-        this->post_body = temp.erase(0, idx + 2);
-        // std::cout << "Request::body : " << this->post_body << std::endl;
-    } else
-        ; // std::cout << "cant found body\n";
+    // if ((idx = lines.find("\r\n\r\n")) != std::string::npos) {
+    //     std::string temp = lines;
+    //     this->post_body = temp.erase(0, idx + 2);
+    //     // std::cout << "Request::body : " << this->post_body << std::endl;
+    // } else
+    this->post_body = lines; // std::cout << "cant found body\n";
     std::string delim = " \t\n";
     std::string::const_iterator it;
     std::string attr = "";

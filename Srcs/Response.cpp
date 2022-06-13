@@ -27,19 +27,25 @@ void Response::set_autoindex(std::string root) // opendir != NULL, readdir, clos
 	// }
 }
 
-void Response::set_header(int status, std::string cgi)
+void Response::set_header(const int &status, const std::string &header)
 {
-	if (cgi == "cgi")
-	{
-		;
-	}
 	if (status == 200)
 	{
 		std::cout << "GET 200!!\n";
-		this->send_to_response = "HTTP/1.1 200 OK\r\nContent-Type: "
-					   "text/html\r\nContent-Length: ";
+		if (header != "") // cgi
+		{
+			this->send_to_response = "HTTP/1.1 200 OK\r\n";
+			std::cout << "there is header!!\n";
+			this->send_to_response += header;
+			this->send_to_response += "Content-Length: ";
+		}
+		else
+		{
+			this->send_to_response = "HTTP/1.1 200 OK\r\nContent-Type: text/html";
+			this->send_to_response += "\r\nContent-Length: ";
+		}
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
-		this->send_to_response += "\r\n\r\n";
+		this->send_to_response += "\r\n\r\n\n";
 		this->send_to_response += this->response_str + "\r\n";
 		// std::cout << this->response_str;
 	}

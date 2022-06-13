@@ -42,6 +42,7 @@ class Client {
     int RETURN;
     int pid;
     // std::string request;
+    std::string header;
     Response response;
     Request request;
     std::string route;

@@ -7,15 +7,15 @@
 class Response
 {
 public:
-	std::string response_str;
-	std::string send_to_response;
+	std::string response_str; // temp res
+	std::string send_to_response; // real res
 	int response_lenth;
 
 public:
 	Response(/* args */);
 	~Response();
 
-	void set_header(int status, std::string route);
+	void set_header(const int &status, const std::string &route);
 	void set_autoindex(std::string root);
 	std::string &get_send_to_response(void);
 	void clear_response(void);
