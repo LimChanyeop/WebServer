@@ -8,26 +8,7 @@
 
 class Server;
 
-enum status {
-    no,
-    server_READ_ok,
-    request_ok,
-    open_READ_ok,
-    need_to_GET_read,
-    need_to_is_file_read,
-    need_to_cgi_read,
-    need_error_read,
-    need_to_POST_write,
-    need_to_cgi_write,
-    WAIT,
-    WRITE_LINE, //////////// WRITE
-    GET_read_ok,
-    is_file_read_ok,
-    cgi_read_ok,
-    error_read_ok,
-    POST_ok,
-    ok
-};
+enum status { r_opened, r_cgi_opened, w_opened, response_ok, cgi_response_ok, complete };
 
 class Client {
   public:

@@ -1,24 +1,24 @@
 #include "../includes/Client.hpp"
 
-Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(no), is_file(0), RETURN(0), pid(-1) {}
+Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(-1), is_file(0), RETURN(0), pid(-1) {}
 
 Client::~Client() {}
 
 void Client::request_parsing(int event_ident) {
-	char READ[1024] = {0};
-	int valread;
-	std::string request;
-	// int valread = recv(acc_socket, request, 1024, 0);
+    char READ[1024] = {0};
+    int valread;
+    std::string request;
+    // int valread = recv(acc_socket, request, 1024, 0);
 
-	while ((valread = read(event_ident, READ, 1023)) == 1023) {
-		request += READ;
-	}
-	if (valread >= 0) {
-		request += READ;
-	}
-	std::cout << "Client::request:" << request << std::endl;
-	this->request.split_request(request);
-	this->request.request_parsing(this->request.requests);
+    while ((valread = read(event_ident, READ, 1023)) == 1023) {
+        request += READ;
+    }
+    if (valread >= 0) {
+        request += READ;
+    }
+    std::cout << "Client::request:" << request << std::endl;
+    this->request.split_request(request);
+    this->request.request_parsing(this->request.requests);
 }
 
 const int &Client::get_server_sock(void) const { return this->server_sock; }
@@ -34,18 +34,16 @@ const int &Client::get_server_id(void) const { return this->server_id; }
 const int &Client::get_location_id(void) const { return this->location_id; }
 
 void Client::set_server_sock(int fd) { this->server_sock = fd; }
-void Client::set_status(int ok) 
-{
-	this->status = ok;
-	switch (ok)
-	{
-	case is_file_read_ok:
-		this->RETURN = 200;
-		break;
-	
-	default:
-		break;
-	}
+void Client::set_status(int ok) {
+    this->status = ok;
+    switch (ok) {
+    case response_ok:
+        this->RETURN = 200;
+        break;
+
+    default:
+        break;
+    }
 }
 void Client::set_read_fd(int fd) { this->read_fd = fd; }
 void Client::set_write_fd(int fd) { this->write_fd = fd; }

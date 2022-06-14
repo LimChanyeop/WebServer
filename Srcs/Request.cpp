@@ -5,7 +5,7 @@ Request::Request() : referer("/"), contentType("text/plain") {}
 void Request::request_parsing(std::vector<std::string> &lists) {
     std::vector<std::string>::iterator it;
     for (it = lists.begin(); it != lists.end(); it++) {
-        std::cout << "it [" << *it << "] " << find_key(*it) << "\n\n";
+        // std::cout << "it [" << *it << "] " << find_key(*it) << "\n\n";
         switch (find_key(*it)) {
         case Emethod:
             method = *(++it);
