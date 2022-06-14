@@ -198,18 +198,18 @@ char **make_env(Client client)
 {
 	std::map<std::string, std::string> cgi_map;
 	// std::string extension = client.getRequest()->getPath().substr(client->getRequest()->getPath().rfind(".") + 1);
-	cgi_map["SERVER_PROTOCOL"] = "'HTTP/1.1'";
+	cgi_map["SERVER_PROTOCOL"] = "HTTP/1.1";
 	cgi_map["GATEWAY_INTERFACE"] = "CGI/1.1";
 	cgi_map["SERVER_SOFTWARE"] = "nginx server";
 	cgi_map["REQUEST_METHOD"] = client.request.get_method();
 	cgi_map["REQUEST_SCHEME"] = client.request.get_method();
 	cgi_map["SERVER_PORT"] = client.request.get_host();
-	// cgi_env["SERVER_NAME"] = client.getaRequest()->getServerName();
-	// cgi_env["DOCUMENT_ROOT"] = _location_info->getCommonDirective()._cgi_path[extension];
-	cgi_map["DOCUMENT_URI"] = client.request.get_referer();
-	cgi_map["REQUEST_URI"] = client.request.get_referer();
-	cgi_map["SCRIPT_NAME"] = "./cgiBinary/php-cgi";
-	cgi_map["SCRIPT_FILENAME"] = "./cgiBinary/php-cgi";
+	cgi_map["SERVER_NAME"] = "hi";
+	cgi_map["DOCUMENT_ROOT"] = "./cgiBinary/php-cgi";
+	cgi_map["DOCUMENT_URI"] = "/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함
+	cgi_map["REQUEST_URI"] = "/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함
+	cgi_map["SCRIPT_NAME"] = "/View/file.php"; // 실행파일 전체 주소가 들어가야함
+	cgi_map["SCRIPT_FILENAME"] = "./View/file.php";
 	cgi_map["QUERY_STRING"] = client.request.get_query();
 	cgi_map["REMOTE_ADDR"] = client.ip;
 	cgi_map["REDIRECT_STATUS"] = "200";
@@ -224,7 +224,7 @@ char **make_env(Client client)
 		
 		// cgi_env[i] = new char[(it->first + "=" + it->second).size()];
 		cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
-		std::cout << "cgi:" << cgi_env[i] << std::endl;
+		std::cout << "cgi: " << cgi_env[i] << std::endl;
 		i++;
 	}
 	cgi_env[i] = NULL;

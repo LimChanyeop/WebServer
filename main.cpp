@@ -97,12 +97,13 @@ int main(int argc, char *argv[]) {
 			else if (kq.event_list[i].filter == EVFILT_READ)
 			{
 				// std::cout << "accept READ Event / ident :" << id << std::endl;
-				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read || \
-					clients[id].get_status() == need_error_read)
-				{
-					;
-				}
-				else if (clients[id].get_status() == need_to_cgi_read) // 이벤트 주체가 READ open // file read->fread
+				// if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read || \
+				// 	clients[id].get_status() == need_error_read)
+				// {
+				// 	;
+				// }
+				if (clients[id].get_status() == need_to_cgi_read || clients[id].get_status() == need_to_GET_read || \
+					clients[id].get_status() == need_to_is_file_read || clients[id].get_status() == need_error_read) // 이벤트 주체가 READ open // file read->fread
 				{
 					if (clients[id].get_status() == need_to_cgi_read) // read
 					{
@@ -212,6 +213,24 @@ int main(int argc, char *argv[]) {
 						} else if (location_id == -1) // is file
 						{
 							std::cout << "is file\n";
+							std::string index_root = '.' + clients[id].request.get_referer();
+							std::cout << "index:" << index_root << std::endl;
+							if (index_root.find("php") != std::string::npos ||
+								index_root.find("py") != std::string::npos)/////////////////// cgi
+							{
+								std::cout << "im cgi!!\n";
+								std::cout << "index_root: " << index_root << std::endl;
+								std::cout << "cgi-file: " << Config.v_server[server_id].get_cgi_path() << std::endl;
+								webserv.run_cgi(Config.v_server[server_id], index_root, clients[id]); // envp have to fix
+								close(clients[id].write_fd);
+								clients[clients[id].read_fd].set_read_fd(id);
+								clients[clients[id].read_fd].set_status(need_to_cgi_read);
+								clients[clients[id].read_fd].pid = clients[id].pid;
+								std::cout << "clients[clients[" << id << "].read_fd].get_read_fd() :" << clients[clients[id].read_fd].get_read_fd() << std::endl;
+								std::cout << "read_fd : " << clients[id].read_fd << std::endl;
+								change_events(kq.change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+								break ;
+							}
 							std::string referer = clients[id].request.get_referer();
 							if (*referer.begin() == '/')
 								referer.erase(referer.begin(), referer.begin() + 1);
@@ -278,10 +297,13 @@ int main(int argc, char *argv[]) {
 							clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
 							clients[open_fd].set_status(need_to_GET_read);
 							change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
-						} else if ((index.find("php") == std::string::npos &&
-							 index.find("py") == std::string::npos)) {
+						}
+						else if ((index.find("php") == std::string::npos &&
+							 index.find("py") == std::string::npos))
+						{
 							clients[id].set_status(ok);
-						} else /////////////////// cgi
+						}
+						else /////////////////// cgi
 						{
 							std::cout << "im cgi!!\n";
 							std::string root = '.' + Config.v_server[server_id].v_location[location_id].get_root();
