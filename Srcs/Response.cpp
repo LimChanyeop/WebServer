@@ -11,25 +11,33 @@ Response::~Response()
 {
 }
 
-void Response::set_autoindex(std::string root) // opendir != NULL, readdir, closedir
+void Response::set_autoindex(std::string &referer, const std::string &name, const int &i) // opendir != NULL, readdir, closedir
 {
-	// std::vector<std::string>::iterator it = root.begin();
-	// for (; it != root.end(); it++)
-	// {
-	int find;
-	if (root.find('.') != std::string::npos)
-		root += '/';
+	// /(View) + /redi.html
+	std::string route;
+	if (name == ".." && i == 1)
+		return;
+	else if (*name.begin() == '.' && i == 1)
+	{
+		if (*(name.end() - 1) != '/')
+			route = name + '/'; ///
+		else
+			route = name;
+	}
+	else if (i == 0)
+	{
+		if (*(referer.end() - 1) != '/')
+			route = referer + '/' + name;
+		else
+			route = referer + name;
+	}
 	else
-		root = "./" + root;
-	this->response_str += "<!DOCTYPE html>\n";
-	this->response_str += "<html>\n";
+		route = '/' + name;
 	this->response_str += "<head>\n</head>\n";
 	this->response_str += "<body>\n";
-	this->response_str += "<h1> Index of " + root + "</h1>\n";
-	this->response_str += "<a href=" + root + ">";
-	this->response_str += root;
+	this->response_str += "<a href=" + route + ">";
+	this->response_str += name + " [route:" + route + ']';
 	this->response_str += "</a><br>\n";
-	// }
 }
 
 void Response::set_header(const int &status, const std::string &header)

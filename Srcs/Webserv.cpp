@@ -12,7 +12,6 @@ Webserv::Webserv(/* args */) {}
 
 Webserv::~Webserv() {}
 
-
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,
 				   void *udata) // 이벤트를 생성하고 이벤트 목록에 추가하는 함수
 {
@@ -22,11 +21,14 @@ void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int
 	change_list.push_back(temp_event);
 }
 
-void Webserv::ready_webserv(Config &Config) {
+void Webserv::ready_webserv(Config &Config)
+{
 	std::vector<Server>::iterator it = Config.v_server.begin();
-	for (; it != Config.v_server.end(); it++) {
+	for (; it != Config.v_server.end(); it++)
+	{
 		(*it).set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
-		if (it->get_socket_fd() <= 0) {
+		if (it->get_socket_fd() <= 0)
+		{
 			std::cerr << "socket error" << std::endl;
 			exit(0);
 		}
@@ -46,53 +48,61 @@ void Webserv::ready_webserv(Config &Config) {
 				   sizeof(optvalue)); // to solve bind error
 
 		int ret;
-		if ((ret = bind(it->get_socket_fd(), (sockaddr *)&address, (socklen_t)sizeof(address))) == -1) {
+		if ((ret = bind(it->get_socket_fd(), (sockaddr *)&address, (socklen_t)sizeof(address))) == -1)
+		{
 			std::cerr << "bind error : return value = " << ret << std::endl;
 			exit(0);
 		}
-		if ((listen(it->get_socket_fd(), 10)) < 0) {
+		if ((listen(it->get_socket_fd(), 10)) < 0)
+		{
 			std::cerr << "listen error" << std::endl;
 			exit(0); // why exit?
 		}
 	}
 }
 
-std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &client) {
+std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &client)
+{
 	std::vector<Server>::iterator it;
-	for (it = Config.v_server.begin(); it != Config.v_server.end(); it++) {
+	for (it = Config.v_server.begin(); it != Config.v_server.end(); it++)
+	{
 		// std::cout << "listen:" << it->get_socket_fd() << " vs " << client.get_server_sock() << std::endl;
-		if (it->get_socket_fd() == client.get_server_sock()) {
+		if (it->get_socket_fd() == client.get_server_sock())
+		{
 			// client.set_server_it(it);
 			return it; // 드디어 어떤 서버인지 찾음
 		}
 	}
-	if (it == Config.v_server.end()) {
+	if (it == Config.v_server.end())
+	{
 		std::cerr << "Can not found Server\n";
 		exit(-1);
 	}
 	return it;
 }
 
-int Webserv::find_server_id(const int &event_ident, const Config &config, const Request &rq, std::map<int, Client> &clients) {
+int Webserv::find_server_id(const int &event_ident, const Config &config, const Request &rq, std::map<int, Client> &clients)
+{
 	std::string port = ""; // 왜 포트를 못찾았을까? -> 포트를 파싱 안했었넹~ok -> 근데도 못찾네~
 	int server_id;
 	// std::cout << "*find*" << clients.find(event_ident)->second << std::endl;
-	if (clients.find(event_ident) != clients.end()) {
+	if (clients.find(event_ident) != clients.end())
+	{
 		server_id = 0;
-		while (server_id < config.v_server.size()) {
+		while (server_id < config.v_server.size())
+		{
 			std::cout << "Webserv::PORT:" << config.v_server[server_id].get_listen() << "vs" << rq.host << std::endl;
 			if (atoi(config.v_server[server_id].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
 			{
-				// std::cout << "==================\n"; // std::cout << "same, server_id - " << server_id << "\n"; std::cout <<
-				// "==================\n";
 				port = rq.get_host(); // ?
 				clients[event_ident].set_server_id(server_id);
 				return server_id;
 			}
 			server_id++;
 		}
-		if (server_id == config.v_server.size()) {
-			std::cerr << "Host not found, Are you Favicon?\n";
+		if (server_id == config.v_server.size())
+		{
+			std::cerr << "Not matched server. check the request.\n";
 			// i = 1;
 			// exit(0);
 			// clients.erase(event_ident);
@@ -119,7 +129,7 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 	if (rq.get_method() == "POST")
 	{
 		// is dir?
-		DIR	*dir_ptr = NULL;
+		DIR *dir_ptr = NULL;
 		struct dirent *file = NULL;
 		std::cout << route << std::endl;
 		if ((dir_ptr = opendir(route.c_str())) != NULL)
@@ -131,8 +141,9 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 		}
 	}
 	FILE *file_ptr;
-	if ((file_ptr = fopen(route.c_str(), "r"))) {  // wb
-		std::cout << "file exits!\n";// exist
+	if ((file_ptr = fopen(route.c_str(), "r")))
+	{								  // wb
+		std::cout << "file exits!\n"; // exist
 		client.is_file = 1;
 		client.RETURN = 200;
 		fclose(file_ptr);
@@ -147,15 +158,18 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 	return -1;
 }
 
-int Webserv::find_location_id(const int &server_id, const Config &config, const Request &rq, Client &client) {
+int Webserv::find_location_id(const int &server_id, const Config &config, const Request &rq, Client &client)
+{
 	int location_id;
 	std::cout << "webserv::server_id : " << server_id << std::endl;
 	// std::cout << "Webserv::" << config.v_server[server_id].v_location.size() << std::endl;
 	if (rq.get_method() == "GET")
 	{
-		for (location_id = 0; location_id < config.v_server[server_id].v_location.size(); location_id++) {
+		for (location_id = 0; location_id < config.v_server[server_id].v_location.size(); location_id++)
+		{
 			// std::cout << "Webserv::TEST-location:" << config.v_server[server_id].v_location[location_id].location << "vs" << rq.referer << std::endl;
-			if (config.v_server[server_id].v_location[location_id].location == rq.get_referer()) {
+			if (config.v_server[server_id].v_location[location_id].location == rq.get_referer())
+			{
 				return location_id;
 			}
 		}
@@ -165,17 +179,29 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 		referer.erase(referer.begin(), referer.begin() + 1);
 	std::string route = "." + config.v_server[server_id].get_root() + referer;
 	std::cout << "webserv::route-" << route << std::endl;
+	// is dir?
+	DIR *dir_ptr = NULL;
+	struct dirent *ent = NULL;
+	if ((dir_ptr = opendir(route.c_str())) != NULL)
+	{
+		std::cout << "It is directory, 201\n";
+		client.RETURN = 200;
+		closedir(dir_ptr);
+		return -1;
+	}
 	FILE *file; // file exist?
-	if ((file = fopen(route.c_str(), "r")) != NULL) { // exist
+	if ((file = fopen(route.c_str(), "r")) != NULL)
+	{ // exist
 		fclose(file);
 		client.is_file = 1;
 		client.RETURN = 200;
-		return -1;
+		return -2;
 	}
 	return 404; // 404에러
 }
 
-void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients) {
+void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients)
+{
 	// std::cout << "client_id:" << event_ident << " vs server_id:" << server_it->get_socket_fd() << std::endl;
 	int acc_fd;
 	if ((acc_fd = accept(server.get_socket_fd(), (sockaddr *)&(server.get_address()),
@@ -207,8 +233,8 @@ char **make_env(Client client)
 	cgi_map["SERVER_NAME"] = "hi";
 	cgi_map["DOCUMENT_ROOT"] = "./cgiBinary/php-cgi";
 	cgi_map["DOCUMENT_URI"] = "/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함
-	cgi_map["REQUEST_URI"] = "/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함
-	cgi_map["SCRIPT_NAME"] = "/View/file.php"; // 실행파일 전체 주소가 들어가야함
+	cgi_map["REQUEST_URI"] = "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함
+	cgi_map["SCRIPT_NAME"] = "/View/file.php";	// 실행파일 전체 주소가 들어가야함
 	cgi_map["SCRIPT_FILENAME"] = "./View/file.php";
 	cgi_map["QUERY_STRING"] = client.request.get_query();
 	cgi_map["REMOTE_ADDR"] = client.ip;
@@ -217,11 +243,12 @@ char **make_env(Client client)
 	cgi_map["CONTENT_TYPE"] = client.request.get_contentType();
 
 	char **cgi_env;
-	cgi_env = new char*[cgi_map.size()+1];
-	
+	cgi_env = new char *[cgi_map.size() + 1];
+
 	size_t i = 0;
-	for (std::map<std::string, std::string>::iterator it = cgi_map.begin(); it != cgi_map.end(); it++) {
-		
+	for (std::map<std::string, std::string>::iterator it = cgi_map.begin(); it != cgi_map.end(); it++)
+	{
+
 		// cgi_env[i] = new char[(it->first + "=" + it->second).size()];
 		cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
 		std::cout << "cgi: " << cgi_env[i] << std::endl;
@@ -231,13 +258,15 @@ char **make_env(Client client)
 	return cgi_env;
 }
 
-void Webserv::run_cgi(const Server &server, const std::string &index_root, Client &client) {
+void Webserv::run_cgi(const Server &server, const std::string &index_root, Client &client)
+{
 	char READ[1024] = {0};
 	int read_fd[2];
 	int write_fd[2];
 	char **cgi_env;
 
-	if (pipe(read_fd) == -1) {
+	if (pipe(read_fd) == -1)
+	{
 		std::cerr << "pipe error\n";
 		exit(-1);
 	}
@@ -247,15 +276,17 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	// std::cout << "ar[1]" << server.v_location[location_id].get_root() + "/" + server.v_location[location_id].get_index() << std::endl;
 	cgi_env = make_env(client);
 	int pid = fork();
-	if (pid == -1) {
+	if (pid == -1)
+	{
 		std::cerr << "fork error\n";
 		exit(-1);
-	} else if (pid == 0) // child
+	}
+	else if (pid == 0) // child
 	{
 		// ------------------
 		char *ar[3];
-		ar[0] = const_cast<char *>((server.get_cgi_path()).c_str());// ("./cgiBinary/php-cgi"); //"./cgiBinary/php-cgi"); // /bin/cat
-		ar[1] = const_cast<char *>(index_root.c_str()); // php file (./file)
+		ar[0] = const_cast<char *>((server.get_cgi_path()).c_str()); // ("./cgiBinary/php-cgi"); //"./cgiBinary/php-cgi"); // /bin/cat
+		ar[1] = const_cast<char *>(index_root.c_str());				 // php file (./file)
 		ar[2] = 0;
 		// if (qury)
 		// 	ar[2] = qury
@@ -271,7 +302,8 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 		int ret = execve(ar[0], ar, cgi_env); // "/bin/cat"
 		if (ret == -1)
 		{
-			std::cerr << "***************\nexecve not run!\n***************\n" << std::endl;
+			std::cerr << "***************\nexecve not run!\n***************\n"
+					  << std::endl;
 			exit(-1);
 		}
 		exit(0);
