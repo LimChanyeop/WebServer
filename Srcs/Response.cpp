@@ -11,19 +11,24 @@ Response::~Response()
 {
 }
 
-void Response::set_autoindex(std::string root) // opendir != NULL, readdir, closedir 
+void Response::set_autoindex(std::string root) // opendir != NULL, readdir, closedir
 {
 	// std::vector<std::string>::iterator it = root.begin();
 	// for (; it != root.end(); it++)
 	// {
-		this->response_str += "<!DOCTYPE html>\n";
-		this->response_str += "<html>\n";
-		this->response_str += "<head>\n</head>\n";
-		this->response_str += "<body>\n";
-		this->response_str += "<h1> Index of " + root + "</h1>\n";
-		this->response_str += "<a href=" + root + ">";
-		this->response_str += root;
-		this->response_str += "</a><br>\n";
+	int find;
+	if (root.find('.') != std::string::npos)
+		root += '/';
+	else
+		root = "./" + root;
+	this->response_str += "<!DOCTYPE html>\n";
+	this->response_str += "<html>\n";
+	this->response_str += "<head>\n</head>\n";
+	this->response_str += "<body>\n";
+	this->response_str += "<h1> Index of " + root + "</h1>\n";
+	this->response_str += "<a href=" + root + ">";
+	this->response_str += root;
+	this->response_str += "</a><br>\n";
 	// }
 }
 
@@ -72,9 +77,9 @@ void Response::set_header(const int &status, const std::string &header)
 		// }
 		// ofs.write("hi", 2);
 		// ofs.close();
-		
+
 		this->send_to_response = "HTTP/1.1 201 Created\r\nContent-Type: "
-					   "text/html\r\nContent-Length: ";
+								 "text/html\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
@@ -83,7 +88,7 @@ void Response::set_header(const int &status, const std::string &header)
 	{
 		std::cout << "POST 204!!\n";
 		this->send_to_response = "HTTP/1.1 204 No Content\r\nContent-Type: "
-					   "text/html\r\nContent-Length: ";
+								 "text/html\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
@@ -92,7 +97,7 @@ void Response::set_header(const int &status, const std::string &header)
 	{
 		std::cout << "404!!\n";
 		this->send_to_response = "HTTP/1.1 404 Not Found\r\nContent-Type: "
-					   "text/html\r\nContent-Length: ";
+								 "text/html\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
@@ -102,7 +107,7 @@ void Response::set_header(const int &status, const std::string &header)
 	{
 		std::cout << "POST 411!!\n";
 		this->send_to_response = "HTTP/1.1 411 Not Found\r\nContent-Type: "
-					   "text/html\r\nContent-Length: ";
+								 "text/html\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
@@ -120,7 +125,7 @@ void Response::set_header(const int &status, const std::string &header)
 		this->send_to_response += "server: NWS\r\n";
 		this->send_to_response += "strict-transport-security: max-age=63072000; includeSubdomains\r\n";
 		this->send_to_response += "vary: Accept-Encoding,User-Agent\r\n";
-			
+
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
 	}
