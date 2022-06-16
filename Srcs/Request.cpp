@@ -105,7 +105,9 @@ void Request::split_request(const std::string &lines)
 	//     this->post_body = temp.erase(0, idx + 2);
 	//     // std::cout << "Request::body : " << this->post_body << std::endl;
 	// } else
-	this->post_body = lines; // std::cout << "cant found body\n";
+	int find;
+	if ((find = lines.find("\r\n\r\n")) != std::string::npos)
+		this->post_body = lines.substr(find + 2); // std::cout << "cant found body\n";
 	std::string delim = " \t\n";
 	std::string::const_iterator it;
 	std::string attr = "";

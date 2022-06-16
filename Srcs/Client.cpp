@@ -6,21 +6,25 @@ Client::~Client() {}
 
 void Client::request_parsing(int event_ident)
 {
-	char READ[1024] = {0};
-	int valread;
-	std::string request;
-	// int valread = recv(acc_socket, request, 1024, 0);
+	FILE *file_ptr = fdopen(event_ident, "r");		/////////////
+	
+	char buff[1024];
+	memset(buff, 0, 1024);
+	long fread_val = 0;
+	std::string fread_str;
+	while ((fread_val = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
+	{
+		buff[fread_val] = 0;
+		fread_str += buff;
+	}
+	if (fread_val < 0)
+	{
+		std::cerr << "request fread error\n";
+		exit(0);
+	}
 
-	while ((valread = read(event_ident, READ, 1023)) == 1023)
-	{
-		request += READ;
-	}
-	if (valread >= 0)
-	{
-		request += READ;
-	}
-	std::cout << "Client::request:" << request << std::endl;
-	this->request.split_request(request);
+	std::cerr << "Cli::fread_str: " << fread_str << std::endl;
+	this->request.split_request(fread_str);
 	this->request.request_parsing(this->request.requests);
 }
 

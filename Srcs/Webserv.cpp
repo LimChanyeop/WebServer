@@ -21,6 +21,81 @@ void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int
 	change_list.push_back(temp_event);
 }
 
+std::string &Webserv::mime_read(std::string &default_mime)
+{
+	int open_fd;
+	open_fd = open(default_mime.c_str(), O_RDONLY);
+	if (open_fd < 0)
+	{
+		std::cerr << "mime open error!!\n";
+		exit(-1);
+	}
+	char buff[1024];
+	std::string read_str;
+	int read_val = 0;
+	memset(buff, 0, 1024);
+	while ((read_val = read(open_fd, buff, 1023)) > 0)
+	{
+		buff[read_val] = 0;
+		read_str += buff;
+	}
+	if (read_val < 0)
+	{
+		std::cerr << "mime read error!!\n";
+		exit(-1);
+	}
+	default_mime = read_str;
+	return default_mime;
+}
+
+void Webserv::mime_parsing(std::string &default_mime)
+{
+	std::vector<std::string> split_mime;
+	std::string mime_str;
+	std::string::iterator it = default_mime.begin();
+	while (it != default_mime.end())
+	{
+		if (*it == '\n')
+		{
+			split_mime.push_back(mime_str);
+			mime_str = "";
+			it++;
+			continue;
+		}
+		mime_str += *it;
+		it++;
+	}
+	std::vector<std::string>::iterator v_it2 = split_mime.begin(); // print
+	std::cerr << "*mime split (v_it)*\n";
+	while (v_it2 != split_mime.end())
+	{
+		std::cerr << *v_it2 << std::endl;
+		v_it2++;
+	}
+	std::vector<std::string>::iterator v_it;
+	std::string mime_str2;
+	for (v_it = split_mime.begin(); v_it != split_mime.end(); v_it++)
+	{
+		it = (*v_it).begin();
+		while (it != (*v_it).end() && *it != ' ') // str1
+		{
+			mime_str += *it;
+			it++;
+		}
+		while (it != (*v_it).end() && *it == ' ') // ' '
+			it++;
+		while (it != (*v_it).end()) // str2
+		{
+			mime_str2 += *it;
+			it++;
+		}
+		this->mimes[mime_str2] = mime_str;
+		std::cerr << mime_str2 << " = " << mime_str << std::endl;
+		mime_str.clear();
+		mime_str2.clear();
+	}
+}
+
 void Webserv::ready_webserv(Config &Config)
 {
 	std::vector<Server>::iterator it = Config.v_server.begin();
@@ -124,7 +199,8 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 	std::string referer = rq.get_referer();
 	if (*referer.begin() == '/')
 		referer.erase(referer.begin(), referer.begin() + 1);
-	std::string route = "." + server.get_root() + referer;
+	client.set_route(server.get_root() + referer);
+	std::string route = "." + client.get_route();
 	std::cout << "webserv::route-" << route << std::endl;
 	if (rq.get_method() == "POST")
 	{
@@ -177,6 +253,7 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	std::string referer = rq.get_referer();
 	if (*referer.begin() == '/')
 		referer.erase(referer.begin(), referer.begin() + 1);
+	client.set_route(config.v_server[server_id].get_root() + referer);
 	std::string route = "." + config.v_server[server_id].get_root() + referer;
 	std::cout << "webserv::route-" << route << std::endl;
 	// is dir?
@@ -216,11 +293,12 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	// std::cout << "hi\n";
 	inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, clients[acc_fd].ip, INET_ADDRSTRLEN);
+	std::cerr << "Web::ip = " << clients[acc_fd].ip << std::endl;
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
 	// std::cout << "hi2\n";
 }
-char **make_env(Client client)
+char **make_env(Client &client, const Server &server)
 {
 	std::map<std::string, std::string> cgi_map;
 	// std::string extension = client.getRequest()->getPath().substr(client->getRequest()->getPath().rfind(".") + 1);
@@ -230,16 +308,17 @@ char **make_env(Client client)
 	cgi_map["REQUEST_METHOD"] = client.request.get_method();
 	cgi_map["REQUEST_SCHEME"] = client.request.get_method();
 	cgi_map["SERVER_PORT"] = client.request.get_host();
-	cgi_map["SERVER_NAME"] = "hi";
-	cgi_map["DOCUMENT_ROOT"] = "./cgiBinary/php-cgi";
-	cgi_map["DOCUMENT_URI"] = "/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함
-	cgi_map["REQUEST_URI"] = "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함
-	cgi_map["SCRIPT_NAME"] = "/View/file.php";	// 실행파일 전체 주소가 들어가야함
-	cgi_map["SCRIPT_FILENAME"] = "./View/file.php";
-	cgi_map["QUERY_STRING"] = client.request.get_query();
-	cgi_map["REMOTE_ADDR"] = client.ip;
-	cgi_map["REDIRECT_STATUS"] = "200";
-	// cgi_map["CONTENT_LENGTH"] = client.request.get_contentLength(); // GET은 노노
+	cgi_map["SERVER_NAME"] = "localhost";
+	cgi_map["DOCUMENT_ROOT"] = server.get_cgi_path(); //"./cgiBinary/php-cgi"; //
+	cgi_map["DOCUMENT_URI"] = client.get_route(); //"/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함 //
+	cgi_map["REQUEST_URI"] = client.get_route(); // "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함 //
+	cgi_map["SCRIPT_NAME"] = client.get_route(); // "/View/file.php";	// 실행파일 전체 주소가 들어가야함 //
+	cgi_map["SCRIPT_FILENAME"] = '.' + client.get_route(); //"./View/file.php";
+	cgi_map["QUERY_STRING"] = client.request.get_query(); //
+	cgi_map["REMOTE_ADDR"] = client.ip; //
+	cgi_map["REDIRECT_STATUS"] = std::to_string(client.RETURN); // 200
+	if (client.request.get_method() == "POST")
+		cgi_map["CONTENT_LENGTH"] = client.request.get_contentLength(); // GET은 노노
 	cgi_map["CONTENT_TYPE"] = client.request.get_contentType();
 
 	char **cgi_env;
@@ -260,7 +339,7 @@ char **make_env(Client client)
 
 void Webserv::run_cgi(const Server &server, const std::string &index_root, Client &client)
 {
-	char READ[1024] = {0};
+	char buff[1024] = {0};
 	int read_fd[2];
 	int write_fd[2];
 	char **cgi_env;
@@ -274,7 +353,7 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 
 	// std::cout << "ar[0]" << server.get_cgi_path().c_str() << std::endl;
 	// std::cout << "ar[1]" << server.v_location[location_id].get_root() + "/" + server.v_location[location_id].get_index() << std::endl;
-	cgi_env = make_env(client);
+	cgi_env = make_env(client, server);
 	int pid = fork();
 	if (pid == -1)
 	{

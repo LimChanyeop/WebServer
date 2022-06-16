@@ -15,7 +15,7 @@ public:
 	Response(/* args */);
 	~Response();
 
-	void set_header(const int &status, const std::string &route);
+	void set_header(const int &status, const std::string &route, const std::string &content_type);
 	void set_autoindex(std::string &referer, const std::string &name, const int &i);
 	std::string &get_send_to_response(void);
 	void clear_response(void);

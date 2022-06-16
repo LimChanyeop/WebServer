@@ -29,11 +29,14 @@ class Client;
 class Request;
 
 class Webserv {
-  private:
+  public:
+    std::map<std::string, std::string> mimes;
   public:
     Webserv(/* args */);
     ~Webserv();
 
+    std::string &mime_read(std::string &default_mime);
+    void mime_parsing(std::string &mime);
     void ready_webserv(Config &Config);
     std::vector<Server>::iterator find_server_it(Config &Config, Client &client);
     int find_server_id(const int &event_ident, const Config &config, const Request &rq, std::map<int, Client> &clients);

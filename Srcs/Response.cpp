@@ -40,7 +40,7 @@ void Response::set_autoindex(std::string &referer, const std::string &name, cons
 	this->response_str += "</a><br>\n";
 }
 
-void Response::set_header(const int &status, const std::string &header)
+void Response::set_header(const int &status, const std::string &header, const std::string &content_type)
 {
 	if (status == 200)
 	{
@@ -54,40 +54,22 @@ void Response::set_header(const int &status, const std::string &header)
 		}
 		else
 		{
-			this->send_to_response = "HTTP/1.1 200 OK\r\nContent-Type: text/html";
+			this->send_to_response = "HTTP/1.1 200 OK\r\nContent-Type: ";
+			this->send_to_response += content_type;
 			this->send_to_response += "\r\nContent-Length: ";
 		}
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
-		this->send_to_response += "\r\n\r\n\n";
+		this->send_to_response += std::to_string(this->response_str.length() + 2);
+		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
+		std::cerr << "Res::response+str:" << response_str << std::endl;
 		// std::cout << this->response_str;
 	}
-	else if (status == 201) // POST
+	else if (status == 201)
 	{
-		std::cout << "POST 201!!\n";
-		// DIR	*dir_ptr = NULL;
-		// struct dirent *file = NULL;
-		// std::cout << route << std::endl;
-		// if ((dir_ptr = opendir(route.c_str())) != NULL)
-		// {
-		// 	std::cerr << "It is directory, 400\n";
-		// }
-		// while((file = readdir(dir_ptr)) != NULL)
-		// {
-		// 	std::cout << file->d_name << std::endl;
-		// }
-
-		// std::ofstream ofs(route);
-		// if (ofs.is_open() != 1)
-		// {
-		// 	std::cerr << "not opened";
-		// 	exit(-1);
-		// }
-		// ofs.write("hi", 2);
-		// ofs.close();
-
-		this->send_to_response = "HTTP/1.1 201 Created\r\nContent-Type: "
-								 "text/html\r\nContent-Length: ";
+		std::cout << "POST 201!!\n";\
+		this->send_to_response = "HTTP/1.1 201 Created\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
@@ -95,8 +77,9 @@ void Response::set_header(const int &status, const std::string &header)
 	else if (status == 204) // POST
 	{
 		std::cout << "POST 204!!\n";
-		this->send_to_response = "HTTP/1.1 204 No Content\r\nContent-Type: "
-								 "text/html\r\nContent-Length: ";
+		this->send_to_response = "HTTP/1.1 204 No Content\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
@@ -104,8 +87,9 @@ void Response::set_header(const int &status, const std::string &header)
 	else if (status == 404)
 	{
 		std::cout << "404!!\n";
-		this->send_to_response = "HTTP/1.1 404 Not Found\r\nContent-Type: "
-								 "text/html\r\nContent-Length: ";
+		this->send_to_response = "HTTP/1.1 404 Not Found\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
@@ -114,8 +98,9 @@ void Response::set_header(const int &status, const std::string &header)
 	else if (status == 411)
 	{
 		std::cout << "POST 411!!\n";
-		this->send_to_response = "HTTP/1.1 411 Not Found\r\nContent-Type: "
-								 "text/html\r\nContent-Length: ";
+		this->send_to_response = "HTTP/1.1 411 Not Found\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";

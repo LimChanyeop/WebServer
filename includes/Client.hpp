@@ -32,7 +32,6 @@ enum status {
 class Client {
   public:
     int server_sock;
-    // std::vector<Server>::iterator server_it; // server
     int server_id;
     int location_id;
     int read_fd;
@@ -41,12 +40,13 @@ class Client {
     int is_file;
     int RETURN;
     int pid;
-    // std::string request;
-    std::string header;
+    char ip[20];
     Response response;
     Request request;
     std::string route;
-    char ip[20];
+    std::string header;
+    std::string content_type;
+    std::string open_file_name;
 
   public:
     Client(/* args */);
