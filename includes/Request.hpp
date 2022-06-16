@@ -81,7 +81,6 @@ class Request {
     const std::string &get_contentType() const;
     const std::string &get_query() const;
 
-    void print_request();
     void clear_request();
 };
 

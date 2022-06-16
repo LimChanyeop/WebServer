@@ -44,7 +44,6 @@ class Webserv {
     int is_dir(const Server &server, const Request &rq, Client &client);
     void accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients);
     void run_cgi(const Server &server, const std::string &index_root, Client &client);
-    // int set_event(Config &config, Kq kq);
 };
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,

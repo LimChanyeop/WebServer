@@ -200,23 +200,6 @@ const std::string &Request::get_referer() const { return referer; }
 const std::string &Request::get_contentLength() const { return contentLength; }
 const std::string &Request::get_contentType() const { return contentType; }
 
-void Request::print_request()
-{
-	std::cout << "method: " << method << std::endl;
-	std::cout << "protocol: " << protocol << std::endl;
-	std::cout << "host: " << host << std::endl;
-	std::cout << "connection: " << connection << std::endl;
-	std::cout << "upgradeInSecureRequest: " << upgradeInSecureRequest << std::endl;
-	std::cout << "userAgent: " << userAgent << std::endl;
-	std::cout << "accept: " << accept << std::endl;
-	std::cout << "acceptEncoding: " << acceptEncoding << std::endl;
-	std::cout << "acceptLanguage: " << acceptLanguage << std::endl;
-	std::cout << "cookie: " << cookie << std::endl;
-	std::cout << "referer: " << referer << std::endl;
-	std::cout << "contentLength: " << contentLength << std::endl;
-	std::cout << "contentType: " << contentType << std::endl;
-}
-
 void Request::clear_request() { requests.erase(requests.begin(), requests.end()); }
 
 const std::string &Request::get_query() const { return query; }

@@ -48,7 +48,7 @@ void Response::set_header(const int &status, const std::string &header, const st
 		if (header != "") // cgi
 		{
 			this->send_to_response = "HTTP/1.1 200 OK\r\n";
-			std::cout << "there is header!!\n";
+			std::cerr << "there is header!!\n";
 			this->send_to_response += header;
 			this->send_to_response += "Content-Length: ";
 		}
@@ -61,7 +61,7 @@ void Response::set_header(const int &status, const std::string &header, const st
 		this->send_to_response += std::to_string(this->response_str.length() + 2);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
-		std::cerr << "Res::response+str:" << response_str << std::endl;
+		// std::cerr << "Res::response+str:" << response_str << std::endl;
 		// std::cout << this->response_str;
 	}
 	else if (status == 201)

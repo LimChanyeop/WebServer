@@ -71,14 +71,6 @@ public:
 	void set_client_limit_body_size(int i);
 	void set_request_limit_header_size(int i);
 
-	// void set_socket_fd(int fd_); ////////// fd
-	// const int &get_socket_fd(void) const;
-
-	// void set_address_len(unsigned int len) { address_len = len; }
-	// sockaddr_in &get_address(void) { return (address); }
-	// unsigned int &get_address_len(void) { return address_len; } ///////// /fd
-
-	void print_all(void) const;
 	void config_parsing(std::vector<std::string>::iterator &it, std::vector<std::string> &lists); //, Config_base config_base)
 };
 

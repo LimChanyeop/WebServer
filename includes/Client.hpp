@@ -52,7 +52,7 @@ class Client {
     Client(/* args */);
     ~Client();
 
-    void request_parsing(int event_ident);
+    int request_parsing(int event_ident);
 
     const int &get_server_sock(void) const;
     // std::vector<Server>::iterator &get_server_it(void); // not const

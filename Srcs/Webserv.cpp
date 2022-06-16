@@ -117,6 +117,11 @@ void Webserv::ready_webserv(Config &Config)
 		// std::cout << "port::" << ntohs(it->address.sin_port) << std::endl; // 4242 ok
 
 		int optvalue = 1;
+		// struct timespec timeout;
+		// timeout.tv_sec = 10; // 초 (seconds)
+		// timeout.tv_nsec = 0;
+		// setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
+		// setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval));
 		setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_REUSEADDR, &optvalue,
 				   sizeof(optvalue)); // to solve bind error
 		setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_REUSEPORT, &optvalue,
@@ -166,7 +171,6 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 		server_id = 0;
 		while (server_id < config.v_server.size())
 		{
-			std::cout << "Webserv::PORT:" << config.v_server[server_id].get_listen() << "vs" << rq.host << std::endl;
 			if (atoi(config.v_server[server_id].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
 			{
 				port = rq.get_host(); // ?
@@ -178,19 +182,8 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 		if (server_id == config.v_server.size())
 		{
 			std::cerr << "Not matched server. check the request.\n";
-			// i = 1;
-			// exit(0);
-			// clients.erase(event_ident);
 		}
 	}
-	// std::string temp;
-	// int it = rq.referer.find(port.c_str());
-	// if (it == rq.referer.size() || it < 0)
-	// {
-	// 	std::cerr << "Cant find ref in port\n";
-	// }
-	// else
-	// 	rq.referer.erase(0, it);
 	return -1;
 }
 
@@ -201,16 +194,14 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 		referer.erase(referer.begin(), referer.begin() + 1);
 	client.set_route(server.get_root() + referer);
 	std::string route = "." + client.get_route();
-	std::cout << "webserv::route-" << route << std::endl;
 	if (rq.get_method() == "POST")
 	{
 		// is dir?
 		DIR *dir_ptr = NULL;
 		struct dirent *file = NULL;
-		std::cout << route << std::endl;
 		if ((dir_ptr = opendir(route.c_str())) != NULL)
 		{
-			std::cout << "It is directory, 201\n";
+			std::cerr << "It is directory, 201\n";
 			client.RETURN = 201;
 			closedir(dir_ptr);
 			return 1;
@@ -293,7 +284,6 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	// std::cout << "hi\n";
 	inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, clients[acc_fd].ip, INET_ADDRSTRLEN);
-	std::cerr << "Web::ip = " << clients[acc_fd].ip << std::endl;
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
 	// std::cout << "hi2\n";
@@ -394,23 +384,4 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	client.pid = pid;
 	client.read_fd = read_fd[0];
 	client.write_fd = write_fd[1];
-	std::cout << "R0:" << read_fd[0] << "W1:" << write_fd[1] << std::endl;
-	std::cout << "R1:" << read_fd[1] << "W0:" << write_fd[0] << std::endl;
 }
-
-// int Webserv::set_event(Config &config, Kq kq)
-// {
-//	 int num_of_event;
-//	 std::vector<Server>::iterator it = config.v_server.begin();
-//	 for (; it != config.v_server.end(); it++)
-//	 {
-//		 int n_changes = kq.change_list.size(); // number of changes = 등록하고자 하는 이벤트 수
-//		 int n_event_list = 8;
-//		 if ((num_of_event = kevent(kq.get_kq_fd(), &kq.change_list[0], n_changes, kq.get_event_list(), n_event_list, NULL)) == -1) {
-//			 std::cerr << "kevent error\n";
-//			 exit(0);
-//		 }
-//		 it->change_list.clear(); // 등록 이벤트 목록 초기화
-//	 }
-//	 return num_of_event;
-// }

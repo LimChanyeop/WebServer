@@ -32,7 +32,9 @@ std::string remove_annotaion(char *argv)
 	std::ifstream config_file(argv);
 	std::string line;
 	if (config_file.is_open() < 1)
+	{
 		std::cerr << "not opened\n";
+	}
 	while (getline(config_file, line))
 	{
 		size_t anno_pos = ((line.find("#") < line.find("//")) ? line.find("#") : line.find("//"));

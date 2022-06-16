@@ -48,30 +48,11 @@ void Location::set_auth_key(std::string str) { auth_key = str; }
 void Location::set_client_limit_body_size(int i) { client_limit_body_size = i; }
 void Location::set_request_limit_header_size(int i) { request_limit_header_size = i; }
 
-void Location::print_all(void) const
-{
-	std::cout << "client_limit_body_size " << client_limit_body_size << std::endl
-			  << "request_limit_header_size " << request_limit_header_size << std::endl
-			  << "user " << user << std::endl
-			  << "worker_processes " << worker_processes << std::endl
-			  << "listen " << listen << std::endl
-			  << "server_name " << server_name << std::endl
-			  << "root " << root << std::endl
-			  << "index " << index << std::endl
-			  << "autoindex " << autoindex << std::endl
-			  << "return_n " << return_n << std::endl
-			  << "error_page " << error_page << std::endl
-			  << "cgi_path " << cgi_path << std::endl
-			  << "allow_methods " << allow_methods << std::endl
-			  << "auth_key " << auth_key << std::endl;
-}
-
 void Location::config_parsing(std::vector<std::string>::iterator &it, std::vector<std::string> &lists) //, Config_base config_base)
 {
 	this->location = *it;
 	for (; it != lists.end() && *it != "}"; it++)
 	{
-		// std::cout << "lo it (" << *it << ")" << find_key(*it) << std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{
@@ -110,7 +91,6 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 			}
 			temp += *(it + 1);
 			this->set_root(temp);
-			std::cout << "root:" << root << std::endl;
 			break;
 		case 7:
 			while (find_semi(*(it + 1)))
