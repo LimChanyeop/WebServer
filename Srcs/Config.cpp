@@ -13,6 +13,7 @@ const std::string &Config::get_allow_methods(void) const { return allow_methods;
 const std::string &Config::get_auth_key(void) const { return auth_key; }
 const int &Config::get_client_limit_body_size(void) const { return client_limit_body_size; }
 const int &Config::get_request_limit_header_size(void) const { return request_limit_header_size; }
+const std::vector<Server> &Config::get_v_server(void) const { return v_server; }
 
 void Config::set_user(std::string str) { user = str; }
 void Config::set_worker_processes(std::string str) { worker_processes = str; }
@@ -131,10 +132,10 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			temp += *(it + 1);
 			this->set_auth_key(temp);
 			break;
-		case 14:												 // server
-			v_server.push_back(Server(*this));					 // vec serverpush_back
+		case 14:													   // server
+			v_server.push_back(Server(*this));						   // vec serverpush_back
 			v_server[v_server.size() - 1].config_parsing(++it, lists); // v_server[i].server_block_parsing((&)it, conf_lists)
-			break;													 // location
+			break;													   // location
 
 		// case 15: // location
 		// 	this->set_auth_key(*(++it));

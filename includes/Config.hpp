@@ -10,7 +10,7 @@ class Server;
 
 class Config
 {
-public:
+private:
 	std::vector<Server> v_server;
 
 	int client_limit_body_size;
@@ -39,6 +39,7 @@ public:
 	const std::string &get_auth_key(void) const;
 	const int &get_client_limit_body_size(void) const;
 	const int &get_request_limit_header_size(void) const;
+	const std::vector<Server> &get_v_server(void) const;
 
 	void set_user(std::string str);
 	void set_worker_processes(std::string str);
@@ -52,6 +53,7 @@ public:
 	void set_auth_key(std::string str);
 	void set_client_limit_body_size(int i);
 	void set_request_limit_header_size(int i);
+	void set_v_server(std::vector<Server> v_server_);
 
 	void config_parsing(std::vector<std::string> lists);
 };

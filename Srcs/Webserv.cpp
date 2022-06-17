@@ -98,8 +98,8 @@ void Webserv::mime_parsing(std::string &default_mime)
 
 void Webserv::ready_webserv(Config &Config)
 {
-	std::vector<Server>::iterator it = Config.v_server.begin();
-	for (; it != Config.v_server.end(); it++)
+	std::vector<Server>::iterator it = const_cast<std::vector<Server> &>(Config.get_v_server()).begin(); // const cast
+	for (; it != Config.get_v_server().end(); it++)
 	{
 		(*it).set_socket_fd(socket(AF_INET, SOCK_STREAM, 0)); // TCP: SOCK_STREAM UDP: SOCK_DGRAM
 		if (it->get_socket_fd() <= 0)
@@ -145,8 +145,8 @@ void Webserv::ready_webserv(Config &Config)
 
 std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &client)
 {
-	std::vector<Server>::iterator it;
-	for (it = Config.v_server.begin(); it != Config.v_server.end(); it++)
+	std::vector<Server>::iterator it = const_cast<std::vector<Server> &>(Config.get_v_server()).begin(); // const cast
+	for (; it != Config.get_v_server().end(); it++)
 	{
 		// std::cout << "listen:" << it->get_socket_fd() << " vs " << client.get_server_sock() << std::endl;
 		if (it->get_socket_fd() == client.get_server_sock())
@@ -155,7 +155,7 @@ std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &cl
 			return it; // 드디어 어떤 서버인지 찾음
 		}
 	}
-	if (it == Config.v_server.end())
+	if (it == Config.get_v_server().end())
 	{
 		std::cerr << "Can not found Server\n";
 		exit(-1);
@@ -171,9 +171,9 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 	if (clients.find(event_ident) != clients.end())
 	{
 		server_id = 0;
-		while (server_id < config.v_server.size())
+		while (server_id < config.get_v_server().size())
 		{
-			if (atoi(config.v_server[server_id].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
+			if (atoi(config.get_v_server()[server_id].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
 			{
 				port = rq.get_host(); // ?
 				clients[event_ident].set_server_id(server_id);
@@ -204,7 +204,7 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 		if ((dir_ptr = opendir(route.c_str())) != NULL)
 		{
 			std::cerr << "It is directory, 201\n";
-			client.RETURN = 201;
+			client.set_RETURN(201);
 			closedir(dir_ptr);
 			return 1;
 		}
@@ -213,15 +213,15 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
 	if ((file_ptr = fopen(route.c_str(), "r")))
 	{								  // wb
 		std::cout << "file exits!\n"; // exist
-		client.is_file = 1;
-		client.RETURN = 200;
+		client.set_is_file(1);
+		client.set_RETURN(200);
 		fclose(file_ptr);
 		return 0;
 	}
 	else
 	{
 		std::cout << "file not exits!\n";
-		client.RETURN = 201; // created
+		client.set_RETURN(201); // created
 		return 0;
 	}
 	return -1;
@@ -234,11 +234,11 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	// std::cout << "Webserv::" << config.v_server[server_id].v_location.size() << std::endl;
 	if (rq.get_method() == "GET")
 	{
-		for (location_id = 0; location_id < config.v_server[server_id].v_location.size(); location_id++)
+		for (location_id = 0; location_id < config.get_v_server()[server_id].v_location.size(); location_id++)
 		{
 			// std::cout << "Webserv::TEST-location:" << config.v_server[server_id].v_location[location_id].location << "vs" << rq.referer <<
 			// std::endl;
-			if (config.v_server[server_id].v_location[location_id].location == rq.get_referer())
+			if (config.get_v_server()[server_id].v_location[location_id].location == rq.get_referer())
 			{
 				return location_id;
 			}
@@ -247,8 +247,8 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	std::string referer = rq.get_referer();
 	if (*referer.begin() == '/')
 		referer.erase(referer.begin(), referer.begin() + 1);
-	client.set_route(config.v_server[server_id].get_root() + referer);
-	std::string route = "." + config.v_server[server_id].get_root() + referer;
+	client.set_route(config.get_v_server()[server_id].get_root() + referer);
+	std::string route = "." + config.get_v_server()[server_id].get_root() + referer;
 	std::cout << "webserv::route-" << route << std::endl;
 	// is dir?
 	DIR *dir_ptr = NULL;
@@ -256,7 +256,7 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	if ((dir_ptr = opendir(route.c_str())) != NULL)
 	{
 		std::cout << "It is directory, 201\n";
-		client.RETURN = 200;
+		client.set_RETURN(200);
 		closedir(dir_ptr);
 		return -1;
 	}
@@ -264,8 +264,8 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	if ((file = fopen(route.c_str(), "r")) != NULL)
 	{ // exist
 		fclose(file);
-		client.is_file = 1;
-		client.RETURN = 200;
+		client.set_is_file(1);
+		client.set_RETURN(200);
 		return -2;
 	}
 	return 404; // 404에러
@@ -293,7 +293,7 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	change_events(kq.change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	// std::cout << "hi\n";
-	inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, clients[acc_fd].ip, INET_ADDRSTRLEN);
+	inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, const_cast<char *>(clients[acc_fd].get_ip()), INET_ADDRSTRLEN); // const cast
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
 	// std::cout << "hi2\n";
@@ -305,21 +305,21 @@ char **make_env(Client &client, const Server &server)
 	cgi_map["SERVER_PROTOCOL"] = "HTTP/1.1";
 	cgi_map["GATEWAY_INTERFACE"] = "CGI/1.1";
 	cgi_map["SERVER_SOFTWARE"] = "nginx server";
-	cgi_map["REQUEST_METHOD"] = client.request.get_method();
-	cgi_map["REQUEST_SCHEME"] = client.request.get_method();
-	cgi_map["SERVER_PORT"] = client.request.get_host();
+	cgi_map["REQUEST_METHOD"] = client.get_request().get_method();
+	cgi_map["REQUEST_SCHEME"] = client.get_request().get_method();
+	cgi_map["SERVER_PORT"] = client.get_request().get_host();
 	cgi_map["SERVER_NAME"] = "localhost";
-	cgi_map["DOCUMENT_ROOT"] = server.get_cgi_path();			//"./cgiBinary/php-cgi"; //
-	cgi_map["DOCUMENT_URI"] = client.get_route();				//"/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함 //
-	cgi_map["REQUEST_URI"] = client.get_route();				// "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함 //
-	cgi_map["SCRIPT_NAME"] = client.get_route();				// "/View/file.php";	// 실행파일 전체 주소가 들어가야함 //
-	cgi_map["SCRIPT_FILENAME"] = '.' + client.get_route();		//"./View/file.php";
-	cgi_map["QUERY_STRING"] = client.request.get_query();		//
-	cgi_map["REMOTE_ADDR"] = client.ip;							//
-	cgi_map["REDIRECT_STATUS"] = std::to_string(client.RETURN); // 200
-	if (client.request.get_method() == "POST")
-		cgi_map["CONTENT_LENGTH"] = client.request.get_contentLength(); // GET은 노노
-	cgi_map["CONTENT_TYPE"] = client.request.get_contentType();
+	cgi_map["DOCUMENT_ROOT"] = server.get_cgi_path();				  //"./cgiBinary/php-cgi"; //
+	cgi_map["DOCUMENT_URI"] = client.get_route();					  //"/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함 //
+	cgi_map["REQUEST_URI"] = client.get_route();					  // "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함 //
+	cgi_map["SCRIPT_NAME"] = client.get_route();					  // "/View/file.php";	// 실행파일 전체 주소가 들어가야함 //
+	cgi_map["SCRIPT_FILENAME"] = '.' + client.get_route();			  //"./View/file.php";
+	cgi_map["QUERY_STRING"] = client.get_request().get_query();		  //
+	cgi_map["REMOTE_ADDR"] = client.get_ip();						  //
+	cgi_map["REDIRECT_STATUS"] = std::to_string(client.get_RETURN()); // 200
+	if (client.get_request().get_method() == "POST")
+		cgi_map["CONTENT_LENGTH"] = client.get_request().get_contentLength(); // GET은 노노
+	cgi_map["CONTENT_TYPE"] = client.get_request().get_contentType();
 
 	char **cgi_env;
 	cgi_env = new char *[cgi_map.size() + 1];
@@ -391,7 +391,7 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	close(write_fd[0]);
 	close(read_fd[1]);
 
-	client.pid = pid;
-	client.read_fd = read_fd[0];
-	client.write_fd = write_fd[1];
+	client.set_pid(pid);
+	client.set_read_fd(read_fd[0]);
+	client.set_write_fd(write_fd[1]);
 }
