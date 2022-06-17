@@ -34,7 +34,7 @@ void set_content_type(Client &client, const Webserv &webserv)
 	if (client.open_file_name == "")
 	{
 		client.content_type = "text/html";
-		return ;
+		return;
 	}
 	std::string open_file_name = client.open_file_name;
 	int find;
@@ -49,7 +49,7 @@ void set_content_type(Client &client, const Webserv &webserv)
 	if (open_file_name == "\n")
 	{
 		client.content_type = "text/plain";
-		return ;
+		return;
 	}
 	std::map<std::string, std::string>::const_iterator m_it = webserv.mimes.begin();
 	while (m_it != webserv.mimes.end())
@@ -59,7 +59,7 @@ void set_content_type(Client &client, const Webserv &webserv)
 		{
 			// std::cerr << "\n**i found mime !!**\n\n";
 			client.content_type = m_it->second;
-			return ;
+			return;
 		}
 		m_it++;
 	}
@@ -68,7 +68,7 @@ void set_content_type(Client &client, const Webserv &webserv)
 		// std::cer << "\n*i cant find mime !!*\n\n";
 		client.content_type = "text/plain";
 	}
-	return ;
+	return;
 
 	if (client.request.referer.find("html")) ////////
 		client.content_type = "text/html";
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 					}
 					std::string header;
 					std::string temp = read_str;
-					
+
 					int find;
 					if ((find = temp.find("X-Powered-By:")) != std::string::npos) // if cgi -> header parsing
 					{
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 					// std::cout << "read)_for)open:" << read_str << std::endl;
 					int read_fd = clients[id].get_read_fd(); //
 					clients[read_fd].response.response_str = read_str;
-					
+
 					clients[read_fd].set_status(cgi_read_ok);
 					// std::out << "READ_ok\n";
 					close(id);
@@ -266,16 +266,20 @@ int main(int argc, char *argv[])
 				{
 					if (clients[id].request_parsing(id) == -1)
 					{
-						change_events(kq.change_list, id, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-						break ;
+						break;
 					}
 					clients[id].set_status(request_ok); // requests_ok
 					int server_id = webserv.find_server_id(id, Config, clients[id].request, clients);
+					if (server_id < 0)
+					{
+						close(id);
+						clients.erase(i);
+					}
 
 					if (clients[id].request.get_method() == "GET")
 					{
 						int location_id = webserv.find_location_id(server_id, Config, clients[id].request, clients[id]); // /abc가 있는가?
-						if (location_id == 404) // is not found
+						if (location_id == 404)																			 // is not found
 						{
 							clients[id].RETURN = 404;
 							int open_fd = open("./status_pages/404.html", O_RDONLY);
@@ -300,7 +304,7 @@ int main(int argc, char *argv[])
 							// std::out << "is file\n";
 							clients[id].RETURN = 200;
 							// std::out << "get_route:" << clients[id].get_route() << std::endl;
-							if (clients[id].get_route().find(".php") != std::string::npos || \
+							if (clients[id].get_route().find(".php") != std::string::npos ||
 								clients[id].get_route().find(".py") != std::string::npos)
 							{
 								// std::out << "im cgi!!\n";
@@ -490,9 +494,8 @@ int main(int argc, char *argv[])
 					} // end POST
 				}
 			} // end FILT READ
+			std::cout << "cli: " << clients[id].get_server_id() << ", id: " << id << std::endl;
 
-			if (clients[id].get_server_id() < -1)
-				continue;
 			if (kq.event_list[i].filter == EVFILT_WRITE &&
 				(clients[id].get_status() == need_to_POST_write || clients[clients[id].read_fd].get_status() == need_to_cgi_write)) ////////////////////////////////
 			{
@@ -592,7 +595,8 @@ int main(int argc, char *argv[])
 						clients[id].response.set_header(200, "", clients[id].content_type); // ok
 					}
 
-					if (clients[id].get_status() == cgi_read_ok) {
+					if (clients[id].get_status() == cgi_read_ok)
+					{
 						write(id, clients[id].response.get_send_to_response().c_str(), clients[id].response.get_send_to_response().length());
 						close(id);
 						clients.erase(id);
@@ -607,7 +611,7 @@ int main(int argc, char *argv[])
 					// std::cerr << "response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
 					int count = 0;
 					fwrite(clients[id].response.get_send_to_response().c_str(), sizeof(char),
-						clients[id].response.get_send_to_response().size(), fp);
+						   clients[id].response.get_send_to_response().size(), fp);
 
 					if (fclose(fp) == EOF)
 						error_exit("fclose");
