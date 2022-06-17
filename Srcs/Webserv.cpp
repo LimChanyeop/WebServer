@@ -281,19 +281,18 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 		std::cerr << "accept error " << acc_fd << std::endl;
 		exit(0);
 	}
+	std::cout << "acc_fd: " << acc_fd << std::endl;
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	struct timespec timeout;
 	timeout.tv_sec = 10; // 초 (seconds)
 	timeout.tv_nsec = 0;
 	setsockopt(acc_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
 	setsockopt(acc_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval));
-	std::cout << "acc_fd: " << acc_fd << std::endl;
 
-	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	change_events(kq.change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	// std::cout << "hi\n";
-	inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, clients[acc_fd].ip, INET_ADDRSTRLEN);
+	// inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, clients[acc_fd].ip, INET_ADDRSTRLEN);
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
 	// std::cout << "hi2\n";

@@ -148,15 +148,16 @@ int main(int argc, char *argv[])
 			if (kq.event_list[i].flags & EV_ERROR)
 			{
 				// clients[id]
+				std::cerr << "EV_ERROR!\n";
 
 				if (is_client(Config, id))
 				{
 					if (clients[id].pid == -1)
 					{
 						if (clients[id].request.requests.size() > 0)
-							close(clients[id].read_fd); // fclose by jwoo
-						if (clients[id].response.response_str.length() > 0)
-							close(clients[id].write_fd);
+							fclose(clients[id].fp); // fclose by jwoo
+						// if (clients[id].response.response_str.length() > 0)
+						// 	close(clients[id].write_fd);
 					}
 				}
 				close(kq.event_list[i].ident);
@@ -176,14 +177,17 @@ int main(int argc, char *argv[])
 					memset(buff, 0, 1024);
 					while ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
 					{
+						if (valfread < 0)
+						{
+							std::cerr << "fread error\n";
+							break;
+						}
 						buff[valfread] = 0;
 						fread_str.append(buff, valfread);
 					}
-					if (valfread < 0)
-					{
-						std::cerr << "fread error\n";
-						exit(0);
-					}
+					
+					fclose(file_ptr);
+					close(id);
 					int read_fd = clients[id].get_read_fd(); //
 					clients[read_fd].response.response_str = fread_str;
 					// std::cout << "read_ok : " << fread_str << std::endl;
@@ -194,7 +198,6 @@ int main(int argc, char *argv[])
 					else
 						clients[read_fd].set_status(GET_read_ok);
 					// std::out << "READ_ok\n";
-					close(id);
 					clients.erase(id);
 				}
 				else if (clients[id].get_status() == need_to_cgi_read) // 이벤트 주체가 READ open // file read->fread
@@ -266,6 +269,16 @@ int main(int argc, char *argv[])
 				{
 					if (clients[id].request_parsing(id) == -1)
 					{
+						clients[id].RETURN = 404; // 500
+						int open_fd = open("./status_pages/404.html", O_RDONLY);
+						clients[id].open_file_name = "./status_pages/404.html";
+						if (open_fd < 0)
+							std::cerr << "open error - " << clients[id].get_route() << std::endl;
+						clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
+						clients[open_fd].set_status(need_error_read);
+
+						clients[id].set_status(WAIT);
+						change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 						break;
 					}
 					clients[id].set_status(request_ok); // requests_ok
@@ -432,7 +445,7 @@ int main(int argc, char *argv[])
 									error_exit("fclose");
 								i++;
 							}
-							// fclose(file_ptr);
+							fclose(file_ptr);
 							int open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
 							clients[id].open_file_name = route + std::to_string(i);
 							if (open_fd < 0)
@@ -494,22 +507,16 @@ int main(int argc, char *argv[])
 					} // end POST
 				}
 			} // end FILT READ
-			std::cout << "cli: " << clients[id].get_server_id() << ", id: " << id << std::endl;
-
-			if (kq.event_list[i].filter == EVFILT_WRITE &&
+			else if (kq.event_list[i].filter == EVFILT_WRITE &&
 				(clients[id].get_status() == need_to_POST_write || clients[clients[id].read_fd].get_status() == need_to_cgi_write)) ////////////////////////////////
 			{
 				FILE *fp = fdopen(id, "w");
-				if (fp == NULL)
-				{
-					if (fclose(fp) == EOF)
-						error_exit("fclose");
-					continue;
-				}
 
 				write(id, clients[id].request.post_body.c_str(), clients[id].request.post_body.length());
 				// std::out << "write-" << id << ":" << clients[id].request.post_body << std::endl;
 				clients[clients[id].get_write_fd()].set_status(POST_ok);
+
+				fclose(fp);
 				close(id);
 				clients.erase(id);
 				break;
@@ -615,6 +622,7 @@ int main(int argc, char *argv[])
 
 					if (fclose(fp) == EOF)
 						error_exit("fclose");
+					fclose(fp);
 					close(id);
 					clients.erase(id);
 				}

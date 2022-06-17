@@ -1,8 +1,12 @@
 #include "../includes/Client.hpp"
 
-Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(no), is_file(0), RETURN(0), pid(-1) {}
+Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(no), is_file(0), RETURN(0), pid(-1), fp(NULL) {}
 
-Client::~Client() {}
+Client::~Client()
+{
+	if (this->fp != NULL)
+		fclose(this->fp);
+} //////// 이거였어 해결!!!!
 
 int Client::request_parsing(int event_ident)
 {
@@ -11,7 +15,7 @@ int Client::request_parsing(int event_ident)
 	{
 		std::cout << "id:" << event_ident << std::endl;
 		std::cout << strerror(errno) << std::endl;
-		exit(0);
+		return -1;
 	}
 
 	char buff[1024];
@@ -33,9 +37,8 @@ int Client::request_parsing(int event_ident)
 	if (fread_val < 0)
 	{
 		std::cerr << "request fread error\n";
-		fclose(file_ptr);
-		exit(0);
 	}
+	this->fp = file_ptr;
 
 	// std::cerr << "Cli::fread_str: " << fread_str << std::endl;
 	this->request.split_request(fread_str);

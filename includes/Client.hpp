@@ -40,6 +40,7 @@ class Client {
     int is_file;
     int RETURN;
     int pid;
+    FILE *fp;
     char ip[20];
     Response response;
     Request request;
