@@ -13,12 +13,12 @@ class Config;
 
 class Server : virtual public Fd
 {
-// protected: // Fd
-// 	int fd;
-// 	int socket_type;
-// 	unsigned int address_len;
+	// protected: // Fd
+	// 	int fd;
+	// 	int socket_type;
+	// 	unsigned int address_len;
 
-public:
+private:
 	std::vector<Location> v_location;
 
 	// Request request;
@@ -55,6 +55,7 @@ public:
 	const std::string &get_auth_key(void) const;
 	const int &get_client_limit_body_size(void) const;
 	const int &get_request_limit_header_size(void) const;
+	const std::vector<Location> &get_v_location(void) const;
 
 	void set_user(std::string str);
 	void set_worker_processes(std::string str);

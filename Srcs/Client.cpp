@@ -39,7 +39,7 @@ int Client::request_parsing(int event_ident)
 
 	// std::cerr << "Cli::fread_str: " << fread_str << std::endl;
 	this->request.split_request(fread_str);
-	this->request.request_parsing(this->request.requests);
+	this->request.request_parsing(this->request.get_requests());
 	return 1;
 }
 

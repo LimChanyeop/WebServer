@@ -11,7 +11,7 @@ Response::~Response()
 {
 }
 
-void Response::set_autoindex(std::string &referer, const std::string &name, const int &i) // opendir != NULL, readdir, closedir
+void Response::set_autoindex(const std::string &referer, const std::string &name, const int &i) // opendir != NULL, readdir, closedir
 {
 	// /(View) + /redi.html
 	std::string route;
@@ -66,7 +66,7 @@ void Response::set_header(const int &status, const std::string &header, const st
 	}
 	else if (status == 201)
 	{
-		std::cout << "POST 201!!\n";\
+		std::cout << "POST 201!!\n";
 		this->send_to_response = "HTTP/1.1 201 Created\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
@@ -132,4 +132,24 @@ void Response::clear_response(void)
 std::string &Response::get_send_to_response(void)
 {
 	return this->send_to_response;
+}
+
+void Response::set_response_str(const std::string &str)
+{
+	this->response_str = str;
+}
+
+void Response::set_response_length(const int &length)
+{
+	this->response_length = length;
+}
+
+std::string &Response::get_response_str(void)
+{
+	return this->response_str;
+}
+
+int &Response::get_response_lenth(void)
+{
+	return this->response_length;
 }

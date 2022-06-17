@@ -30,8 +30,9 @@ const std::string &Server::get_allow_methods(void) const { return allow_methods;
 const std::string &Server::get_auth_key(void) const { return auth_key; }
 const int &Server::get_client_limit_body_size(void) const { return client_limit_body_size; }
 const int &Server::get_request_limit_header_size(void) const { return request_limit_header_size; }
+const std::vector<Location> &Server::get_v_location(void) const { return v_location; }
 
-void Server::set_user(std::string str){ user = str; }
+void Server::set_user(std::string str) { user = str; }
 void Server::set_worker_processes(std::string str) { worker_processes = str; }
 void Server::set_listen(std::string str) { listen = str; }
 void Server::set_server_name(std::string str) { server_name = str; }
@@ -40,7 +41,7 @@ void Server::set_index(std::string str) { index = str; }
 void Server::set_autoindex(std::string str) { autoindex = str; }
 void Server::set_return_n(std::string str) { return_n = str; }
 void Server::set_error_page(std::string str) { error_page = str; }
-void Server::set_cgi_path(std::string str) 
+void Server::set_cgi_path(std::string str)
 {
 	// std::cout << "before cgi path-" << str << std::endl;
 	str.erase(0, str.find("./"));
@@ -188,8 +189,8 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 		case 14: // server
 			std::cerr << "double server!\n";
 			break;
-		case 15:														 // location
-			v_location.push_back(Location(*this));					 // vec v_location push_back
+		case 15:														   // location
+			v_location.push_back(Location(*this));						   // vec v_location push_back
 			v_location[v_location.size() - 1].config_parsing(++it, lists); // v_location[i].server_parsing((&)it, conf_lists)
 			break;
 

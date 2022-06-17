@@ -21,7 +21,6 @@ public:
 	Kqueue(/* args */);
 	~Kqueue();
 
-	void setting(void);
 	const int &get_kq_fd(void) const;
 	struct kevent *get_event_list(void);
 	std::vector<struct kevent> &get_change_list(void);
@@ -30,6 +29,8 @@ public:
 	void set_event_list(struct kevent &event_list_);
 	void set_kq_fd(int fd_);
 	int set_event(void);
+
+	void setting(void);
 };
 
 #endif

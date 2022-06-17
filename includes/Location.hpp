@@ -9,7 +9,7 @@ class Server;
 
 class Location
 {
-public:
+private:
 	std::string location;
 	int client_limit_body_size;
 	int request_limit_header_size;
@@ -28,6 +28,7 @@ public:
 
 public:
 	Location(Server sb);
+
 	const std::string &get_user(void) const;
 	const std::string &get_worker_processes(void) const;
 	const std::string &get_listen(void) const;
@@ -40,6 +41,7 @@ public:
 	const std::string &get_cgi_path(void) const;
 	const std::string &get_allow_methods(void) const;
 	const std::string &get_auth_key(void) const;
+	const std::string &get_location(void) const;
 	const int &get_client_limit_body_size(void) const;
 	const int &get_request_limit_header_size(void) const;
 

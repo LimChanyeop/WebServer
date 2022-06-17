@@ -2,10 +2,10 @@
 
 Request::Request() : referer("/"), contentType("text/plain") {}
 
-void Request::request_parsing(std::vector<std::string> &lists)
+void Request::request_parsing(const std::vector<std::string> &lists)
 {
-	std::vector<std::string>::iterator it;
-	for (it = lists.begin(); it != lists.end(); it++)
+	std::vector<std::string> lists_ = lists;
+	for (std::vector<std::string>::iterator it = lists_.begin(); it != lists_.end(); it++)
 	{
 		// std::cout << "it [" << *it << "] " << find_key(*it) << "\n\n";
 		switch (find_key(*it))
@@ -199,7 +199,11 @@ const std::string &Request::get_cookie() const { return cookie; }
 const std::string &Request::get_referer() const { return referer; }
 const std::string &Request::get_contentLength() const { return contentLength; }
 const std::string &Request::get_contentType() const { return contentType; }
+const std::string &Request::get_post_body() const { return post_body; }
+const std::vector<std::string> &Request::get_requests() const { return requests; }
 
 void Request::clear_request() { requests.erase(requests.begin(), requests.end()); }
 
 const std::string &Request::get_query() const { return query; }
+
+void Request::set_post_body(std::string post_body) { this->post_body = post_body; }

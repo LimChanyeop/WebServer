@@ -51,8 +51,8 @@ void set_content_type(Client &client, const Webserv &webserv)
 		client.set_content_type("text/plain");
 		return;
 	}
-	std::map<std::string, std::string>::const_iterator m_it = webserv.mimes.begin();
-	while (m_it != webserv.mimes.end())
+	std::map<std::string, std::string>::const_iterator m_it = const_cast<Webserv &>(webserv).get_mimes().begin();
+	while (m_it != const_cast<Webserv &>(webserv).get_mimes().end())
 	{
 		// std::cerr << "open_file_name: " << open_file_name << " vs mime: " << m_it->first << std::endl;
 		if (m_it->first.find(open_file_name) != std::string::npos)
@@ -63,21 +63,21 @@ void set_content_type(Client &client, const Webserv &webserv)
 		}
 		m_it++;
 	}
-	if (m_it == webserv.mimes.end())
+	if (m_it == const_cast<Webserv &>(webserv).get_mimes().end())
 	{
 		// std::cer << "\n*i cant find mime !!*\n\n";
 		client.set_content_type("text/plain");
 	}
 	return;
 
-	if (client.get_request().referer.find("html")) ////////
+	if (client.get_request().get_referer().find("html")) ////////
 		client.set_content_type("text/html");
-	else if (client.get_request().referer.find("txt"))
+	else if (client.get_request().get_referer().find("txt"))
 		client.set_content_type("text/plain");
 
-	else if (client.get_request().referer.find("gif"))
+	else if (client.get_request().get_referer().find("gif"))
 		client.set_content_type("image/gif");
-	else if (client.get_request().referer.find("png"))
+	else if (client.get_request().get_referer().find("png"))
 		client.set_content_type("image/png");
 }
 
@@ -153,9 +153,9 @@ int main(int argc, char *argv[])
 				{
 					if (clients[id].get_pid() == -1)
 					{
-						if (clients[id].get_request().requests.size() > 0)
+						if (clients[id].get_request().get_requests().size() > 0)
 							close(clients[id].get_read_fd()); // fclose by jwoo
-						if (clients[id].get_response().response_str.length() > 0)
+						if (clients[id].get_response().get_response_str().length() > 0)
 							close(clients[id].get_write_fd());
 					}
 				}
@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 						exit(0);
 					}
 					int read_fd = clients[id].get_read_fd(); //
-					clients[read_fd].get_response().response_str = fread_str;
+					clients[read_fd].get_response().set_response_str(fread_str);
 					// std::cout << "read_ok : " << fread_str << std::endl;
 					if (clients[id].get_status() == need_error_read)
 						clients[read_fd].set_status(error_read_ok);
@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
 
 					// std::cout << "read)_for)open:" << read_str << std::endl;
 					int read_fd = clients[id].get_read_fd(); //
-					clients[read_fd].get_response().response_str = read_str;
+					clients[read_fd].get_response().set_response_str(read_str);
 
 					clients[read_fd].set_status(cgi_read_ok);
 					// std::out << "READ_ok\n";
@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 							std::string referer = clients[id].get_request().get_referer();
 							if (*referer.begin() == '/')
 								referer.erase(referer.begin(), referer.begin() + 1);
-							std::string root = Config.get_v_server()[server_id].v_location[location_id].get_root();
+							std::string root = Config.get_v_server()[server_id].get_v_location()[location_id].get_root();
 							if (root != "" && root != "" && *(root.end() - 1) == '/')
 								root.erase(root.end() - 1, root.end());
 							clients[id].set_route(root + "/" + referer);
@@ -352,12 +352,12 @@ int main(int argc, char *argv[])
 							break;
 						}
 						clients[id].set_location_id(location_id);
-						std::string index = Config.get_v_server()[server_id].v_location[location_id].get_index();
-						if (Config.get_v_server()[server_id].v_location[location_id].get_index() != "" &&
+						std::string index = Config.get_v_server()[server_id].get_v_location()[location_id].get_index();
+						if (Config.get_v_server()[server_id].get_v_location()[location_id].get_index() != "" &&
 							(index.find("php") == std::string::npos && index.find("py") == std::string::npos))
 						{
 							clients[id].set_RETURN(200);
-							std::string root = Config.get_v_server()[server_id].v_location[location_id].get_root();
+							std::string root = Config.get_v_server()[server_id].get_v_location()[location_id].get_root();
 							if (root != "" && *(root.end() - 1) != '/')
 								root += '/';
 							clients[id].set_route(root + index);
@@ -392,10 +392,10 @@ int main(int argc, char *argv[])
 						{
 							// std::out << "im cgi!!\n";
 							clients[id].set_RETURN(201);
-							std::string root = '.' + Config.get_v_server()[server_id].v_location[location_id].get_root();
+							std::string root = '.' + Config.get_v_server()[server_id].get_v_location()[location_id].get_root();
 							if (root != "" && *(root.end() - 1) != '/')
 								root += '/';
-							std::string index_root = root + Config.get_v_server()[server_id].v_location[location_id].get_index();
+							std::string index_root = root + Config.get_v_server()[server_id].get_v_location()[location_id].get_index();
 							// std::out << "index_root: " << index_root << std::endl;
 							// std::out << "cgi-file: " << Config.v_server[server_id].get_cgi_path() << std::endl;
 							webserv.run_cgi(Config.get_v_server()[server_id], index_root, clients[id]); // envp have to fix
@@ -458,7 +458,7 @@ int main(int argc, char *argv[])
 											  NULL); // cgi에 post_body 쓰기
 							}
 							else
-								clients[open_fd].get_request().post_body = clients[id].get_request().post_body;
+								clients[open_fd].get_request().set_post_body(clients[id].get_request().get_post_body());
 
 							clients[id].set_status(WAIT);
 							change_events(kq.get_change_list(), open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
@@ -481,7 +481,7 @@ int main(int argc, char *argv[])
 							std::cout << "POST-my fd!!" << id << ", open fd!!" << open_fd << std::endl;
 							clients[open_fd].set_status(need_to_POST_write);
 							clients[open_fd].set_write_fd(id);
-							clients[open_fd].get_request().post_body = clients[id].get_request().post_body;
+							clients[open_fd].get_request().set_post_body(clients[id].get_request().get_post_body());
 
 							clients[id].set_status(WAIT);
 							// fcntl(open_fd, F_SETFL, O_NONBLOCK);
@@ -504,7 +504,7 @@ int main(int argc, char *argv[])
 					continue;
 				}
 
-				write(id, clients[id].get_request().post_body.c_str(), clients[id].get_request().post_body.length());
+				write(id, clients[id].get_request().get_post_body().c_str(), clients[id].get_request().get_post_body().length());
 				// std::out << "write-" << id << ":" << clients[id].request.post_body << std::endl;
 				clients[clients[id].get_write_fd()].set_status(POST_ok);
 				close(id);
@@ -537,7 +537,7 @@ int main(int argc, char *argv[])
 						clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 						// std::cer << "POST response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
 					}
-					else if (clients[id].get_request().referer.find("favicon.ico") == std::string::npos && clients[id].get_request().get_method() == "GET")
+					else if (clients[id].get_request().get_referer().find("favicon.ico") == std::string::npos && clients[id].get_request().get_method() == "GET")
 					{																					// clients[id].location_id != -1 &&
 						if (Config.get_v_server()[clients[id].get_server_id()].get_autoindex() == "on") // location on?
 						{
@@ -546,11 +546,11 @@ int main(int argc, char *argv[])
 							int is_root = 0;
 							struct dirent *ent;
 							if (clients[id].get_location_id() < 0 && clients[id].get_is_file() != 1) // /abc
-								dir = opendir(('.' + clients[id].get_request().referer).c_str());
+								dir = opendir(('.' + clients[id].get_request().get_referer()).c_str());
 							else if (clients[id].get_request().get_referer() == "/")
 							{
 								is_root = 1;
-								dir = opendir(('.' + clients[id].get_request().referer).c_str());
+								dir = opendir(('.' + clients[id].get_request().get_referer()).c_str());
 							}
 							else
 							{
@@ -568,14 +568,14 @@ int main(int argc, char *argv[])
 							if (dir != NULL)
 							{
 								/* print all the files and directories within directory */
-								clients[id].get_response().response_str += "<!DOCTYPE html>\n";
-								clients[id].get_response().response_str += "<html>\n";
-								clients[id].get_response().response_str += "<head>\n</head>\n";
-								clients[id].get_response().response_str += "<body>\n";
-								clients[id].get_response().response_str += "<h1>Index of ." + clients[id].get_request().referer + "</h1>\n";
-								clients[id].get_response().response_str += "</a><br>\n";
+								clients[id].get_response().set_response_str(clients[id].get_response().get_response_str() + "<!DOCTYPE html>\n");
+								clients[id].get_response().set_response_str(clients[id].get_response().get_response_str() + "<html>\n");
+								clients[id].get_response().set_response_str(clients[id].get_response().get_response_str() + "<head>\n</head>\n");
+								clients[id].get_response().set_response_str(clients[id].get_response().get_response_str() + "<body>\n");
+								clients[id].get_response().set_response_str(clients[id].get_response().get_response_str() + "<h1>Index of ." + clients[id].get_request().get_referer() + "</h1>\n");
+								clients[id].get_response().set_response_str(clients[id].get_response().get_response_str() + "</a><br>\n");
 								while ((ent = readdir(dir)) != NULL)
-									clients[id].get_response().set_autoindex(clients[id].get_request().referer, ent->d_name, is_root);
+									clients[id].get_response().set_autoindex(clients[id].get_request().get_referer(), ent->d_name, is_root);
 								closedir(dir);
 							}
 							else

@@ -1,8 +1,7 @@
 #include "../includes/Fd.hpp"
 
-Fd::Fd(/* args */)// : fd(0), socket_type(0), address_len(0)
+Fd::Fd(/* args */) // : fd(0), socket_type(0), address_len(0)
 {
-
 }
 
 Fd::~Fd()

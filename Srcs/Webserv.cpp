@@ -234,11 +234,11 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	// std::cout << "Webserv::" << config.v_server[server_id].v_location.size() << std::endl;
 	if (rq.get_method() == "GET")
 	{
-		for (location_id = 0; location_id < config.get_v_server()[server_id].v_location.size(); location_id++)
+		for (location_id = 0; location_id < config.get_v_server()[server_id].get_v_location().size(); location_id++)
 		{
 			// std::cout << "Webserv::TEST-location:" << config.v_server[server_id].v_location[location_id].location << "vs" << rq.referer <<
 			// std::endl;
-			if (config.get_v_server()[server_id].v_location[location_id].location == rq.get_referer())
+			if (config.get_v_server()[server_id].get_v_location()[location_id].get_location() == rq.get_referer())
 			{
 				return location_id;
 			}
@@ -394,4 +394,9 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	client.set_pid(pid);
 	client.set_read_fd(read_fd[0]);
 	client.set_write_fd(write_fd[1]);
+}
+
+std::map<std::string, std::string> &Webserv::get_mimes(void)
+{
+	return mimes;
 }

@@ -30,6 +30,7 @@ const std::string &Location::get_error_page(void) const { return error_page; }
 const std::string &Location::get_cgi_path(void) const { return cgi_path; }
 const std::string &Location::get_allow_methods(void) const { return allow_methods; }
 const std::string &Location::get_auth_key(void) const { return auth_key; }
+const std::string &Location::get_location(void) const { return location; }
 const int &Location::get_client_limit_body_size(void) const { return client_limit_body_size; }
 const int &Location::get_request_limit_header_size(void) const { return request_limit_header_size; }
 
