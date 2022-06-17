@@ -32,7 +32,9 @@ std::string remove_annotaion(char *argv)
 	std::ifstream config_file(argv);
 	std::string line;
 	if (config_file.is_open() < 1)
+	{
 		std::cerr << "not opened\n";
+	}
 	while (getline(config_file, line))
 	{
 		size_t anno_pos = ((line.find("#") < line.find("//")) ? line.find("#") : line.find("//"));
@@ -70,7 +72,7 @@ int find_key(const std::string &key)
 	keys.push_back("root");
 	keys.push_back("index");
 	keys.push_back("autoindex");
-	keys.push_back("return_n");
+	keys.push_back("return");
 	keys.push_back("error_page");
 	keys.push_back("cgi_path");
 	keys.push_back("allow_nethods");

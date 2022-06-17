@@ -53,7 +53,6 @@ public:
 	void set_client_limit_body_size(int i);
 	void set_request_limit_header_size(int i);
 
-	void print_all(void) const;
 	void config_parsing(std::vector<std::string> lists);
 };
 
