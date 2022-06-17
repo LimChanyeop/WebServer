@@ -290,8 +290,8 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	std::cout << "acc_fd: " << acc_fd << std::endl;
 
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
-	change_events(kq.change_list, acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-	change_events(kq.change_list, acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	change_events(kq.get_change_list(), acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	change_events(kq.get_change_list(), acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	// std::cout << "hi\n";
 	inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, const_cast<char *>(clients[acc_fd].get_ip()), INET_ADDRSTRLEN); // const cast
 	clients[acc_fd].set_server_sock(event_ident);

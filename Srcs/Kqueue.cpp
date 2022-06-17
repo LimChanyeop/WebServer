@@ -10,17 +10,17 @@ Kqueue::~Kqueue()
 
 void Kqueue::setting(void)
 {
-	this->kq = kqueue();
+	this->kq_fd = kqueue();
 }
 
 void Kqueue::set_kq_fd(int fd_)
 {
-	this->kq = fd_;
+	this->kq_fd = fd_;
 }
 
 const int &Kqueue::get_kq_fd(void) const
 {
-	return this->kq;
+	return this->kq_fd;
 }
 
 int Kqueue::set_event(void)
@@ -40,3 +40,4 @@ int Kqueue::set_event(void)
 }
 
 struct kevent *Kqueue::get_event_list(void) { return event_list; }
+std::vector<struct kevent> &Kqueue::get_change_list(void) { return change_list; }
