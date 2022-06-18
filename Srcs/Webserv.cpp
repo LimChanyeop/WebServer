@@ -316,11 +316,11 @@ char **make_env(Client &client, const Server &server)
 	cgi_map["REDIRECT_STATUS"] = "200";
 	if (client.get_request().get_method() == "POST")
 		cgi_map["CONTENT_LENGTH"] = client.get_request().get_contentLength(); // GET은 노노
-	// if (client.request.get_method() == "POST")
-	// 	cgi_map["CONTENT_TYPE"] = "multipart/form-data; " + client.request.boundary;
-	// else
-	// 	cgi_map["CONTENT_TYPE"] = client.request.get_contentType();
-	cgi_map["CONTENT_TYPE"] = "text/plain";
+	if (client.get_request().get_post_filename().find(".png") != std::string::npos)
+		cgi_map["CONTENT_TYPE"] = "multipart/form-data; boundary=" + client.get_request().get_boundary();
+	else
+		cgi_map["CONTENT_TYPE"] = "text/html";
+	// cgi_map["CONTENT_TYPE"] = "text/plain";
 
 	char **cgi_env;
 	cgi_env = new char *[cgi_map.size() + 1];

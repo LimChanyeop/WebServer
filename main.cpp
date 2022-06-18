@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
 					{
 						continue;
 					}
-					// std::out << "FILE READ, id:" << id << " ,read_id:" << clients[id].read_fd << "\n"; // open->read->write fopen->fread->fwrite
+					std::cerr << "FILE READ, id:" << id << " ,read_id:" << clients[id].get_read_fd() << "\n"; // open->read->write fopen->fread->fwrite
 					int valread = 0;
 					std::string read_str;
 					char buff[1024];
@@ -228,30 +228,17 @@ int main(int argc, char *argv[])
 					{ // read
 						buff[valread] = 0;
 						read_str.append(buff, valread);
-						// std::out << "**read_str:" << read_str << "\n\n";
 					}
+					// std::cerr << "**read_str:" << read_str << "\n\n";
 					if (valread < 0)
 					{
 						std::cerr << "read_error!\n";
 						exit(0);
 					}
-					std::string header;
-					std::string temp = read_str;
-
-					int find;
-					if ((find = temp.find("X-Powered-By:")) != std::string::npos) // if cgi -> header parsing
-					{
-						if ((find = temp.find("<")) != std::string::npos)
-						{
-							header = temp.erase(find - 1, temp.end() - temp.begin());
-							read_str = read_str.erase(0, find);
-						}
-					}
-					// std::out << "header:" << header << std::endl;
-					clients[clients[id].get_read_fd()].set_header(header);
-
-					// std::cout << "read)_for)open:" << read_str << std::endl;
 					int read_fd = clients[id].get_read_fd(); //
+
+					clients[read_fd].header_parsing(read_str);
+					// std::cout << "read)_for)open:" << read_str << std::endl;
 					clients[read_fd].get_response().set_response_str(read_str);
 
 					clients[read_fd].set_status(cgi_read_ok);
@@ -263,7 +250,7 @@ int main(int argc, char *argv[])
 				{
 					webserv.accept_add_events(id, const_cast<std::vector<Server> &>(Config.get_v_server())[clients[id].get_server_id()], kq, clients);
 				}
-				else if (clients.find(id) != clients.end()) // 이벤트 주체가 client
+				else if (clients.find(id) != clients.end() && clients[id].get_status() != WAIT) // 이벤트 주체가 client
 				{
 					if (clients[id].request_parsing(id) == -1)
 					{
@@ -290,7 +277,8 @@ int main(int argc, char *argv[])
 						clients.erase(i);
 					}
 
-					if (clients[id].get_request().get_method() == "GET")
+					if (clients[id].get_request().get_method() == "GET" ||
+						clients[id].get_request().get_method() == "DELETE")
 					{
 						int location_id = webserv.find_location_id(server_id, Config, clients[id].get_request(), clients[id]); // /abc가 있는가?
 						if (location_id == 404)																				   // is not found
@@ -311,7 +299,10 @@ int main(int argc, char *argv[])
 						else if (location_id == -1) // dir
 						{
 							clients[id].set_RETURN(200);
-							clients[id].set_status(ok);
+							if (clients[id].get_request().get_method() == "GET")
+								clients[id].set_status(ok);
+							else
+								clients[id].set_status(DELETE_ok);
 							break;
 						}
 						else if (location_id == -2) // is file
@@ -325,6 +316,7 @@ int main(int argc, char *argv[])
 								std::cout << "im cgi!!\n";
 								// std::out << "index_root: " << clients[id].get_route() << std::endl;
 								// std::out << "cgi-file: " << Config.v_server[server_id].get_cgi_path() << std::endl;
+								std::cerr << "cli boundary:" << clients[id].get_request().get_boundary() << std::endl;
 								webserv.run_cgi(Config.get_v_server()[server_id], clients[id].get_route(), clients[id]); // envp have to fix
 								close(clients[id].get_write_fd());
 								clients[clients[id].get_read_fd()].set_read_fd(id);
@@ -332,7 +324,9 @@ int main(int argc, char *argv[])
 								clients[clients[id].get_read_fd()].set_pid(clients[id].get_pid());
 								// std::cout << "clients[clients[" << id << "].read_fd].get_read_fd() :" << clients[clients[id].read_fd].get_read_fd()
 								// 		  << std::endl;
-								// std::cout << "read_fd : " << clients[id].read_fd << std::endl;
+								std::cout << "read_fd : " << clients[id].get_read_fd() << std::endl;
+								std::cerr << "write_fd : " << clients[id].get_write_fd() << std::endl;
+								clients[id].set_status(WAIT);
 								fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
 								change_events(kq.get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 								break;
@@ -363,6 +357,12 @@ int main(int argc, char *argv[])
 								clients[id].set_status(WAIT);
 								fcntl(open_fd, F_SETFL, O_NONBLOCK);
 								change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+								break;
+							}
+							if (clients[id].get_request().get_method() == "DELETE")
+							{
+								clients[id].set_status(DELETE_ok);
+								close(open_fd);
 								break;
 							}
 							clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
@@ -404,6 +404,7 @@ int main(int argc, char *argv[])
 
 							clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
 							clients[open_fd].set_status(need_to_GET_read);
+							clients[id].set_status(WAIT);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 						}
@@ -431,13 +432,14 @@ int main(int argc, char *argv[])
 							// 		  << std::endl;
 							// std::cout << "read_fd : " << clients[id].read_fd << std::endl;
 							fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
+							clients[id].set_status(WAIT);
 							change_events(kq.get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 						}
 					}
 
 
 					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					else if (clients[id].get_request().get_method() == "POST" && clients[id].get_status() != WAIT) /////************ post ***************** ////////////////////////////////////////////////////////////
+					else if (clients[id].get_request().get_method() == "POST") /////************ post ***************** ////////////////////////////////////////////////////////////
 					{
 						int is_dir = webserv.is_dir(Config.get_v_server()[server_id], clients[id].get_request(), clients[id]);
 						if (is_dir == 1) // is dir
@@ -506,18 +508,20 @@ int main(int argc, char *argv[])
 								// POST CGI
 								clients[id].set_RETURN(200);
 								std::string index_root = route + std::to_string(i);
+								std::cerr << "cli boundary:" << clients[id].get_request().get_boundary() << std::endl;
 								webserv.run_cgi(Config.get_v_server()[server_id], index_root, clients[id]);
 								clients[clients[id].get_read_fd()].set_pid(clients[id].get_pid());
 								clients[clients[id].get_write_fd()].set_pid(clients[id].get_pid());
 								clients[clients[id].get_read_fd()].set_read_fd(id);
 								clients[clients[id].get_write_fd()].set_write_fd(id);
 								clients[clients[id].get_read_fd()].get_request().set_post_body(clients[id].get_request().get_post_body());
-								clients[clients[id].get_write_fd()].get_request().set_post_body(clients[id].get_request().get_post_body());
+								clients[clients[id].get_write_fd()].get_request().set_post_body(clients[id].get_request().get_post_body()); // body
+								clients[clients[id].get_write_fd()].get_request().set_header(clients[id].get_request().get_header()); // header
 								clients[clients[id].get_write_fd()].set_status(need_to_cgi_write);
 
 								std::cerr << "clients[read_fd:" << clients[id].get_read_fd() << "].set_read_fd(" << id << ")\n";
 								std::cerr << "clients[write_fd:" << clients[id].get_write_fd() << "].set_write_fd(" << id << ")\n";
-								std::cout << "read_fd : " << clients[id].get_read_fd() << ", write_fd : " << clients[id].get_write_fd() <<std::endl;
+								std::cerr << "read_fd : " << clients[id].get_read_fd() << ", write_fd : " << clients[id].get_write_fd() <<std::endl;
 
 								clients[id].set_status(WAIT);
 								fcntl(clients[id].get_write_fd(), F_SETFL, O_NONBLOCK);
@@ -550,7 +554,7 @@ int main(int argc, char *argv[])
 			else if (kq.get_event_list()[i].filter == EVFILT_WRITE)
 			{
 				// std::cerr << "id: " << id << ", status: " << 
-				if (clients[id].get_status() == need_to_POST_write) ////////////////////////////////
+				if (clients[id].get_status() == need_to_POST_write) //////////////////////////////// file에다가 write
 				{
 					std::cerr << "im POST write!!\n";
 					FILE *fp = fdopen(id, "wb");
@@ -565,19 +569,21 @@ int main(int argc, char *argv[])
 					clients.erase(id);
 					break;
 				}
-				else if (clients[id].get_status() == need_to_cgi_write)
+				else if (clients[id].get_status() == need_to_cgi_write) // CGI에다가 write
 				{
-					std::cerr << "im POST-CGI write!! id: " << id << ", and write to " << clients[id].get_write_fd() << ".\n"; 
-					FILE *fp = fdopen(id, "wb");
+					std::cerr << "im POST-CGI write!! id: " << id << ", origin is: " << clients[id].get_write_fd() << ".\n"; 
+					// FILE *fp = fdopen(id, "wb");
 
-					fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
+					// fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
 					// write(id, clients[id].get_request().get_post_body().c_str(), clients[id].get_request().get_post_body().length());
-					std::cerr << "write-" << id << ":" << clients[id].get_request().get_post_body() << std::endl;
+					write(id, clients[id].get_request().get_header().c_str(), clients[id].get_request().get_header().length());
+					std::cerr << "write-" << id << " +++++++++++++++++++++++++++++++++++\n" << clients[id].get_request().get_header() << "\n+++++++++++++++++++++++++++++++++++++++\n";
 					int read_fd = clients[clients[id].get_write_fd()].get_read_fd();
 					clients[read_fd].set_status(need_to_cgi_read);
+					clients[id].set_status(WAIT);
 					change_events(kq.get_change_list(), read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
 
-					fclose(fp);
+					// fclose(fp);
 					close(id);
 					clients.erase(id);
 					std::cerr << "post cgi end, go to fd: " << read_fd << "\n";
@@ -600,14 +606,18 @@ int main(int argc, char *argv[])
 						}
 						else if (clients[id].get_status() == cgi_read_ok)
 						{
-							clients[id].get_response().set_header(200, clients[id].get_header(), clients[id].get_content_type());
-							// std::cerr << "CGI response :: " << clients[id].get_response().get_send_to_response().c_str() << std::endl;
+							clients[id].get_response().set_header(200, clients[id].get_request().get_header(), clients[id].get_content_type());
+							std::cerr << "CGI response :: " << clients[id].get_response().get_send_to_response().c_str() << std::endl;
 						}
 						else if (clients[id].get_status() == POST_ok)
 						{
 							// std::cer << "POST RETURN:" << clients[id].get_RETURN() << std::endl;
 							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 							// std::cer << "POST response :: " << clients[id].get_response().get_send_to_response().c_str() << std::endl;
+						}
+						else if (clients[id].get_status() == DELETE_ok)
+						{
+							clients[id].get_response().set_header(200, "", "DELETE");
 						}
 						else if (clients[id].get_request().get_referer().find("favicon.ico") == std::string::npos && clients[id].get_request().get_method() == "GET")
 						{																			  // clients[id].location_id != -1 &&
@@ -667,11 +677,11 @@ int main(int argc, char *argv[])
 						FILE *fp = fdopen(id, "wb");
 						if (clients[id].get_status() == cgi_read_ok)
 						{
-							// write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
-							fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char), clients[id].get_response().get_send_to_response().length(), fp);
+							write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
+							// fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char), clients[id].get_response().get_send_to_response().length(), fp);
 							std::cerr << "END::::" << clients[id].get_request().get_start_line() << std::endl;
 							close(id);
-							fclose(fp);
+							// fclose(fp);
 							clients.erase(id);
 							break;
 						}

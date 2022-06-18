@@ -27,6 +27,7 @@ enum status
 	cgi_read_ok,
 	error_read_ok,
 	POST_ok,
+	DELETE_ok,
 	ok
 };
 
@@ -47,7 +48,6 @@ private:
 	Response response;
 	Request request;
 	std::string route;
-	std::string header;
 	std::string content_type;
 	std::string open_file_name;
 
@@ -55,6 +55,7 @@ public:
 	Client(/* args */);
 	~Client();
 
+	void header_parsing(std::string &read_str);
 	int request_parsing(int event_ident);
 
 	const int &get_server_sock(void) const;

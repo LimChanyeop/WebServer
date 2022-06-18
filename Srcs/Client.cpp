@@ -8,8 +8,27 @@ Client::~Client()
 		fclose(this->fp);
 } //////// 이거였어 해결!!!!
 
+void Client::header_parsing(std::string &read_str)
+{
+	std::string header;
+	std::string temp = read_str;
+
+	int find;
+	if ((find = temp.find("X-Powered-By:")) != std::string::npos) // if cgi -> header parsing
+	{
+		if ((find = temp.find("<")) != std::string::npos)
+		{
+			header = temp.erase(find - 1, temp.end() - temp.begin());
+			read_str = read_str.erase(0, find);
+		}
+	}
+	// std::out << "header:" << header << std::endl;
+	this->get_request().set_header(header);
+}
+
 int Client::request_parsing(int event_ident)
 {
+	std::cerr << "parsing~\n";
 	FILE *file_ptr = fdopen(event_ident, "r"); /////////////
 	if (file_ptr == NULL)
 	{
@@ -40,7 +59,7 @@ int Client::request_parsing(int event_ident)
 	}
 	this->fp = file_ptr;
 
-	// std::cerr << "Cli::fread_str: " << fread_str << std::endl;
+	std::cerr << "Cli::fread_str======================================\n" << fread_str << "\n===============================================\n";
 	this->request.split_request(fread_str);
 	this->request.request_parsing(this->request.get_requests());
 	return 1;
@@ -58,7 +77,6 @@ const int &Client::get_RETURN(void) const { return this->RETURN; }
 const int &Client::get_pid(void) const { return this->pid; }
 Request &Client::get_request(void) { return this->request; }
 Response &Client::get_response(void) { return this->response; }
-const std::string &Client::get_header(void) const { return this->header; }
 const std::string &Client::get_content_type(void) const { return this->content_type; }
 const std::string &Client::get_open_file_name(void) const { return this->open_file_name; }
 const FILE *Client::get_fp(void) const { return this->fp; }
@@ -87,9 +105,7 @@ void Client::set_is_file(int i) { this->is_file = i; }
 void Client::set_RETURN(int i) { this->RETURN = i; }
 void Client::set_request(Request request_) { this->request = request_; }
 void Client::set_response(Response response_) { this->response = response_; }
-void Client::set_header(std::string str) { this->header = str; }
 void Client::set_content_type(std::string str) { this->content_type = str; }
 void Client::set_open_file_name(std::string str) { this->open_file_name = str; }
 void Client::set_fp(FILE *_fp) { this->fp = _fp; }
 void Client::set_pid(int i) { this->pid = i; }
-
