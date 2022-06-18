@@ -32,14 +32,14 @@ std::string &Webserv::mime_read(std::string &default_mime)
 	}
 	char buff[1024];
 	std::string read_str;
-	int read_val = 0;
+	int valread = 0;
 	memset(buff, 0, 1024);
-	while ((read_val = read(open_fd, buff, 1023)) > 0)
+	while ((valread = read(open_fd, buff, 1023)) > 0)
 	{
-		buff[read_val] = 0;
-		read_str += buff;
+		buff[valread] = 0;
+		read_str.append(buff, valread);
 	}
-	if (read_val < 0)
+	if (valread < 0)
 	{
 		std::cerr << "mime read error!!\n";
 		exit(-1);
@@ -286,7 +286,7 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	setsockopt(acc_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
 	setsockopt(acc_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval));
 
-	// fcntl(acc_fd, F_SETFL, O_NONBLOCK);
+	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	change_events(kq.get_change_list(), acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	change_events(kq.get_change_list(), acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	// std::cout << "hi\n";

@@ -437,7 +437,7 @@ int main(int argc, char *argv[])
 
 
 					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					else if (clients[id].get_request().get_method() == "POST" && clients[id].get_status() != WAIT) /////////////// *************** post ***************** ////////////////////////////////////////////////////////////
+					else if (clients[id].get_request().get_method() == "POST" && clients[id].get_status() != WAIT) /////************ post ***************** ////////////////////////////////////////////////////////////
 					{
 						int is_dir = webserv.is_dir(Config.get_v_server()[server_id], clients[id].get_request(), clients[id]);
 						if (is_dir == 1) // is dir
@@ -459,7 +459,7 @@ int main(int argc, char *argv[])
 							}
 							// fclose(file_ptr); //아직 fdleak
 							clients[id].set_open_file_name(route + std::to_string(i));
-							int open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
+							int open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, 0777);
 							if (open_fd < 0)
 							{
 								clients[id].set_open_file_name("404");
@@ -526,9 +526,9 @@ int main(int argc, char *argv[])
 							}
 							int open_fd;
 							if (clients[id].get_RETURN() == 200)
-								open_fd = open(route.c_str(), O_RDWR | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
+								open_fd = open(route.c_str(), O_RDWR | O_APPEND | O_SYNC, 0777);
 							else
-								open_fd = open(route.c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
+								open_fd = open(route.c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, 0777);
 							clients[id].set_open_file_name(route);
 							if (open_fd < 0)
 							{
@@ -686,8 +686,6 @@ int main(int argc, char *argv[])
 							clients[id].get_response().get_send_to_response().size(), fp);
 						std::cerr << "END::::" << clients[id].get_request().get_start_line() << std::endl;
 
-						if (fclose(fp) == EOF)
-							error_exit("fclose");
 						fclose(fp);
 						close(id);
 						clients.erase(id);

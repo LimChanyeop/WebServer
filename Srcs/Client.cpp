@@ -20,7 +20,7 @@ int Client::request_parsing(int event_ident)
 
 	char buff[1024];
 	memset(buff, 0, 1024);
-	long fread_val = 0;
+	long valfread = 0;
 	std::string fread_str;
 	// AddressSanitizer:DEADLYSIGNAL
 	//  =================================================================
@@ -29,12 +29,12 @@ int Client::request_parsing(int event_ident)
 	//  ==38790==Hint: address points to the zero page.
 	//      #0 0x7fff6e9cca5d in flockfile+0x12 (libsystem_c.dylib:x86_64+0x38a5d)
 	//      #1 0x7fff6e9ce6ac in fread+0x1e (libsystem_c.dylib:x86_64+0x3a6ac)
-	while ((fread_val = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
+	while ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
 	{
-		buff[fread_val] = 0;
-		fread_str += buff;
+		buff[valfread] = 0;
+		fread_str.append(buff, valfread);
 	}
-	if (fread_val < 0)
+	if (valfread < 0)
 	{
 		std::cerr << "request fread error\n";
 	}
