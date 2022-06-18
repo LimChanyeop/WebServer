@@ -103,6 +103,8 @@ int find_server(Config Config, Client &client, int id)
 int main(int argc, char *argv[])
 {
 	Webserv webserv;
+	Config Config;
+	Kqueue kq;
 	std::vector<std::string> vec_attr;
 	std::string default_conf = "./conf/default.conf";
 	std::string default_mime = "./setting/mime.types";
@@ -115,7 +117,6 @@ int main(int argc, char *argv[])
 		std::cerr << "input error argc-(" << argc << ")\n";
 		exit(0);
 	}
-	Config Config;
 	Config.config_parsing(vec_attr);
 	std::string &mime = webserv.mime_read(default_mime);
 	webserv.mime_parsing(mime);
@@ -125,13 +126,13 @@ int main(int argc, char *argv[])
 	// Config.print_all();
 
 	webserv.ready_webserv(Config);
-	Kqueue kq;
 	std::map<int, Client> clients;
 	// kq.setting();
 	kq.kq = kqueue();
 	for (std::vector<Server>::iterator it = Config.v_server.begin(); it != Config.v_server.end(); it++)
 	{
 		// std::cout << "event-" << it->get_socket_fd() << std::endl;
+		fcntl(it->get_socket_fd(), F_SETFL, O_NONBLOCK);
 		change_events(kq.change_list, it->get_socket_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	}
 	while (1)
@@ -156,8 +157,8 @@ int main(int argc, char *argv[])
 					{
 						if (clients[id].request.requests.size() > 0)
 							fclose(clients[id].fp); // fclose by jwoo
-						// if (clients[id].response.response_str.length() > 0)
-						// 	close(clients[id].write_fd);
+						if (clients[id].write_fd >= 0)
+							close(clients[id].write_fd);
 					}
 				}
 				close(kq.event_list[i].ident);
@@ -202,37 +203,34 @@ int main(int argc, char *argv[])
 				}
 				else if (clients[id].get_status() == need_to_cgi_read) // 이벤트 주체가 READ open // file read->fread
 				{
-					if (clients[id].get_status() == need_to_cgi_read) // read
+					int status;
+					int ret = waitpid(clients[id].pid, &status, WNOHANG);
+					if (ret == 0)
+						continue;
+					else if (WIFSIGNALED(status) == true)
 					{
-						int status;
-						int ret = waitpid(clients[id].pid, &status, WNOHANG);
-						if (ret == 0)
-							continue;
-						else if (WIFSIGNALED(status) == true)
-						{
-							// cgi error
-							clients.erase(id);
-							close(id);
-							continue;
-						}
-						else if (WIFEXITED(status) != true)
-						{
-							continue;
-						}
+						// cgi error
+						clients.erase(id);
+						close(id);
+						continue;
+					}
+					else if (WIFEXITED(status) != true)
+					{
+						continue;
 					}
 					// std::out << "FILE READ, id:" << id << " ,read_id:" << clients[id].read_fd << "\n"; // open->read->write fopen->fread->fwrite
-					int read_val = 0;
+					int valread = 0;
 					std::string read_str;
 					char buff[1024];
 					// int valread = recv(acc_socket, read_str, 1024, 0);
 					memset(buff, 0, 1024);
-					while ((read_val = read(id, buff, 1023)) > 0)
+					while ((valread = read(id, buff, 1023)) > 0)
 					{ // read
-						buff[read_val] = 0;
-						read_str += buff;
+						buff[valread] = 0;
+						read_str.append(buff, valread);
 						// std::out << "**read_str:" << read_str << "\n\n";
 					}
-					if (read_val < 0)
+					if (valread < 0)
 					{
 						std::cerr << "read_error!\n";
 						exit(0);
@@ -278,11 +276,14 @@ int main(int argc, char *argv[])
 						clients[open_fd].set_status(need_error_read);
 
 						clients[id].set_status(WAIT);
+						fcntl(open_fd, F_SETFL, O_NONBLOCK);
 						change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 						break;
-					}
-					clients[id].set_status(request_ok); // requests_ok
+					} // requests_ok
+
+					std::cerr << "GO!::::" << clients[id].request.start_line << std::endl;
 					int server_id = webserv.find_server_id(id, Config, clients[id].request, clients);
+					clients[id].set_server_id(server_id);
 					if (server_id < 0)
 					{
 						close(id);
@@ -303,10 +304,11 @@ int main(int argc, char *argv[])
 							clients[open_fd].set_status(need_error_read);
 
 							clients[id].set_status(WAIT);
+							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 							break;
 						}
-						else if (location_id == -1)
+						else if (location_id == -1) // dir
 						{
 							clients[id].RETURN = 200;
 							clients[id].set_status(ok);
@@ -314,13 +316,13 @@ int main(int argc, char *argv[])
 						}
 						else if (location_id == -2) // is file
 						{
-							// std::out << "is file\n";
+							std::cout << "is file\n";
 							clients[id].RETURN = 200;
 							// std::out << "get_route:" << clients[id].get_route() << std::endl;
 							if (clients[id].get_route().find(".php") != std::string::npos ||
 								clients[id].get_route().find(".py") != std::string::npos)
 							{
-								// std::out << "im cgi!!\n";
+								std::cout << "im cgi!!\n";
 								// std::out << "index_root: " << clients[id].get_route() << std::endl;
 								// std::out << "cgi-file: " << Config.v_server[server_id].get_cgi_path() << std::endl;
 								webserv.run_cgi(Config.v_server[server_id], clients[id].get_route(), clients[id]); // envp have to fix
@@ -331,6 +333,7 @@ int main(int argc, char *argv[])
 								// std::cout << "clients[clients[" << id << "].read_fd].get_read_fd() :" << clients[clients[id].read_fd].get_read_fd()
 								// 		  << std::endl;
 								// std::cout << "read_fd : " << clients[id].read_fd << std::endl;
+								fcntl(clients[id].read_fd, F_SETFL, O_NONBLOCK);
 								change_events(kq.change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 								break;
 							}
@@ -358,6 +361,7 @@ int main(int argc, char *argv[])
 								clients[open_fd].set_status(need_error_read);
 
 								clients[id].set_status(WAIT);
+								fcntl(open_fd, F_SETFL, O_NONBLOCK);
 								change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 								break;
 							}
@@ -365,6 +369,7 @@ int main(int argc, char *argv[])
 							clients[open_fd].set_status(need_to_is_file_read);
 
 							clients[id].set_status(WAIT);
+							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 							break;
 						}
@@ -392,12 +397,14 @@ int main(int argc, char *argv[])
 								clients[open_fd].set_status(need_error_read);
 
 								clients[id].set_status(WAIT);
+								fcntl(open_fd, F_SETFL, O_NONBLOCK);
 								change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 								break;
 							}
 
 							clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
 							clients[open_fd].set_status(need_to_GET_read);
+							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 						}
 						else if ((index.find("php") == std::string::npos && index.find("py") == std::string::npos))
@@ -423,16 +430,20 @@ int main(int argc, char *argv[])
 							// std::cout << "clients[clients[" << id << "].read_fd].get_read_fd() :" << clients[clients[id].read_fd].get_read_fd()
 							// 		  << std::endl;
 							// std::cout << "read_fd : " << clients[id].read_fd << std::endl;
+							fcntl(clients[id].read_fd, F_SETFL, O_NONBLOCK);
 							change_events(kq.change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 						}
 					}
-					else if (clients[id].request.get_method() == "POST") /////////////// *************** post *****************
+
+
+					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+					else if (clients[id].request.get_method() == "POST" && clients[id].get_status() != WAIT) /////////////// *************** post ***************** ////////////////////////////////////////////////////////////
 					{
 						int is_dir = webserv.is_dir(Config.v_server[server_id], clients[id].request, clients[id]);
 						if (is_dir == 1) // is dir
 						{
 							std::cout << "ISDIR\n";
-							clients[id].RETURN = 201;
+							// clients[id].RETURN = 201;
 							std::string referer = clients[id].request.get_referer();
 							if (*(referer.end() - 1) != '/')
 								referer += '/';
@@ -445,9 +456,9 @@ int main(int argc, char *argv[])
 									error_exit("fclose");
 								i++;
 							}
-							fclose(file_ptr);
-							int open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
+							// fclose(file_ptr); //아직 fdleak
 							clients[id].open_file_name = route + std::to_string(i);
+							int open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
 							if (open_fd < 0)
 							{
 								clients[id].open_file_name = "404";
@@ -456,34 +467,62 @@ int main(int argc, char *argv[])
 							std::cout << "POST-my fd::" << id << ", open fd::" << open_fd << std::endl;
 							clients[open_fd].set_status(need_to_POST_write);
 							clients[open_fd].write_fd = id;
+							std::cerr << "referer: " << clients[id].request.get_referer() << std::endl;
+							std::cerr << "post_filename: " << clients[id].request.post_filename << std::endl;
+							std::cerr << "post_content_type: " << clients[id].request.post_content_type << std::endl;
+							// if (clients[id].request.get_referer().find("php") != std::string::npos ||
+							// 	clients[id].request.get_referer().find("py") != std::string::npos)
+							// {
+							// 	// cgi
+							// 	clients[id].RETURN = 200;
+							// 	std::string index_root = route + std::to_string(i);
+							// 	webserv.run_cgi(Config.v_server[server_id], index_root, clients[id]);
+							// 	clients[clients[id].read_fd].pid = clients[id].pid;
+							// 	clients[clients[id].read_fd].set_read_fd(id);
+							// 	// clients[clients[id].write_fd].set_write_fd(id); 생각해보니 필요없음
+							// 	clients[clients[id].read_fd].set_status(need_to_cgi_write);
+							// 	std::cout << "clients[clients[" << id << "].read_fd].get_read_fd() :" << clients[clients[id].read_fd].get_read_fd()
+							// 			  << std::endl;
+							// 	std::cout << "read_fd : " << clients[id].read_fd << std::endl;
+							// 	change_events(kq.change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
+							// 	change_events(kq.change_list, clients[id].write_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+							// 				  NULL); // cgi에 post_body 쓰기
+							// }
+							// else
+								clients[open_fd].request.post_body = clients[id].request.post_body;
+
+							clients[id].set_status(WAIT);
+							fcntl(open_fd, F_SETFL, O_NONBLOCK);
+							change_events(kq.change_list, open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
+						}
+						else ///////////////////////////////////// POST
+						{
+							std::cout << "not dir\n";
+							std::string route = "." + clients[id].request.get_referer();
 							if (clients[id].request.get_referer().find("php") != std::string::npos ||
 								clients[id].request.get_referer().find("py") != std::string::npos)
 							{
-								// cgi
+								// POST CGI
 								clients[id].RETURN = 200;
 								std::string index_root = route + std::to_string(i);
 								webserv.run_cgi(Config.v_server[server_id], index_root, clients[id]);
 								clients[clients[id].read_fd].pid = clients[id].pid;
+								clients[clients[id].write_fd].pid = clients[id].pid;
 								clients[clients[id].read_fd].set_read_fd(id);
-								// clients[clients[id].write_fd].set_write_fd(id); 생각해보니 필요없음
-								clients[clients[id].read_fd].set_status(need_to_cgi_write);
-								std::cout << "clients[clients[" << id << "].read_fd].get_read_fd() :" << clients[clients[id].read_fd].get_read_fd()
-										  << std::endl;
-								std::cout << "read_fd : " << clients[id].read_fd << std::endl;
-								change_events(kq.change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
-								change_events(kq.change_list, clients[id].write_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-											  NULL); // cgi에 post_body 쓰기
-							}
-							else
-								clients[open_fd].request.post_body = clients[id].request.post_body;
+								clients[clients[id].write_fd].set_write_fd(id);
+								clients[clients[id].read_fd].request.post_body = clients[id].request.post_body;
+								clients[clients[id].write_fd].request.post_body = clients[id].request.post_body;
+								clients[clients[id].write_fd].set_status(need_to_cgi_write);
 
-							clients[id].set_status(WAIT);
-							change_events(kq.change_list, open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
-						}
-						else /////////////////////////////////////
-						{
-							std::cout << "not dir\n";
-							std::string route = "." + clients[id].request.get_referer();
+								std::cerr << "clients[read_fd:" << clients[id].read_fd << "].set_read_fd(" << id << ")\n";
+								std::cerr << "clients[write_fd:" << clients[id].write_fd << "].set_write_fd(" << id << ")\n";
+								std::cout << "read_fd : " << clients[id].read_fd << ", write_fd : " << clients[id].write_fd <<std::endl;
+
+								clients[id].set_status(WAIT);
+								fcntl(clients[id].write_fd, F_SETFL, O_NONBLOCK);
+								change_events(kq.change_list, clients[id].write_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi에 post_body 쓰기
+								break;
+							}
 							int open_fd;
 							if (clients[id].RETURN == 200)
 								open_fd = open(route.c_str(), O_RDWR | O_APPEND | O_SYNC, S_IWUSR | S_IRUSR);
@@ -501,130 +540,157 @@ int main(int argc, char *argv[])
 							clients[open_fd].request.post_body = clients[id].request.post_body;
 
 							clients[id].set_status(WAIT);
-							// fcntl(open_fd, F_SETFL, O_NONBLOCK);
+							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(kq.change_list, open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
 						}
 					} // end POST
 				}
 			} // end FILT READ
-			else if (kq.event_list[i].filter == EVFILT_WRITE &&
-				(clients[id].get_status() == need_to_POST_write || clients[clients[id].read_fd].get_status() == need_to_cgi_write)) ////////////////////////////////
+			else if (kq.event_list[i].filter == EVFILT_WRITE)
 			{
-				FILE *fp = fdopen(id, "w");
-
-				write(id, clients[id].request.post_body.c_str(), clients[id].request.post_body.length());
-				// std::out << "write-" << id << ":" << clients[id].request.post_body << std::endl;
-				clients[clients[id].get_write_fd()].set_status(POST_ok);
-
-				fclose(fp);
-				close(id);
-				clients.erase(id);
-				break;
-			}
-			else if (kq.event_list[i].filter == EVFILT_WRITE && clients[id].get_status() >= WRITE_LINE)
-			{
-				// std::out << "accept WRITE Event / ident :" << id << std::endl;
-				set_content_type(clients[id], webserv);
-				if (clients[id].get_status() >= WRITE_LINE) // && server_it->request.get_host() != "")
+				// std::cerr << "id: " << id << ", status: " << 
+				if (clients[id].get_status() == need_to_POST_write) ////////////////////////////////
 				{
-					if (clients[id].get_status() == error_read_ok)
-					{
-						clients[id].response.set_header(404, "", clients[id].content_type);
-					}
-					else if (clients[id].get_status() == is_file_read_ok)
-					{
-						clients[id].response.set_header(clients[id].RETURN, "", clients[id].content_type);
-						// std::cerr << "response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
-					}
-					else if (clients[id].get_status() == cgi_read_ok)
-					{
-						clients[id].response.set_header(200, clients[id].header, clients[id].content_type);
-						// std::cerr << "CGI response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
-					}
-					else if (clients[id].get_status() == POST_ok)
-					{
-						// std::cer << "POST RETURN:" << clients[id].RETURN << std::endl;
-						clients[id].response.set_header(clients[id].RETURN, "", clients[id].content_type);
-						// std::cer << "POST response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
-					}
-					else if (clients[id].request.referer.find("favicon.ico") == std::string::npos && clients[id].request.get_method() == "GET")
-					{																			  // clients[id].location_id != -1 &&
-						if (Config.v_server[clients[id].get_server_id()].get_autoindex() == "on") // location on?
-						{
-							// std::cer << "auto indexing~!\n";
-							DIR *dir;
-							int is_root = 0;
-							struct dirent *ent;
-							if (clients[id].location_id < 0 && clients[id].is_file != 1) // /abc
-								dir = opendir(('.' + clients[id].request.referer).c_str());
-							else if (clients[id].request.get_referer() == "/")
-							{
-								is_root = 1;
-								dir = opendir(('.' + clients[id].request.referer).c_str());
-							}
-							else
-							{
-								// int open_fd = open("./status_pages/404.html", O_RDONLY); // not autoindexing
-								// if (open_fd < 0)
-								// 	std::cerr << "open error - " << clients[id].get_route() << std::endl;
-								// std::cout << "404-my fd::" << id << ", open fd::" << open_fd << std::endl;
-								// clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
-								// clients[open_fd].set_status(need_error_read);
-
-								// clients[id].set_status(WAIT);
-								// change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
-								break;
-							}
-							if (dir != NULL)
-							{
-								/* print all the files and directories within directory */
-								clients[id].response.response_str += "<!DOCTYPE html>\n";
-								clients[id].response.response_str += "<html>\n";
-								clients[id].response.response_str += "<head>\n</head>\n";
-								clients[id].response.response_str += "<body>\n";
-								clients[id].response.response_str += "<h1>Index of ." + clients[id].request.referer + "</h1>\n";
-								clients[id].response.response_str += "</a><br>\n";
-								while ((ent = readdir(dir)) != NULL)
-									clients[id].response.set_autoindex(clients[id].request.referer, ent->d_name, is_root);
-								closedir(dir);
-							}
-							else
-							{
-								/* could not open directory */
-								perror("");
-								return EXIT_FAILURE;
-							}
-						}
-						clients[id].response.set_header(200, "", clients[id].content_type);
-					}
-					else
-					{
-						clients[id].response.set_header(200, "", clients[id].content_type); // ok
-					}
-
-					if (clients[id].get_status() == cgi_read_ok)
-					{
-						write(id, clients[id].response.get_send_to_response().c_str(), clients[id].response.get_send_to_response().length());
-						close(id);
-						clients.erase(id);
-						break;
-					}
+					std::cerr << "im POST write!!\n";
 					FILE *fp = fdopen(id, "wb");
-					if (fp == NULL)
-					{
-						// std::out << "fdopen error" << std::endl;
-						continue;
-					}
-					// std::cerr << "response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
-					int count = 0;
-					fwrite(clients[id].response.get_send_to_response().c_str(), sizeof(char),
-						   clients[id].response.get_send_to_response().size(), fp);
 
-					if (fclose(fp) == EOF)
-						error_exit("fclose");
+					// write(id, clients[id].request.post_body.c_str(), clients[id].request.post_body.length());
+					fwrite(clients[id].request.post_body.c_str(), sizeof(char), clients[id].request.post_body.length(), fp);
+					std::cerr << "write-" << id << ":\n" << clients[id].request.post_body << std::endl;
+					clients[clients[id].get_write_fd()].set_status(POST_ok);
+
 					fclose(fp);
 					close(id);
 					clients.erase(id);
+					break;
+				}
+				else if (clients[id].get_status() == need_to_cgi_write)
+				{
+					std::cerr << "im POST-CGI write!! id: " << id << ", and write to " << clients[id].write_fd << ".\n"; 
+					FILE *fp = fdopen(id, "wb");
+
+					fwrite(clients[id].request.post_body.c_str(), sizeof(char), clients[id].request.post_body.length(), fp);
+					// write(id, clients[id].request.post_body.c_str(), clients[id].request.post_body.length());
+					std::cerr << "write-" << id << ":" << clients[id].request.post_body << std::endl;
+					int read_fd = clients[clients[id].write_fd].read_fd;
+					clients[read_fd].set_status(need_to_cgi_read);
+					change_events(kq.change_list, read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
+
+					fclose(fp);
+					close(id);
+					clients.erase(id);
+					std::cerr << "post cgi end, go to fd: " << read_fd << "\n";
+					break;
+				}
+				else if (clients[id].get_status() >= WRITE_LINE)
+				{
+					// std::out << "accept WRITE Event / ident :" << id << std::endl;
+					set_content_type(clients[id], webserv);
+					if (clients[id].get_status() >= WRITE_LINE) // && server_it->request.get_host() != "")
+					{
+						if (clients[id].get_status() == error_read_ok)
+						{
+							clients[id].response.set_header(404, "", clients[id].content_type);
+						}
+						else if (clients[id].get_status() == is_file_read_ok)
+						{
+							clients[id].response.set_header(clients[id].RETURN, "", clients[id].content_type);
+							// std::cerr << "response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
+						}
+						else if (clients[id].get_status() == cgi_read_ok)
+						{
+							clients[id].response.set_header(200, clients[id].header, clients[id].content_type);
+							// std::cerr << "CGI response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
+						}
+						else if (clients[id].get_status() == POST_ok)
+						{
+							// std::cer << "POST RETURN:" << clients[id].RETURN << std::endl;
+							clients[id].response.set_header(clients[id].RETURN, "", clients[id].content_type);
+							// std::cer << "POST response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
+						}
+						else if (clients[id].request.referer.find("favicon.ico") == std::string::npos && clients[id].request.get_method() == "GET")
+						{																			  // clients[id].location_id != -1 &&
+							if (Config.v_server[clients[id].get_server_id()].get_autoindex() == "on") // location on?
+							{
+								// std::cer << "auto indexing~!\n";
+								DIR *dir;
+								int is_root = 0;
+								struct dirent *ent;
+								if (clients[id].location_id < 0 && clients[id].is_file != 1) // /abc
+									dir = opendir(('.' + clients[id].request.referer).c_str());
+								else if (clients[id].request.get_referer() == "/")
+								{
+									is_root = 1;
+									dir = opendir(('.' + clients[id].request.referer).c_str());
+								}
+								else
+								{
+									// int open_fd = open("./status_pages/404.html", O_RDONLY); // not autoindexing
+									// if (open_fd < 0)
+									// 	std::cerr << "open error - " << clients[id].get_route() << std::endl;
+									// std::cout << "404-my fd::" << id << ", open fd::" << open_fd << std::endl;
+									// clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
+									// clients[open_fd].set_status(need_error_read);
+
+									// clients[id].set_status(WAIT);
+									// change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+									break;
+								}
+								if (dir != NULL)
+								{
+									/* print all the files and directories within directory */
+									clients[id].response.response_str += "<!DOCTYPE html>\n";
+									clients[id].response.response_str += "<html>\n";
+									clients[id].response.response_str += "<head>\n</head>\n";
+									clients[id].response.response_str += "<body>\n";
+									clients[id].response.response_str += "<h1>Index of ." + clients[id].request.referer + "</h1>\n";
+									clients[id].response.response_str += "</a><br>\n";
+									while ((ent = readdir(dir)) != NULL)
+										clients[id].response.set_autoindex(clients[id].request.referer, ent->d_name, is_root);
+									closedir(dir);
+								}
+								else
+								{
+									/* could not open directory */
+									perror("");
+									return EXIT_FAILURE;
+								}
+							}
+							clients[id].response.set_header(200, "", clients[id].content_type);
+						}
+						else
+						{
+							clients[id].response.set_header(200, "", clients[id].content_type); // ok
+						}
+
+						FILE *fp = fdopen(id, "wb");
+						if (clients[id].get_status() == cgi_read_ok)
+						{
+							// write(id, clients[id].response.get_send_to_response().c_str(), clients[id].response.get_send_to_response().length());
+							fwrite(clients[id].response.get_send_to_response().c_str(), sizeof(char), clients[id].response.get_send_to_response().length(), fp);
+							std::cerr << "END::::" << clients[id].request.start_line << std::endl;
+							close(id);
+							fclose(fp);
+							clients.erase(id);
+							break;
+						}
+						if (fp == NULL)
+						{
+							// std::out << "fdopen error" << std::endl;
+							continue;
+						}
+						// std::cerr << "response :: " << clients[id].response.get_send_to_response().c_str() << std::endl;
+						int count = 0;
+						fwrite(clients[id].response.get_send_to_response().c_str(), sizeof(char),
+							clients[id].response.get_send_to_response().size(), fp);
+						std::cerr << "END::::" << clients[id].request.start_line << std::endl;
+
+						if (fclose(fp) == EOF)
+							error_exit("fclose");
+						fclose(fp);
+						close(id);
+						clients.erase(id);
+					}
 				}
 			}
 		}

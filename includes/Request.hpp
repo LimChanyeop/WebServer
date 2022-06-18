@@ -40,9 +40,12 @@ class Request {
     std::string acceptLanguage;
     std::string cookie;
     std::string referer;
-    std::string contentLength;
-    std::string contentType;
-    std::string post_body;
+    std::string contentLength; // post
+    std::string contentType; // post
+    std::string post_body; // post
+    std::string post_filename; // post
+    std::string post_content_type; // post
+    std::string boundary; // post
     std::string query;
 
   public:

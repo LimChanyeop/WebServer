@@ -45,8 +45,8 @@ class Client {
     Response response;
     Request request;
     std::string route;
-    std::string header;
-    std::string content_type;
+    std::string header; // post
+    std::string content_type; // post
     std::string open_file_name;
 
   public:
