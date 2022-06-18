@@ -6,7 +6,7 @@
 #include <vector>
 #include <sys/event.h>
 
-#define NOE 1000
+#define NOE 128
 
 class Client;
 

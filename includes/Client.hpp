@@ -42,6 +42,7 @@ private:
 	int is_file;
 	int RETURN;
 	int pid;
+	FILE *fp;
 	char ip[20];
 	Response response;
 	Request request;
@@ -70,6 +71,7 @@ public:
 	const int &get_RETURN(void) const;
 	const int &get_is_file(void) const;
 	const int &get_pid(void) const;
+	const FILE *get_fp(void) const;
 	const char *get_ip(void) const;
 	Request &get_request(void);
 	Response &get_response(void);
@@ -87,6 +89,7 @@ public:
 	void set_open_file_name(std::string str);
 	void set_RETURN(int i);
 	void set_is_file(int i);
+	void set_fp(FILE *fp);
 	void set_pid(int i);
 	void set_ip(const char *str);
 	void set_request(Request request_);

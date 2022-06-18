@@ -65,13 +65,13 @@ void Webserv::mime_parsing(std::string &default_mime)
 		mime_str += *it;
 		it++;
 	}
-	std::vector<std::string>::iterator v_it2 = split_mime.begin(); // print
-	std::cerr << "*mime split (v_it)*\n";
-	while (v_it2 != split_mime.end())
-	{
-		std::cerr << *v_it2 << std::endl;
-		v_it2++;
-	}
+	// std::vector<std::string>::iterator v_it2 = split_mime.begin(); // print
+	// std::cerr << "*mime split (v_it)*\n";
+	// while (v_it2 != split_mime.end())
+	// {
+	// 	std::cerr << *v_it2 << std::endl;
+	// 	v_it2++;
+	// }
 	std::vector<std::string>::iterator v_it;
 	std::string mime_str2;
 	for (v_it = split_mime.begin(); v_it != split_mime.end(); v_it++)
@@ -90,7 +90,7 @@ void Webserv::mime_parsing(std::string &default_mime)
 			it++;
 		}
 		this->mimes[mime_str2] = mime_str;
-		std::cerr << mime_str2 << " = " << mime_str << std::endl;
+		// std::cerr << mime_str2 << " = " << mime_str << std::endl;
 		mime_str.clear();
 		mime_str2.clear();
 	}
@@ -176,7 +176,6 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 			if (atoi(config.get_v_server()[server_id].get_listen().c_str()) == atoi(rq.get_host().c_str())) // 못찾는게,, 이게 다르데;;
 			{
 				port = rq.get_host(); // ?
-				clients[event_ident].set_server_id(server_id);
 				return server_id;
 			}
 			server_id++;
@@ -189,25 +188,22 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 	return -1;
 }
 
-int Webserv::is_dir(const Server &server, const Request &rq, Client &client)
+int Webserv::is_dir(const Server &server, const Request &rq, Client &client) // POST
 {
 	std::string referer = rq.get_referer();
 	if (*referer.begin() == '/')
 		referer.erase(referer.begin(), referer.begin() + 1);
 	client.set_route(server.get_root() + referer);
 	std::string route = "." + client.get_route();
-	if (rq.get_method() == "POST")
+	std::cerr << "route: " << route << std::endl;
+	DIR *dir_ptr = NULL;
+	struct dirent *file = NULL;
+	if ((dir_ptr = opendir(route.c_str())) != NULL)
 	{
-		// is dir?
-		DIR *dir_ptr = NULL;
-		struct dirent *file = NULL;
-		if ((dir_ptr = opendir(route.c_str())) != NULL)
-		{
-			std::cerr << "It is directory, 201\n";
-			client.set_RETURN(201);
-			closedir(dir_ptr);
-			return 1;
-		}
+		std::cerr << "It is directory, 201\n";
+		client.set_RETURN(201);
+		closedir(dir_ptr);
+		return 1;
 	}
 	FILE *file_ptr;
 	if ((file_ptr = fopen(route.c_str(), "r")))
@@ -263,6 +259,7 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	FILE *file; // file exist?
 	if ((file = fopen(route.c_str(), "r")) != NULL)
 	{ // exist
+		std::cerr << "file exist\n";
 		fclose(file);
 		client.set_is_file(1);
 		client.set_RETURN(200);
@@ -281,19 +278,19 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 		std::cerr << "accept error " << acc_fd << std::endl;
 		exit(0);
 	}
+	std::cout << "acc_fd: " << acc_fd << std::endl;
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	struct timespec timeout;
 	timeout.tv_sec = 10; // 초 (seconds)
 	timeout.tv_nsec = 0;
 	setsockopt(acc_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
 	setsockopt(acc_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval));
-	std::cout << "acc_fd: " << acc_fd << std::endl;
 
-	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
+	// fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	change_events(kq.get_change_list(), acc_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	change_events(kq.get_change_list(), acc_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	// std::cout << "hi\n";
-	inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, const_cast<char *>(clients[acc_fd].get_ip()), INET_ADDRSTRLEN); // const cast
+	// inet_ntop(AF_INET, (sockaddr *)&(server.get_address()).sin_addr, const_cast<char *>(clients[acc_fd].get_ip()), INET_ADDRSTRLEN); // const cast
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
 	// std::cout << "hi2\n";
@@ -309,17 +306,21 @@ char **make_env(Client &client, const Server &server)
 	cgi_map["REQUEST_SCHEME"] = client.get_request().get_method();
 	cgi_map["SERVER_PORT"] = client.get_request().get_host();
 	cgi_map["SERVER_NAME"] = "localhost";
-	cgi_map["DOCUMENT_ROOT"] = server.get_cgi_path();				  //"./cgiBinary/php-cgi"; //
-	cgi_map["DOCUMENT_URI"] = client.get_route();					  //"/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함 //
-	cgi_map["REQUEST_URI"] = client.get_route();					  // "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함 //
-	cgi_map["SCRIPT_NAME"] = client.get_route();					  // "/View/file.php";	// 실행파일 전체 주소가 들어가야함 //
-	cgi_map["SCRIPT_FILENAME"] = '.' + client.get_route();			  //"./View/file.php";
-	cgi_map["QUERY_STRING"] = client.get_request().get_query();		  //
-	cgi_map["REMOTE_ADDR"] = client.get_ip();						  //
-	cgi_map["REDIRECT_STATUS"] = std::to_string(client.get_RETURN()); // 200
+	cgi_map["DOCUMENT_ROOT"] = server.get_cgi_path();			//"./cgiBinary/php-cgi"; //
+	cgi_map["DOCUMENT_URI"] = client.get_route();				//"/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함 //
+	cgi_map["REQUEST_URI"] = client.get_route();				// "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함 //
+	cgi_map["SCRIPT_NAME"] = client.get_route();				// "/View/file.php";	// 실행파일 전체 주소가 들어가야함 //
+	cgi_map["SCRIPT_FILENAME"] = '.' + client.get_route();		//"./View/file.php";
+	cgi_map["QUERY_STRING"] = client.get_request().get_query();		//
+	cgi_map["REMOTE_ADDR"] = client.get_ip();							//
+	cgi_map["REDIRECT_STATUS"] = "200";
 	if (client.get_request().get_method() == "POST")
 		cgi_map["CONTENT_LENGTH"] = client.get_request().get_contentLength(); // GET은 노노
-	cgi_map["CONTENT_TYPE"] = client.get_request().get_contentType();
+	// if (client.request.get_method() == "POST")
+	// 	cgi_map["CONTENT_TYPE"] = "multipart/form-data; " + client.request.boundary;
+	// else
+	// 	cgi_map["CONTENT_TYPE"] = client.request.get_contentType();
+	cgi_map["CONTENT_TYPE"] = "text/plain";
 
 	char **cgi_env;
 	cgi_env = new char *[cgi_map.size() + 1];

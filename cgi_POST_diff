@@ -1,0 +1,41 @@
+POST /View/file.php HTTP/1.1
+
+cgi: CONTENT_LENGTH=23892
+cgi: CONTENT_TYPE=multipart/form-data
+cgi: DOCUMENT_ROOT=./cgiBinary/php-cgi
+cgi: DOCUMENT_URI=/View/file.php
+cgi: GATEWAY_INTERFACE=CGI/1.1
+cgi: QUERY_STRING=
+cgi: REDIRECT_STATUS=200
+cgi: REMOTE_ADDR=������������������������
+cgi: REQUEST_METHOD=POST
+cgi: REQUEST_SCHEME=POST
+cgi: REQUEST_URI=/View/file.php
+cgi: SCRIPT_FILENAME=./View/file.php
+cgi: SCRIPT_NAME=/View/file.php
+cgi: SERVER_NAME=localhost
+cgi: SERVER_PORT=4243
+cgi: SERVER_PROTOCOL=HTTP/1.1
+cgi: SERVER_SOFTWARE=nginx server
+
+^^^^^^^^^^^ BAD ^^^^^^^^^^^^^
+
+=========== GOOD ============
+
+cgi: CONTENT_LENGTH=23892
+cgi: CONTENT_TYPE=multipart/form-data; boundary=----WebKitFormBoundary0sOcRgjUc74TZtPi
+cgi: DOCUMENT_ROOT=./www/php/php-cgi
+cgi: DOCUMENT_URI=/View/file.php
+cgi: GATEWAY_INTERFACE=CGI/1.1
+cgi: QUERY_STRING=
+cgi: REDIRECT_STATUS=200
+cgi: REMOTE_ADDR=127.0.0.1
+cgi: REQUEST_METHOD=POST
+cgi: REQUEST_SCHEME=POST
+cgi: REQUEST_URI=/View/file.php
+cgi: SCRIPT_FILENAME=./View/file.php
+cgi: SCRIPT_NAME=/View/file.php
+cgi: SERVER_NAME=localhost
+cgi: SERVER_PORT=4242
+cgi: SERVER_PROTOCOL=HTTP/1.1
+cgi: SERVER_SOFTWARE=nginx server designed by sma

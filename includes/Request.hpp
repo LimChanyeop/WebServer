@@ -42,14 +42,18 @@ private:
 	std::string acceptLanguage;
 	std::string cookie;
 	std::string referer;
-	std::string contentLength;
-	std::string contentType;
-	std::string post_body;
+	std::string contentLength; // post
+    std::string contentType; // post
+    std::string post_body; // post
+    std::string post_filename; // post
+    std::string post_content_type; // post
+    std::string boundary; // post
 	std::string query;
 
 public:
 	Request();
 
+	const std::string &get_start_line() const;
 	const std::string &get_method() const;
 	const std::string &get_protocol() const;
 	const std::string &get_host() const;
@@ -65,8 +69,11 @@ public:
 	const std::string &get_contentType() const;
 	const std::string &get_query() const;
 	const std::string &get_post_body() const;
+	const std::string &get_post_filename() const;
+	const std::string &get_post_content_type() const;
 	const std::vector<std::string> &get_requests() const;
 
+	void set_start_line(std::string _start_linee);
 	void set_method(std::string method);
 	void set_protocol(std::string protocol);
 	void set_host(std::string host);
@@ -82,6 +89,8 @@ public:
 	void set_contentType(std::string contentType);
 	void set_query(std::string query);
 	void set_post_body(std::string post_body);
+	void set_post_filename(std::string post_filename);
+	void set_post_content_type(std::string post_content_type);
 	void set_requests(std::vector<std::string> requests);
 
 	void clear_request();

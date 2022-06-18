@@ -44,7 +44,7 @@ void Response::set_header(const int &status, const std::string &header, const st
 {
 	if (status == 200)
 	{
-		std::cout << "GET 200!!\n";
+		std::cout << "200!!\n";
 		if (header != "") // cgi
 		{
 			this->send_to_response = "HTTP/1.1 200 OK\r\n";
@@ -97,7 +97,7 @@ void Response::set_header(const int &status, const std::string &header, const st
 	}
 	else if (status == 411)
 	{
-		std::cout << "POST 411!!\n";
+		std::cout << "411!!\n";
 		this->send_to_response = "HTTP/1.1 411 Not Found\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
@@ -105,22 +105,6 @@ void Response::set_header(const int &status, const std::string &header, const st
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
 		// std::cout << this->response_str;
-	}
-	else if (status == 42)
-	{
-		this->send_to_response = "HTTP/1.1 200 OK\r\n";
-		this->send_to_response += "cache-control: max-age=31536000\r\n";
-		this->send_to_response += "content-encoding: gzip\r\n";
-		this->send_to_response += "content-length: ";
-		this->send_to_response += std::to_string(this->response_str.size());
-		this->send_to_response += "\r\ncontent-type: image/vnd.microsoft.icon\r\n";
-		this->send_to_response += "referrer-policy: unsafe-url";
-		this->send_to_response += "server: NWS\r\n";
-		this->send_to_response += "strict-transport-security: max-age=63072000; includeSubdomains\r\n";
-		this->send_to_response += "vary: Accept-Encoding,User-Agent\r\n";
-
-		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
 	}
 }
 

@@ -1,8 +1,12 @@
 #include "../includes/Client.hpp"
 
-Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(no), is_file(0), RETURN(0), pid(-1) {}
+Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(no), is_file(0), RETURN(0), pid(-1), fp(NULL) {}
 
-Client::~Client() {}
+Client::~Client()
+{
+	if (this->fp != NULL)
+		fclose(this->fp);
+} //////// 이거였어 해결!!!!
 
 int Client::request_parsing(int event_ident)
 {
@@ -11,7 +15,7 @@ int Client::request_parsing(int event_ident)
 	{
 		std::cout << "id:" << event_ident << std::endl;
 		std::cout << strerror(errno) << std::endl;
-		exit(0);
+		return -1;
 	}
 
 	char buff[1024];
@@ -33,9 +37,8 @@ int Client::request_parsing(int event_ident)
 	if (fread_val < 0)
 	{
 		std::cerr << "request fread error\n";
-		fclose(file_ptr);
-		exit(0);
 	}
+	this->fp = file_ptr;
 
 	// std::cerr << "Cli::fread_str: " << fread_str << std::endl;
 	this->request.split_request(fread_str);
@@ -50,6 +53,16 @@ const int &Client::get_write_fd(void) const { return this->write_fd; }
 const std::string &Client::get_route(void) const { return this->route; }
 const int &Client::get_server_id(void) const { return this->server_id; }
 const int &Client::get_location_id(void) const { return this->location_id; }
+const int &Client::get_is_file(void) const { return this->is_file; }
+const int &Client::get_RETURN(void) const { return this->RETURN; }
+const int &Client::get_pid(void) const { return this->pid; }
+Request &Client::get_request(void) { return this->request; }
+Response &Client::get_response(void) { return this->response; }
+const std::string &Client::get_header(void) const { return this->header; }
+const std::string &Client::get_content_type(void) const { return this->content_type; }
+const std::string &Client::get_open_file_name(void) const { return this->open_file_name; }
+const FILE *Client::get_fp(void) const { return this->fp; }
+const char *Client::get_ip(void) const { return this->ip; }
 
 void Client::set_server_sock(int fd) { this->server_sock = fd; }
 void Client::set_status(int ok)
@@ -72,19 +85,11 @@ void Client::set_server_id(int i) { this->server_id = i; }
 void Client::set_location_id(int i) { this->location_id = i; }
 void Client::set_is_file(int i) { this->is_file = i; }
 void Client::set_RETURN(int i) { this->RETURN = i; }
-void Client::set_pid(int i) { this->pid = i; }
 void Client::set_request(Request request_) { this->request = request_; }
 void Client::set_response(Response response_) { this->response = response_; }
 void Client::set_header(std::string str) { this->header = str; }
 void Client::set_content_type(std::string str) { this->content_type = str; }
 void Client::set_open_file_name(std::string str) { this->open_file_name = str; }
+void Client::set_fp(FILE *_fp) { this->fp = _fp; }
+void Client::set_pid(int i) { this->pid = i; }
 
-const int &Client::get_is_file(void) const { return this->is_file; }
-const int &Client::get_RETURN(void) const { return this->RETURN; }
-const int &Client::get_pid(void) const { return this->pid; }
-Request &Client::get_request(void) { return this->request; }
-Response &Client::get_response(void) { return this->response; }
-const std::string &Client::get_header(void) const { return this->header; }
-const std::string &Client::get_content_type(void) const { return this->content_type; }
-const std::string &Client::get_open_file_name(void) const { return this->open_file_name; }
-const char *Client::get_ip(void) const { return this->ip; }
