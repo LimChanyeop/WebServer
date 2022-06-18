@@ -424,8 +424,9 @@ int main(int argc, char *argv[])
 							int i = 0;
 							while ((file_ptr = fopen((route + std::to_string(i)).c_str(), "r")) != NULL)
 							{
-								if (fclose(file_ptr) == EOF)
-									error_exit("fclose");
+								fclose(file_ptr);
+								// if (fclose(file_ptr) == EOF)
+								// 	error_exit("fclose");
 								i++;
 							}
 							// fclose(file_ptr);
@@ -499,8 +500,9 @@ int main(int argc, char *argv[])
 				FILE *fp = fdopen(id, "w");
 				if (fp == NULL)
 				{
-					if (fclose(fp) == EOF)
-						error_exit("fclose");
+					fclose(fp);
+					// if (fclose(fp) == EOF)
+					// 	error_exit("fclose");
 					continue;
 				}
 
@@ -610,8 +612,9 @@ int main(int argc, char *argv[])
 					fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char),
 						   clients[id].get_response().get_send_to_response().size(), fp);
 
-					if (fclose(fp) == EOF)
-						error_exit("fclose");
+					fclose(fp);
+					// if (fclose(fp) == EOF)
+					// 	error_exit("fclose");
 					close(id);
 					clients.erase(id);
 				}
