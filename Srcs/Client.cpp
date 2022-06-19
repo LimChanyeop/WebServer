@@ -74,6 +74,8 @@ const std::string &Client::get_content_type(void) const { return this->content_t
 const std::string &Client::get_open_file_name(void) const { return this->open_file_name; }
 const FILE *Client::get_fp(void) const { return this->fp; }
 const char *Client::get_ip(void) const { return this->ip; }
+const std::string &Client::get_redi_root(void) const { return this->redi_root; }
+
 
 void Client::set_server_sock(int fd) { this->server_sock = fd; }
 void Client::set_status(int ok)
@@ -102,3 +104,4 @@ void Client::set_content_type(std::string str) { this->content_type = str; }
 void Client::set_open_file_name(std::string str) { this->open_file_name = str; }
 void Client::set_fp(FILE *_fp) { this->fp = _fp; }
 void Client::set_pid(int i) { this->pid = i; }
+void Client::set_redi_root(std::string str) { this->redi_root = str; }

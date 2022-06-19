@@ -22,6 +22,7 @@ enum status
 	need_to_cgi_write,
 	WAIT,
 	WRITE_LINE, //////////// WRITE
+	redi_write,
 	GET_read_ok,
 	is_file_read_ok,
 	cgi_read_ok,
@@ -42,6 +43,7 @@ private:
 	int status;
 	int is_file;
 	int RETURN;
+	std::string redi_root;
 	int pid;
 	FILE *fp;
 	char ip[20];
@@ -70,6 +72,7 @@ public:
 	const std::string &get_content_type(void) const;
 	const std::string &get_open_file_name(void) const;
 	const int &get_RETURN(void) const;
+	const std::string &get_redi_root(void) const;
 	const int &get_is_file(void) const;
 	const int &get_pid(void) const;
 	const FILE *get_fp(void) const;
@@ -89,6 +92,7 @@ public:
 	void set_content_type(std::string str);
 	void set_open_file_name(std::string str);
 	void set_RETURN(int i);
+	void set_redi_root(std::string str);
 	void set_is_file(int i);
 	void set_fp(FILE *fp);
 	void set_pid(int i);

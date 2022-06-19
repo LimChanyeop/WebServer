@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 		{
 			int id = kq.get_event_list()[i].ident;
 			// std::cout << "event id:" << id << \
-			// 	" , event filter:" << kq.event_list[i].filter << \
+			// 	" , event filter:" << kq.get_event_list()[i].filter << \
 			// 	" , status:" << clients[id].get_status() << std::endl;
 			if (kq.get_event_list()[i].flags & EV_ERROR)
 			{
@@ -166,11 +166,11 @@ int main(int argc, char *argv[])
 			}
 			else if (kq.get_event_list()[i].filter == EVFILT_READ)
 			{
-				// std::out << "accept READ Event / ident :" << id << std::endl;
+				std::cout << "accept READ Event / ident :" << id << std::endl;
 				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
 					clients[id].get_status() == need_error_read)
 				{
-					// std::out << "FILE READ, id:" << id << " ,read_id:" << clients[id].read_fd << "\n"; // open->read->write fopen->fread->fwrite
+					std::cout << "FILE READ, id:" << id << " ,read_id:" << clients[id].get_read_fd() << "\n"; // open->read->write fopen->fread->fwrite
 					FILE *file_ptr = fdopen(id, "r");
 					int valfread = 0;
 					std::string fread_str;
@@ -187,18 +187,17 @@ int main(int argc, char *argv[])
 						fread_str.append(buff, valfread);
 					}
 					
-					fclose(file_ptr);
+					// fclose(file_ptr);
 					close(id);
 					int read_fd = clients[id].get_read_fd(); //
 					clients[read_fd].get_response().set_response_str(fread_str);
-					// std::cout << "read_ok : " << fread_str << std::endl;
 					if (clients[id].get_status() == need_error_read)
 						clients[read_fd].set_status(error_read_ok);
 					else if (clients[id].get_status() == need_to_is_file_read)
 						clients[read_fd].set_status(is_file_read_ok);
 					else
 						clients[read_fd].set_status(GET_read_ok);
-					// std::out << "READ_ok\n";
+					std::cout << ", id: " << read_fd << " status: " << clients[read_fd].get_status() << std::endl;
 					clients.erase(id);
 				}
 				else if (clients[id].get_status() == need_to_cgi_read) // 이벤트 주체가 READ open // file read->fread
@@ -307,7 +306,7 @@ int main(int argc, char *argv[])
 						}
 						else if (location_id == -2) // is file
 						{
-							// std::out << "is file\n";
+							std::cout << "is file\n";
 							clients[id].set_RETURN(200);
 							// std::out << "get_route:" << clients[id].get_route() << std::endl;
 							if (clients[id].get_route().find(".php") != std::string::npos ||
@@ -332,14 +331,18 @@ int main(int argc, char *argv[])
 								break;
 							}
 							std::string referer = clients[id].get_request().get_referer();
+							std::cout << "server_id: " << server_id << ", location_id: " << location_id <<std::endl;
 							if (*referer.begin() == '/')
 								referer.erase(referer.begin(), referer.begin() + 1);
-							std::string root = Config.get_v_server()[server_id].get_v_location()[location_id].get_root();
-							if (root != "" && root != "" && *(root.end() - 1) == '/')
-								root.erase(root.end() - 1, root.end());
-							clients[id].set_route(root + "/" + referer);
+							std::string root = Config.get_v_server()[server_id].get_root();
+							std::cerr << "root: " << root << std::endl;
+							if (root != "" && *(root.end() - 1) != '/')
+								root += '/';
+							clients[id].set_route(root + referer);
+							std::cout << "route: " << clients[id].get_route() << std::endl;
 
 							int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
+							std::cout << "route: " << '.' + clients[id].get_route() << std::endl;
 							clients[id].set_open_file_name('.' + clients[id].get_route());
 							if (open_fd < 0)
 							{
@@ -374,15 +377,26 @@ int main(int argc, char *argv[])
 							break;
 						}
 						clients[id].set_location_id(location_id);
+						int stat = Config.get_v_server()[server_id].get_v_location()[location_id].get_redi_status();
+						if (stat > 0) // rediraction!!
+						{
+							std::cerr << "redirection~\n";
+							clients[id].set_RETURN(stat);
+							clients[id].set_redi_root(Config.get_v_server()[server_id].get_v_location()[location_id].get_redi_root());
+							clients[id].set_status(redi_write);
+							break;
+						}
 						std::string index = Config.get_v_server()[server_id].get_v_location()[location_id].get_index();
 						if (Config.get_v_server()[server_id].get_v_location()[location_id].get_index() != "" &&
 							(index.find("php") == std::string::npos && index.find("py") == std::string::npos))
 						{
+							std::cerr << "is index!\n";
 							clients[id].set_RETURN(200);
 							std::string root = Config.get_v_server()[server_id].get_v_location()[location_id].get_root();
 							if (root != "" && *(root.end() - 1) != '/')
 								root += '/';
 							clients[id].set_route(root + index);
+							std::cout << "route: " << clients[id].get_route() << std::endl;
 
 							int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
 							clients[id].set_open_file_name('.' + clients[id].get_route());
@@ -594,11 +608,15 @@ int main(int argc, char *argv[])
 				}
 				else if (clients[id].get_status() >= WRITE_LINE)
 				{
-					// std::out << "accept WRITE Event / ident :" << id << std::endl;
+					std::cout << "accept WRITE Event / ident :" << id << ",status: " << clients[id].get_status() << std::endl;
 					set_content_type(clients[id], webserv);
 					if (clients[id].get_status() >= WRITE_LINE) // && server_it->request.get_host() != "")
 					{
-						if (clients[id].get_status() == error_read_ok)
+						if (clients[id].get_status() == redi_write)
+						{
+							clients[id].get_response().set_header(clients[id].get_RETURN(), clients[id].get_redi_root(), clients[id].get_content_type());
+						}
+						else if (clients[id].get_status() == error_read_ok)
 						{
 							clients[id].get_response().set_header(404, "", clients[id].get_content_type());
 						}
@@ -622,14 +640,19 @@ int main(int argc, char *argv[])
 						{
 							clients[id].get_response().set_header(200, "", "DELETE");
 						}
+						else if (clients[id].get_location_id() > 0)
+						{
+							clients[id].get_response().set_header(200, "", clients[id].get_content_type());
+						}
 						else if (clients[id].get_request().get_referer().find("favicon.ico") == std::string::npos && clients[id].get_request().get_method() == "GET")
 						{																			  // clients[id].location_id != -1 &&
 							if (Config.get_v_server()[clients[id].get_server_id()].get_autoindex() == "on") // location on?
 							{
-								// std::cer << "auto indexing~!\n";
+								std::cerr << "auto indexing~!\n";
 								DIR *dir;
 								int is_root = 0;
 								struct dirent *ent;
+								std::cout << "route: " << '.' + clients[id].get_request().get_referer() << std::endl;
 								if (clients[id].get_location_id() < 0 && clients[id].get_is_file() != 1) // /abc
 									dir = opendir(('.' + clients[id].get_request().get_referer()).c_str());
 								else if (clients[id].get_request().get_referer() == "/")
@@ -639,15 +662,15 @@ int main(int argc, char *argv[])
 								}
 								else
 								{
-									// int open_fd = open("./status_pages/404.html", O_RDONLY); // not autoindexing
-									// if (open_fd < 0)
-									// 	std::cerr << "open error - " << clients[id].get_route() << std::endl;
-									// std::cout << "404-my fd::" << id << ", open fd::" << open_fd << std::endl;
-									// clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
-									// clients[open_fd].set_status(need_error_read);
+									int open_fd = open("./status_pages/404.html", O_RDONLY); // not autoindexing
+									if (open_fd < 0)
+										std::cerr << "open error - " << clients[id].get_route() << std::endl;
+									std::cout << "404-my fd::" << id << ", open fd::" << open_fd << std::endl;
+									clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
+									clients[open_fd].set_status(need_error_read);
 
-									// clients[id].set_status(WAIT);
-									// change_events(kq.change_list, open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+									clients[id].set_status(WAIT);
+									change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 									break;
 								}
 								if (dir != NULL)
@@ -674,6 +697,7 @@ int main(int argc, char *argv[])
 						}
 						else
 						{
+							std::cout << "are you get_read_ok?\n";
 							clients[id].get_response().set_header(200, "", clients[id].get_content_type()); // ok
 						}
 
@@ -688,13 +712,10 @@ int main(int argc, char *argv[])
 							clients.erase(id);
 							break;
 						}
-						if (fp == NULL)
-						{
-							// std::out << "fdopen error" << std::endl;
-							continue;
-						}
 						// std::cerr << "response :: " << clients[id].get_response().get_send_to_response().c_str() << std::endl;
 						int count = 0;
+
+						// std::cout << "send_to_res\n" << clients[id].get_response().get_send_to_response() << std::endl;
 						fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char),
 							clients[id].get_response().get_send_to_response().size(), fp);
 						std::cerr << "END::::" << clients[id].get_request().get_start_line() << std::endl;

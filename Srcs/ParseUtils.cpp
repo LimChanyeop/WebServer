@@ -63,7 +63,7 @@ int find_semi(std::string &str)
 int find_key(const std::string &key)
 {
 	std::vector<std::string> keys;
-	keys.push_back("client_limit_body_size");
+	keys.push_back("client_limit_body_size"); // 0
 	keys.push_back("request_limit_header_size");
 	keys.push_back("user");
 	keys.push_back("worker_processes");
@@ -73,12 +73,13 @@ int find_key(const std::string &key)
 	keys.push_back("index");
 	keys.push_back("autoindex");
 	keys.push_back("return");
-	keys.push_back("error_page");
+	keys.push_back("error_page"); // 10
 	keys.push_back("cgi_path");
 	keys.push_back("allow_nethods");
 	keys.push_back("auth_key");
 	keys.push_back("server");
 	keys.push_back("location");
+	keys.push_back("return"); // 16
 
 	for (std::vector<std::string>::iterator it = keys.begin(); it != keys.end(); it++)
 	{

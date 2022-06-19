@@ -40,16 +40,16 @@ void Response::set_autoindex(const std::string &referer, const std::string &name
 	this->response_str += "</a><br>\n";
 }
 
-void Response::set_header(const int &status, const std::string &header, const std::string &content_type)
+void Response::set_header(const int &status, const std::string &opt, const std::string &content_type)
 {
 	if (status == 200)
 	{
 		std::cout << "200!!\n";
-		if (header != "") // cgi
+		if (opt != "") // cgi
 		{
 			this->send_to_response = "HTTP/1.1 200 OK\r\n";
 			std::cerr << "there is header!!\n";
-			this->send_to_response += header;
+			this->send_to_response += opt;
 			this->send_to_response += "Content-Length: ";
 		}
 		else
@@ -83,6 +83,15 @@ void Response::set_header(const int &status, const std::string &header, const st
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
+	}
+	else if (status == 301)
+	{
+		std::cout << "REDI 301!!\n";
+		this->send_to_response = "HTTP/1.1 301 Moved Permanently\r\nLocation: ";
+		this->send_to_response += opt + "\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
+		this->send_to_response += std::to_string(this->response_str.length() + 1);
 	}
 	else if (status == 404)
 	{

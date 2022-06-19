@@ -136,7 +136,7 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 			temp += *(it + 1);
 			this->set_autoindex(temp);
 			break;
-		case 9:
+		case 9: // return n
 			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
@@ -193,7 +193,6 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 			v_location.push_back(Location(*this));						   // vec v_location push_back
 			v_location[v_location.size() - 1].config_parsing(++it, lists); // v_location[i].server_parsing((&)it, conf_lists)
 			break;
-
 		default:
 			break;
 		}
