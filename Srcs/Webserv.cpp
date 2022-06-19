@@ -307,17 +307,21 @@ char **make_env(Client &client, const Server &server)
 	cgi_map["SERVER_PORT"] = client.get_request().get_host();
 	cgi_map["SERVER_NAME"] = "localhost";
 	cgi_map["DOCUMENT_ROOT"] = server.get_cgi_path();			//"./cgiBinary/php-cgi"; //
+	std::cerr << "cgi path: " <<  server.get_cgi_path() << std::endl;
 	cgi_map["DOCUMENT_URI"] = client.get_route();				//"/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함 //
 	cgi_map["REQUEST_URI"] = client.get_route();				// "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함 //
 	cgi_map["SCRIPT_NAME"] = client.get_route();				// "/View/file.php";	// 실행파일 전체 주소가 들어가야함 //
 	cgi_map["SCRIPT_FILENAME"] = '.' + client.get_route();		//"./View/file.php";
 	cgi_map["QUERY_STRING"] = client.get_request().get_query();		//
-	cgi_map["REMOTE_ADDR"] = client.get_ip();							//
+	cgi_map["REMOTE_ADDR"] = "127.0.0.1"; //client.get_ip();							//
 	cgi_map["REDIRECT_STATUS"] = "200";
+	std::cerr << "file name:" << client.get_request().get_post_filename() << std::endl;
 	if (client.get_request().get_method() == "POST")
 		cgi_map["CONTENT_LENGTH"] = client.get_request().get_contentLength(); // GET은 노노
 	if (client.get_request().get_post_filename().find(".png") != std::string::npos)
 		cgi_map["CONTENT_TYPE"] = "multipart/form-data; boundary=" + client.get_request().get_boundary();
+	else if (client.get_request().get_contentType() != "")
+		cgi_map["CONTENT_TYPE"] = client.get_request().get_contentType();
 	else
 		cgi_map["CONTENT_TYPE"] = "text/html";
 	// cgi_map["CONTENT_TYPE"] = "text/plain";

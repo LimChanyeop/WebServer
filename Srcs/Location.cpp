@@ -167,6 +167,7 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 			break;
 		// case 15: // location
 		// 	break;
+		case 16:
 		default:
 			break;
 		}

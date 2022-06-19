@@ -1,17 +1,18 @@
-cgi: CONTENT_TYPE=text/plain
+cgi: CONTENT_LENGTH=23890
+cgi: CONTENT_TYPE=multipart/form-data; boundary=----WebKitFormBoundaryD63triAr810a2bdA
 cgi: DOCUMENT_ROOT=./cgiBinary/php-cgi
 cgi: DOCUMENT_URI=/View/file.php
 cgi: GATEWAY_INTERFACE=CGI/1.1
 cgi: QUERY_STRING=
 cgi: REDIRECT_STATUS=200
-cgi: REMOTE_ADDR=0.0.0.0
-cgi: REQUEST_METHOD=GET
-cgi: REQUEST_SCHEME=GET
+cgi: REMOTE_ADDR=127.0.0.1
+cgi: REQUEST_METHOD=POST
+cgi: REQUEST_SCHEME=POST
 cgi: REQUEST_URI=/View/file.php
 cgi: SCRIPT_FILENAME=./View/file.php
 cgi: SCRIPT_NAME=/View/file.php
-cgi: SERVER_NAME=hi
-cgi: SERVER_PORT=4242
+cgi: SERVER_NAME=localhost
+cgi: SERVER_PORT=4243
 cgi: SERVER_PROTOCOL=HTTP/1.1
 cgi: SERVER_SOFTWARE=nginx server
 
@@ -19,18 +20,18 @@ cgi: SERVER_SOFTWARE=nginx server
 
 =================good=======================
 
-cgi: CONTENT_TYPE=text/plain
+cgi: CONTENT_TYPE=multipart/form-data; boundary=----WebKitFormBoundaryGAyvsNVTS3xt5ztu
 cgi: DOCUMENT_ROOT=./www/php/php-cgi
-cgi: DOCUMENT_URI=/www/php/file.php
+cgi: DOCUMENT_URI=/View/file.php
 cgi: GATEWAY_INTERFACE=CGI/1.1
 cgi: QUERY_STRING=
 cgi: REDIRECT_STATUS=200
 cgi: REMOTE_ADDR=127.0.0.1
-cgi: REQUEST_METHOD=GET
-cgi: REQUEST_SCHEME=GET
-cgi: REQUEST_URI=/www/php/file.php
-cgi: SCRIPT_FILENAME=./www/php/file.php
-cgi: SCRIPT_NAME=/www/php/file.php
+cgi: REQUEST_METHOD=POST
+cgi: REQUEST_SCHEME=POST
+cgi: REQUEST_URI=/View/file.php
+cgi: SCRIPT_FILENAME=./View/file.php
+cgi: SCRIPT_NAME=/View/file.php
 cgi: SERVER_NAME=localhost
 cgi: SERVER_PORT=4242
 cgi: SERVER_PROTOCOL=HTTP/1.1

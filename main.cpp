@@ -525,7 +525,9 @@ int main(int argc, char *argv[])
 
 								clients[id].set_status(WAIT);
 								fcntl(clients[id].get_write_fd(), F_SETFL, O_NONBLOCK);
+								fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
 								change_events(kq.get_change_list(), clients[id].get_write_fd(), EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi에 post_body 쓰기
+								change_events(kq.get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 								break;
 							}
 							int open_fd;
@@ -556,7 +558,7 @@ int main(int argc, char *argv[])
 				// std::cerr << "id: " << id << ", status: " << 
 				if (clients[id].get_status() == need_to_POST_write) //////////////////////////////// file에다가 write
 				{
-					std::cerr << "im POST write!!\n";
+					std::cerr << "im POST(file) write!!\n";
 					FILE *fp = fdopen(id, "wb");
 
 					// write(id, clients[id].get_request().post_body.c_str(), clients[id].get_request().post_body.length());
@@ -572,18 +574,19 @@ int main(int argc, char *argv[])
 				else if (clients[id].get_status() == need_to_cgi_write) // CGI에다가 write
 				{
 					std::cerr << "im POST-CGI write!! id: " << id << ", origin is: " << clients[id].get_write_fd() << ".\n"; 
-					// FILE *fp = fdopen(id, "wb");
+					FILE *fp = fdopen(id, "wb");
 
-					// fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
+					// fwrite(clients[id].get_request().get_header().c_str(), sizeof(char), clients[id].get_request().get_header().length(), fp);
+					fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
 					// write(id, clients[id].get_request().get_post_body().c_str(), clients[id].get_request().get_post_body().length());
-					write(id, clients[id].get_request().get_header().c_str(), clients[id].get_request().get_header().length());
-					std::cerr << "write-" << id << " +++++++++++++++++++++++++++++++++++\n" << clients[id].get_request().get_header() << "\n+++++++++++++++++++++++++++++++++++++++\n";
+					// write(id, clients[id].get_request().get_header().c_str(), clients[id].get_request().get_header().length());
+					// std::cerr << "write-" << id << " +++++++++++++++++++++++++++++++++++\n" << clients[id].get_request().get_post_body() << "\n+++++++++++++++++++++++++++++++++++++++\n";
 					int read_fd = clients[clients[id].get_write_fd()].get_read_fd();
 					clients[read_fd].set_status(need_to_cgi_read);
 					clients[id].set_status(WAIT);
-					change_events(kq.get_change_list(), read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
+					// change_events(kq.get_change_list(), read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
 
-					// fclose(fp);
+					fclose(fp);
 					close(id);
 					clients.erase(id);
 					std::cerr << "post cgi end, go to fd: " << read_fd << "\n";

@@ -28,6 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     echo "[id]: $fid";
   }
 }
+phpinfo();
 ?>
 
 </body>

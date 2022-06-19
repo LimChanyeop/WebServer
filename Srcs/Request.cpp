@@ -159,7 +159,7 @@ void Request::split_request(const std::string &lines)
 			this->boundary.erase(0, 2);
 			
 			if ((find = post_body.find("\r\n\r\n", it - post_body.begin())) != std::string::npos) // it 부터 찾게
-				header += post_body.substr(it - post_body.begin(), find - (it - post_body.begin()) + 4);
+				header += post_body.substr(it - post_body.begin(), find - (it - post_body.begin()) + 4 + 8);
 			std::cerr << "start(it - begin): " << it - post_body.begin() << ", find: " << find << std::endl;
 		}
 	}
@@ -168,8 +168,8 @@ void Request::split_request(const std::string &lines)
 	
 	if (header == "")
 		header = post_body; ///////
-	if (query == "")
-		query = header;
+	// if (query == "")
+	// 	query = header;
 
 
 	std::string delim = " \t\n";
