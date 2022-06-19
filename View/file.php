@@ -25,10 +25,6 @@
     </head>
     <body>
 <?php
-
-
-print_r($_FILES);
-print_r($_POST);
 // 디렉토리 설정
 $upload_dir = "/uploads";
 //$dir = $_SERVER['DOCUMENT_ROOT'] . $upload_dir;
@@ -63,7 +59,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $uploadOk = 1;
 
     // Check if image file is a actual image or fake image
-    phpinfo();
     if(isset($_POST["submit"])) {
       $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
       if($check !== false) {

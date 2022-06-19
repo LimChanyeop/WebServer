@@ -332,9 +332,10 @@ char **make_env(Client &client, const Server &server)
 	size_t i = 0;
 	for (std::map<std::string, std::string>::iterator it = cgi_map.begin(); it != cgi_map.end(); it++)
 	{
-
-		// cgi_env[i] = new char[(it->first + "=" + it->second).size()];
-		cgi_env[i] = strdup((it->first + "=" + it->second).c_str());
+		std::string temp = (it->first + "=" + it->second);
+		while (*(temp.end() - 1) == '\n' || *(temp.end() - 1) == '\r')
+			temp.pop_back();
+		cgi_env[i] = strdup(temp.c_str());
 		std::cout << "cgi: " << cgi_env[i] << std::endl;
 		i++;
 	}
