@@ -54,12 +54,10 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 			break;
 		case 14: // POST
 			set_method("POST");
-
 			referer = *(++it);
 			break;
 		case 15: // DELETE
-			set_method("DELETE");
-
+			set_method("DELETE");\
 			referer = *(++it);
 			break;
 		default:

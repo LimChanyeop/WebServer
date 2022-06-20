@@ -16,6 +16,7 @@ const std::string &Config::get_auth_key(void) const { return auth_key; }
 const int &Config::get_client_limit_body_size(void) const { return client_limit_body_size; }
 const int &Config::get_request_limit_header_size(void) const { return request_limit_header_size; }
 const std::vector<Server> &Config::get_v_server(void) const { return v_server; }
+const std::string &Config::get_limit_except(void) const { return limit_except; }
 
 void Config::set_user(std::string str) { user = str; }
 void Config::set_worker_processes(std::string str) { worker_processes = str; }
@@ -29,12 +30,14 @@ void Config::set_allow_methods(std::string str) { allow_methods = str; }
 void Config::set_auth_key(std::string str) { auth_key = str; }
 void Config::set_client_limit_body_size(int i) { client_limit_body_size = i; }
 void Config::set_request_limit_header_size(int i) { request_limit_header_size = i; }
+void Config::set_limit_except(std::string str) { limit_except = str; }
 
 void Config::config_parsing(std::vector<std::string> lists) //, Config_base config_base)
 {
 	std::vector<std::string>::iterator it;
 	for (it = lists.begin(); it != lists.end(); it++)
 	{
+		std::cerr << "it: " << *it << ", find_key: " << find_key(*it) << std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{
@@ -51,6 +54,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_user(temp);
@@ -60,6 +64,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_worker_processes(temp);
@@ -69,6 +74,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_root(temp);
@@ -78,6 +84,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_index(temp);
@@ -87,6 +94,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_autoindex(temp);
@@ -96,6 +104,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_return_n(temp);
@@ -105,6 +114,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_error_page(temp);
@@ -114,6 +124,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_cgi_path(temp);
@@ -123,6 +134,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_allow_methods(temp);
@@ -132,6 +144,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_auth_key(temp);
@@ -139,13 +152,36 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 		case 14:													   // server
 			v_server.push_back(Server(*this));						   // vec serverpush_back
 			v_server[v_server.size() - 1].config_parsing(++it, lists); // v_server[i].server_block_parsing((&)it, conf_lists)
-			break;													   // location
-
+			break;
 		// case 15: // location
-		// 	this->set_auth_key(*(++it));
-		// 	break;
+		case 16: // limit
+			while (find_semi(*(it + 1)))
+			{
+				temp += *it;
+				temp += ' ';
+				it++;
+			}
+			temp += *(it + 1);
+			this->limit_except = temp;
+			std::cout << "Conf::limit_except: " << limit_except << std::endl;
+			break;
 		default:
 			break;
 		}
+	}
+}
+
+void Config::server_check(void)
+{ // listen
+	std::map<std::string, int> dup;
+	std::vector<Server>::iterator it = this->v_server.begin();
+	for (; it != v_server.end(); it++) {
+		if (dup[it->get_listen()] == 1)
+		{
+			std::cerr << "Duplicated Port\n";
+			exit(-1);
+		}
+		std::cout << dup[it->get_listen()] << std::endl;
+		dup[it->get_listen()] = 1;
 	}
 }

@@ -21,6 +21,94 @@ void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int
 	change_list.push_back(temp_event);
 }
 
+int Webserv::is_client(Config config, int id)
+{
+	std::vector<Server>::iterator it = const_cast<std::vector<Server> &>(config.get_v_server()).begin();
+	for (; it != config.get_v_server().end(); it++)
+	{
+		if (it->get_socket_fd() == id)
+			return 0;
+	}
+	return 1;
+}
+
+void Webserv::set_content_type(Client &client, const Webserv &webserv)
+{
+	std::__1::map<std::__1::string, std::__1::string>::const_iterator it;
+	// for (it = webserv.mimes.begin(); it != webserv.mimes.end(); it++)
+	// {
+	// 	std::cerr << it->first << " = " << it->second << std::endl;
+	// }
+
+	if (client.get_open_file_name() == "")
+	{
+		client.set_content_type("text/html");
+		return;
+	}
+	std::string open_file_name = client.get_open_file_name();
+	int find;
+	while ((find = open_file_name.find('/')) != std::string::npos)
+	{
+		open_file_name.erase(0, find + 1);
+	}
+	std::string::iterator s_it = open_file_name.begin();
+	while (s_it != open_file_name.end() && *s_it != '.')
+		s_it++;
+	open_file_name.erase(0, s_it - open_file_name.begin() + 1);
+	if (open_file_name == "\n")
+	{
+		client.set_content_type("text/plain");
+		return;
+	}
+	std::map<std::string, std::string>::const_iterator m_it = const_cast<Webserv &>(webserv).get_mimes().begin();
+	while (m_it != const_cast<Webserv &>(webserv).get_mimes().end())
+	{
+		// std::cerr << "open_file_name: " << open_file_name << " vs mime: " << m_it->first << std::endl;
+		if (m_it->first.find(open_file_name) != std::string::npos)
+		{
+			// std::cerr << "\n**i found mime !!**\n\n";
+			client.set_content_type(m_it->second);
+			return;
+		}
+		m_it++;
+	}
+	if (m_it == const_cast<Webserv &>(webserv).get_mimes().end())
+	{
+		// std::cer << "\n*i cant find mime !!*\n\n";
+		client.set_content_type("text/plain");
+	}
+	return;
+
+	if (client.get_request().get_referer().find("html")) ////////
+		client.set_content_type("text/html");
+	else if (client.get_request().get_referer().find("txt"))
+		client.set_content_type("text/plain");
+
+	else if (client.get_request().get_referer().find("gif"))
+		client.set_content_type("image/gif");
+	else if (client.get_request().get_referer().find("png"))
+		client.set_content_type("image/png");
+}
+
+int Webserv::find_server(Config Config, Client &client, int id)
+{
+	std::vector<Server>::iterator it = const_cast<std::vector<Server> &>(Config.get_v_server()).begin();
+	for (; it != Config.get_v_server().end(); it++)
+	{
+		// std::out << "listen:" << it->get_socket_fd() << " vs " << id << std::endl;
+		if (it->get_socket_fd() == id)
+		{
+			// std::out << "It is server!!\n";
+			client.set_server_id(it - Config.get_v_server().begin());
+			client.set_server_sock(id);
+			// std::cout << client.get_server_id() << std::endl;
+			// std::cout << client.get_server_sock() << std::endl;
+			return 1; // 드디어 어떤 서버인지 찾음
+		}
+	}
+	return 0;
+}
+
 std::string &Webserv::mime_read(std::string &default_mime)
 {
 	int open_fd;
@@ -188,77 +276,64 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 	return -1;
 }
 
+int Webserv::check_except(std::map<int, Client> &clients, Config &config, int &ident, int &server_id)
+{
+	std::string limit_except = config.get_v_server()[server_id].get_limit_except();
+	std::string method = clients[ident].get_request().get_method();
+	if (method != "GET" && method != "POST" && method != "DELETE")
+	{
+		std::cerr << "NO right method\n";
+		this->set_error_page(clients, ident, 405);
+		// clients[ident].set_RETURN(404);
+		// int open_fd = open("./status_pages/404.html", O_RDONLY);
+		// clients[ident].set_open_file_name("./status_pages/404.html");
+		// if (open_fd < 0)
+		// 	std::cerr << "open error - " << clients[ident].get_route() << std::endl;
+		// clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
+		// clients[open_fd].set_status(need_error_read);
+
+		// clients[ident].set_status(WAIT);
+		// fcntl(open_fd, F_SETFL, O_NONBLOCK);
+		// change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+		return -1;
+	}
+	std::cout << limit_except << " vs " << method << std::endl;
+	if (limit_except == "")
+		return 1;
+	if (limit_except.find(method) == std::string::npos) // no match
+	{
+		std::cerr << "Not except\n";
+		this->set_error_page(clients, ident, 405);
+		// clients[ident].set_RETURN(404);
+		// int open_fd = open("./status_pages/404.html", O_RDONLY);
+		// clients[ident].set_open_file_name("./status_pages/404.html");
+		// if (open_fd < 0)
+		// 	std::cerr << "open error - " << clients[ident].get_route() << std::endl;
+		// clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
+		// clients[open_fd].set_status(need_error_read);
+
+		// clients[ident].set_status(WAIT);
+		// fcntl(open_fd, F_SETFL, O_NONBLOCK);
+		// change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+		return -1;
+	}
+	return 1;
+}
+
 int Webserv::check_size(std::map<int, Client> &clients, Config &config, int &ident, int &server_id)
 {
-	if (server_id >= 0) // server limit
+	std::cerr << "body_size: " << clients[ident].get_request().get_post_body_size() << std::endl;
+	std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_v_server()[server_id].get_request_limit_header_size() << std::endl;
+	if (clients[ident].get_request().get_header_size() > config.get_v_server()[server_id].get_request_limit_header_size())
 	{
-		std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_v_server()[server_id].get_request_limit_header_size();
-		if (clients[ident].get_request().get_header_size() > config.get_v_server()[server_id].get_request_limit_header_size())
-		{
-			clients[ident].set_RETURN(404);
-			int open_fd = open("./status_pages/404.html", O_RDONLY);
-			clients[ident].set_open_file_name("./status_pages/404.html");
-			if (open_fd < 0)
-				std::cerr << "open error - " << clients[ident].get_route() << std::endl;
-			clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
-			clients[open_fd].set_status(need_error_read);
-
-			clients[ident].set_status(WAIT);
-			fcntl(open_fd, F_SETFL, O_NONBLOCK);
-			change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
-			return -1;
-		}
-		std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_v_server()[server_id].get_request_limit_header_size();
-		if (clients[ident].get_request().get_post_body_size() > config.get_v_server()[server_id].get_client_limit_body_size())
-		{
-			clients[ident].set_RETURN(404);
-			int open_fd = open("./status_pages/404.html", O_RDONLY);
-			clients[ident].set_open_file_name("./status_pages/404.html");
-			if (open_fd < 0)
-				std::cerr << "open error - " << clients[ident].get_route() << std::endl;
-			clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
-			clients[open_fd].set_status(need_error_read);
-
-			clients[ident].set_status(WAIT);
-			fcntl(open_fd, F_SETFL, O_NONBLOCK);
-			change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
-			return -1;
-		}
+		this->set_error_page(clients, ident, 413);
+		return -1;
 	}
-	else // config limit
+	std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_v_server()[server_id].get_request_limit_header_size();
+	if (clients[ident].get_request().get_post_body_size() > config.get_v_server()[server_id].get_client_limit_body_size())
 	{
-		std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_request_limit_header_size();
-		if (clients[ident].get_request().get_header_size() > config.get_request_limit_header_size())
-		{
-			clients[ident].set_RETURN(404);
-			int open_fd = open("./status_pages/404.html", O_RDONLY);
-			clients[ident].set_open_file_name("./status_pages/404.html");
-			if (open_fd < 0)
-				std::cerr << "open error - " << clients[ident].get_route() << std::endl;
-			clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
-			clients[open_fd].set_status(need_error_read);
-
-			clients[ident].set_status(WAIT);
-			fcntl(open_fd, F_SETFL, O_NONBLOCK);
-			change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
-			return -1;
-		}
-		std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_request_limit_header_size();
-		if (clients[ident].get_request().get_post_body_size() > config.get_client_limit_body_size())
-		{
-			clients[ident].set_RETURN(404);
-			int open_fd = open("./status_pages/404.html", O_RDONLY);
-			clients[ident].set_open_file_name("./status_pages/404.html");
-			if (open_fd < 0)
-				std::cerr << "open error - " << clients[ident].get_route() << std::endl;
-			clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
-			clients[open_fd].set_status(need_error_read);
-
-			clients[ident].set_status(WAIT);
-			fcntl(open_fd, F_SETFL, O_NONBLOCK);
-			change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
-			return -1;
-		}
+		this->set_error_page(clients, ident, 413);
+		return -1;
 	}
 	return 1;
 }
@@ -356,7 +431,7 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	std::cout << "acc_fd: " << acc_fd << std::endl;
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	struct timespec timeout;
-	timeout.tv_sec = 10; // 초 (seconds)
+	timeout.tv_sec = 60; // 초
 	timeout.tv_nsec = 0;
 	setsockopt(acc_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
 	setsockopt(acc_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval));
@@ -393,7 +468,10 @@ char **make_env(Client &client, const Server &server)
 	std::cerr << "file name:" << client.get_request().get_post_filename() << std::endl;
 	if (client.get_request().get_method() == "POST")
 		cgi_map["CONTENT_LENGTH"] = client.get_request().get_contentLength(); // GET은 노노
-	if (client.get_request().get_post_filename().find(".png") != std::string::npos)
+	if (client.get_request().get_post_filename().find(".png") != std::string::npos ||
+		client.get_request().get_post_filename().find(".jpg") != std::string::npos ||
+		client.get_request().get_post_filename().find(".jpeg") != std::string::npos ||
+		client.get_request().get_post_filename().find(".gif") != std::string::npos)
 		cgi_map["CONTENT_TYPE"] = "multipart/form-data; boundary=" + client.get_request().get_boundary();
 	else if (client.get_request().get_contentType() != "")
 		cgi_map["CONTENT_TYPE"] = client.get_request().get_contentType();
@@ -476,6 +554,63 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	client.set_read_fd(read_fd[0]);
 	client.set_write_fd(write_fd[1]);
 }
+
+void Webserv::set_error_page(std::map<int, Client> &clients, const int &id, const int &status)
+{
+	clients[id].set_RETURN(status);
+	std::string route = "./status_pages/" + std::to_string(status) + ".html";
+	if (status == 0) // default
+		route = "./status_pages/Default_erreor.html";
+	int open_fd = open(route.c_str(), O_RDONLY);
+	if (open_fd < 0)
+	{
+		open_fd = open("./status_pages/Default_erreor.html", O_RDONLY);
+		std::cerr << "open error - " << clients[id].get_route() << std::endl;
+	}
+	clients[id].set_open_file_name(route);
+	clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
+	clients[open_fd].set_status(need_error_read);
+
+	clients[id].set_status(WAIT);
+	fcntl(open_fd, F_SETFL, O_NONBLOCK);
+	change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+}
+
+void Webserv::set_indexing(Client &client, int &id)
+{
+	std::cerr << "auto indexing~!\n";
+	DIR *dir;
+	int is_root = 0;
+	struct dirent *ent;
+	std::cout << "route: " << '.' + client.get_request().get_referer() << std::endl;
+	if (client.get_location_id() < 0 && client.get_is_file() != 1) // /abc
+		dir = opendir(('.' + client.get_request().get_referer()).c_str());
+	else// (client.get_request().get_referer() == "/")
+	{
+		is_root = 1;
+		dir = opendir(('.' + client.get_request().get_referer()).c_str());
+	}
+	if (dir != NULL)
+	{
+		/* print all the files and directories within directory */
+		client.get_response().get_response_str() += "<!DOCTYPE html>\n";
+		client.get_response().get_response_str() += "<html>\n";
+		client.get_response().get_response_str() += "<head>\n</head>\n";
+		client.get_response().get_response_str() += "<body>\n";
+		client.get_response().get_response_str() += "<h1>Index of ." + client.get_request().get_referer() + "</h1>\n";
+		client.get_response().get_response_str() += "</a><br>\n";
+		while ((ent = readdir(dir)) != NULL)
+			client.get_response().set_autoindex(client.get_request().get_referer(), ent->d_name, is_root);
+		closedir(dir);
+	}
+	else
+	{
+		/* could not open directory */
+		perror("");
+		// return EXIT_FAILURE;
+	}
+}
+
 
 std::map<std::string, std::string> &Webserv::get_mimes(void)
 {

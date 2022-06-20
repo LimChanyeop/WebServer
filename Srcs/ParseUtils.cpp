@@ -1,5 +1,11 @@
 #include "../includes/ParseUtils.hpp"
 
+void error_exit(std::string error)
+{
+	std::cerr << error << " error!\n";
+	exit(-1);
+}
+
 void split_config(std::string lines, std::vector<std::string> &vec_attr)
 {
 	std::string delim = " \t";
@@ -51,6 +57,7 @@ std::string remove_annotaion(char *argv)
 
 int find_semi(std::string &str)
 {
+	std::cout << "hi";
 	if (*(str.end() - 1) == ';')
 	{
 		str.erase(str.end() - 1);
@@ -79,7 +86,7 @@ int find_key(const std::string &key)
 	keys.push_back("auth_key");
 	keys.push_back("server");
 	keys.push_back("location");
-	keys.push_back("return"); // 16
+	keys.push_back("limit_except");
 
 	for (std::vector<std::string>::iterator it = keys.begin(); it != keys.end(); it++)
 	{

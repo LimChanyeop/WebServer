@@ -2,19 +2,19 @@
 
 Location::Location(Server sb) : redi_status(0)
 {
-	sb.set_client_limit_body_size(this->get_client_limit_body_size());
-	sb.set_request_limit_header_size(this->get_request_limit_header_size());
-	sb.set_user(this->get_user());
-	sb.set_worker_processes(this->get_worker_processes());
-	sb.set_listen(this->get_listen());			 // servget_listen()er
-	sb.set_server_name(this->get_server_name()); // servget_server_name()er
-	sb.set_root(this->get_root());
-	sb.set_index(this->get_index());
-	sb.set_autoindex(this->get_autoindex());
-	sb.set_error_page(this->get_error_page());
-	sb.set_auth_key(this->get_auth_key());
-	sb.set_cgi_path(this->get_cgi_path());
-	sb.set_allow_methods(this->get_allow_methods());
+	this->set_client_limit_body_size(sb.get_client_limit_body_size());
+	this->set_request_limit_header_size(sb.get_request_limit_header_size());
+	this->set_user(sb.get_user());
+	this->set_worker_processes(sb.get_worker_processes());
+	this->set_listen(sb.get_listen());
+	this->set_server_name(sb.get_server_name());
+	this->set_root(sb.get_root());
+	this->set_index(sb.get_index());
+	this->set_autoindex(sb.get_autoindex());
+	this->set_error_page(sb.get_error_page());
+	this->set_auth_key(sb.get_auth_key());
+	this->set_cgi_path(sb.get_cgi_path());
+	this->set_allow_methods(sb.get_allow_methods());
 }
 
 const std::string &Location::get_user(void) const { return user; }

@@ -93,6 +93,17 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response += "\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
 	}
+	else if (status == 400)
+	{
+		std::cout << "400!!\n";
+		this->send_to_response = "HTTP/1.1 400 Bad Request!\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
+		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += "\r\n\r\n";
+		this->send_to_response += this->response_str + "\r\n";
+		// std::cout << this->response_str;
+	}
 	else if (status == 404)
 	{
 		std::cout << "404!!\n";
@@ -104,10 +115,10 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response += this->response_str + "\r\n";
 		// std::cout << this->response_str;
 	}
-	else if (status == 411)
+	else if (status == 405)
 	{
-		std::cout << "411!!\n";
-		this->send_to_response = "HTTP/1.1 411 Not Found\r\nContent-Type: ";
+		std::cout << "405!!\n";
+		this->send_to_response = "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);

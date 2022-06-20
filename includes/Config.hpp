@@ -25,6 +25,7 @@ private:
 	std::string cgi_path;
 	std::string allow_methods;
 	std::string auth_key;
+	std::string limit_except;
 
 public:
 	Config();
@@ -41,6 +42,7 @@ public:
 	const int &get_client_limit_body_size(void) const;
 	const int &get_request_limit_header_size(void) const;
 	const std::vector<Server> &get_v_server(void) const;
+	const std::string &get_limit_except(void) const;
 
 	void set_user(std::string str);
 	void set_worker_processes(std::string str);
@@ -55,8 +57,10 @@ public:
 	void set_client_limit_body_size(int i);
 	void set_request_limit_header_size(int i);
 	void set_v_server(std::vector<Server> v_server_);
+	void set_limit_except(std::string str);
 
 	void config_parsing(std::vector<std::string> lists);
+	void server_check(void);
 };
 
 #endif
