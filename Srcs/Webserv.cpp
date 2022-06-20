@@ -188,6 +188,81 @@ int Webserv::find_server_id(const int &event_ident, const Config &config, const 
 	return -1;
 }
 
+int Webserv::check_size(std::map<int, Client> &clients, Config &config, int &ident, int &server_id)
+{
+	if (server_id >= 0) // server limit
+	{
+		std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_v_server()[server_id].get_request_limit_header_size();
+		if (clients[ident].get_request().get_header_size() > config.get_v_server()[server_id].get_request_limit_header_size())
+		{
+			clients[ident].set_RETURN(404);
+			int open_fd = open("./status_pages/404.html", O_RDONLY);
+			clients[ident].set_open_file_name("./status_pages/404.html");
+			if (open_fd < 0)
+				std::cerr << "open error - " << clients[ident].get_route() << std::endl;
+			clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
+			clients[open_fd].set_status(need_error_read);
+
+			clients[ident].set_status(WAIT);
+			fcntl(open_fd, F_SETFL, O_NONBLOCK);
+			change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+			return -1;
+		}
+		std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_v_server()[server_id].get_request_limit_header_size();
+		if (clients[ident].get_request().get_post_body_size() > config.get_v_server()[server_id].get_client_limit_body_size())
+		{
+			clients[ident].set_RETURN(404);
+			int open_fd = open("./status_pages/404.html", O_RDONLY);
+			clients[ident].set_open_file_name("./status_pages/404.html");
+			if (open_fd < 0)
+				std::cerr << "open error - " << clients[ident].get_route() << std::endl;
+			clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
+			clients[open_fd].set_status(need_error_read);
+
+			clients[ident].set_status(WAIT);
+			fcntl(open_fd, F_SETFL, O_NONBLOCK);
+			change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+			return -1;
+		}
+	}
+	else // config limit
+	{
+		std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_request_limit_header_size();
+		if (clients[ident].get_request().get_header_size() > config.get_request_limit_header_size())
+		{
+			clients[ident].set_RETURN(404);
+			int open_fd = open("./status_pages/404.html", O_RDONLY);
+			clients[ident].set_open_file_name("./status_pages/404.html");
+			if (open_fd < 0)
+				std::cerr << "open error - " << clients[ident].get_route() << std::endl;
+			clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
+			clients[open_fd].set_status(need_error_read);
+
+			clients[ident].set_status(WAIT);
+			fcntl(open_fd, F_SETFL, O_NONBLOCK);
+			change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+			return -1;
+		}
+		std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_request_limit_header_size();
+		if (clients[ident].get_request().get_post_body_size() > config.get_client_limit_body_size())
+		{
+			clients[ident].set_RETURN(404);
+			int open_fd = open("./status_pages/404.html", O_RDONLY);
+			clients[ident].set_open_file_name("./status_pages/404.html");
+			if (open_fd < 0)
+				std::cerr << "open error - " << clients[ident].get_route() << std::endl;
+			clients[open_fd].set_read_fd(ident); // event_fd:6 -> open_fd:10  발생된10->6
+			clients[open_fd].set_status(need_error_read);
+
+			clients[ident].set_status(WAIT);
+			fcntl(open_fd, F_SETFL, O_NONBLOCK);
+			change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+			return -1;
+		}
+	}
+	return 1;
+}
+
 int Webserv::is_dir(const Server &server, const Request &rq, Client &client) // POST
 {
 	std::string referer = rq.get_referer();
@@ -406,3 +481,9 @@ std::map<std::string, std::string> &Webserv::get_mimes(void)
 {
 	return mimes;
 }
+
+Kqueue &Webserv::get_kq(void)
+{
+	return this->kq;
+}
+

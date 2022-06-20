@@ -1,6 +1,8 @@
 #include "../includes/Config.hpp"
 #include "../includes/ParseUtils.hpp"
 
+Config::Config() : request_limit_header_size(0), client_limit_body_size(0) {}
+
 const std::string &Config::get_user(void) const { return user; }
 const std::string &Config::get_worker_processes(void) const { return worker_processes; }
 const std::string &Config::get_root(void) const { return root; }
@@ -38,9 +40,11 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 		{
 		case 0:
 			this->set_client_limit_body_size(atoi((*(it + 1)).c_str()));
+			std::cerr << "body_size: " << *(it + 1) << std::endl;
 			break;
 		case 1:
 			this->set_request_limit_header_size(atoi((*(it + 1)).c_str()));
+			std::cerr << "client_size: " << *(it + 1) << std::endl;
 			break;
 		case 2:
 			while (find_semi(*(it + 1)))

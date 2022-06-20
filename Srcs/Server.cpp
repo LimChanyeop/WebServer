@@ -2,18 +2,18 @@
 
 Server::Server(Config conf) : Fd()
 {
-	conf.set_client_limit_body_size(this->get_client_limit_body_size());
-	conf.set_request_limit_header_size(this->get_request_limit_header_size());
-	conf.set_user(this->get_user());
-	conf.set_worker_processes(this->get_worker_processes());
-	conf.set_root(this->get_root());
-	conf.set_index(this->get_index());
-	conf.set_autoindex(this->get_autoindex());
-	conf.set_return_n(this->get_return_n());
-	conf.set_error_page(this->get_error_page());
-	conf.set_auth_key(this->get_auth_key());
-	conf.set_cgi_path(this->get_cgi_path());
-	conf.set_allow_methods(this->get_allow_methods());
+	this->set_client_limit_body_size(conf.get_client_limit_body_size());
+	this->set_request_limit_header_size(conf.get_request_limit_header_size());
+	this->set_user(conf.get_user());
+	this->set_worker_processes(conf.get_worker_processes());
+	this->set_root(conf.get_root());
+	this->set_index(conf.get_index());
+	this->set_autoindex(conf.get_autoindex());
+	this->set_return_n(conf.get_return_n());
+	this->set_error_page(conf.get_error_page());
+	this->set_auth_key(conf.get_auth_key());
+	this->set_cgi_path(conf.get_cgi_path());
+	this->set_allow_methods(conf.get_allow_methods());
 }
 
 const std::string &Server::get_user(void) const { return user; }
@@ -62,9 +62,11 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 		{
 		case 0:
 			this->set_client_limit_body_size(atoi((*(it + 1)).c_str()));
+			std::cerr << "SERVER_body_size: " << *(it + 1) << std::endl;
 			break;
 		case 1:
 			this->set_request_limit_header_size(atoi((*(it + 1)).c_str()));
+			std::cerr << "SERVER_client_size: " << *(it + 1) << std::endl;
 			break;
 		case 2:
 			while (find_semi(*(it + 1)))

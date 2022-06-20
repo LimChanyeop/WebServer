@@ -48,8 +48,10 @@ private:
     std::string post_filename; // post
     std::string post_content_type; // post
     std::string boundary; // post
-	std::string header; // post
+	std::string post_header; // post
 	std::string query;
+	int post_body_size;
+	int header_size;
 
 public:
 	Request();
@@ -75,6 +77,8 @@ public:
 	const std::vector<std::string> &get_requests() const;
 	const std::string &get_boundary(void) const;
 	const std::string &get_header(void) const;
+	const int &get_post_body_size(void) const;
+	const int &get_header_size(void) const;
 
 	void set_start_line(std::string _start_linee);
 	void set_method(std::string method);
@@ -97,6 +101,8 @@ public:
 	void set_requests(std::vector<std::string> requests);
 	void set_boundary(std::string _boundary);
 	void set_header(std::string str);
+	void set_post_body_size(int i);
+	void set_header_size(int i);
 
 	void clear_request();
 	void request_parsing(const std::vector<std::string> &lists);

@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "Kqueue.hpp"
 #include "Client.hpp"
 #include "Config.hpp"
 #include "Kqueue.hpp"
@@ -32,12 +33,14 @@ class Webserv
 {
 private:
 	std::map<std::string, std::string> mimes;
+	Kqueue kq;
 
 public:
 	Webserv(/* args */);
 	~Webserv();
 
 	std::map<std::string, std::string> &get_mimes(void);
+	Kqueue &get_kq(void);
 
 	std::string &mime_read(std::string &default_mime);
 	void mime_parsing(std::string &mime);
@@ -45,6 +48,7 @@ public:
 	std::vector<Server>::iterator find_server_it(Config &Config, Client &client);
 	int find_server_id(const int &event_ident, const Config &config, const Request &rq, std::map<int, Client> &clients);
 	int find_location_id(const int &server_id, const Config &config, const Request &rq, Client &client);
+	int check_size(std::map<int, Client> &clients, Config &config, int &ident, int &lo);
 	int is_dir(const Server &server, const Request &rq, Client &client);
 	void accept_add_events(const int &event_ident, Server &server, Kqueue &kq, std::map<int, Client> &clients);
 	void run_cgi(const Server &server, const std::string &index_root, Client &client);

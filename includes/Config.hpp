@@ -27,6 +27,7 @@ private:
 	std::string auth_key;
 
 public:
+	Config();
 	const std::string &get_user(void) const;
 	const std::string &get_worker_processes(void) const;
 	const std::string &get_root(void) const;

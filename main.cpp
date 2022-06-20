@@ -104,7 +104,6 @@ int main(int argc, char *argv[])
 {
 	Webserv webserv;
 	Config Config;
-	Kqueue kq;
 	std::vector<std::string> vec_attr;
 	std::string default_conf = "./conf/default.conf";
 	std::string default_mime = "./setting/mime.types";
@@ -127,26 +126,26 @@ int main(int argc, char *argv[])
 
 	webserv.ready_webserv(Config);
 	std::map<int, Client> clients;
-	// kq.setting();
-	kq.set_kq_fd(kqueue());
+	// webserv.get_kq().setting();
+	webserv.get_kq().set_kq_fd(kqueue());
 	for (std::vector<Server>::iterator it = const_cast<std::vector<Server> &>(Config.get_v_server()).begin(); it != Config.get_v_server().end(); it++)
 	{
 		// std::cout << "event-" << it->get_socket_fd() << std::endl;
 		fcntl(it->get_socket_fd(), F_SETFL, O_NONBLOCK);
-		change_events(kq.get_change_list(), it->get_socket_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+		change_events(webserv.get_kq().get_change_list(), it->get_socket_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 	}
 	while (1)
 	{
 		std::string str_buf;
 
-		int num_of_event = kq.set_event();
+		int num_of_event = webserv.get_kq().set_event();
 		for (int i = 0; i < num_of_event; i++)
 		{
-			int id = kq.get_event_list()[i].ident;
+			int id = webserv.get_kq().get_event_list()[i].ident;
 			// std::cout << "event id:" << id << \
-			// 	" , event filter:" << kq.get_event_list()[i].filter << \
+			// 	" , event filter:" << webserv.get_kq().get_event_list()[i].filter << \
 			// 	" , status:" << clients[id].get_status() << std::endl;
-			if (kq.get_event_list()[i].flags & EV_ERROR)
+			if (webserv.get_kq().get_event_list()[i].flags & EV_ERROR)
 			{
 				// clients[id]
 				std::cerr << "EV_ERROR!\n";
@@ -161,10 +160,10 @@ int main(int argc, char *argv[])
 							close(clients[id].get_write_fd());
 					}
 				}
-				close(kq.get_event_list()[i].ident);
+				close(webserv.get_kq().get_event_list()[i].ident);
 				continue;
 			}
-			else if (kq.get_event_list()[i].filter == EVFILT_READ)
+			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ)
 			{
 				std::cout << "accept READ Event / ident :" << id << std::endl;
 				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
@@ -247,7 +246,7 @@ int main(int argc, char *argv[])
 				}
 				else if (find_server(Config, clients[id], id)) // 이벤트 주체가 server
 				{
-					webserv.accept_add_events(id, const_cast<std::vector<Server> &>(Config.get_v_server())[clients[id].get_server_id()], kq, clients);
+					webserv.accept_add_events(id, const_cast<std::vector<Server> &>(Config.get_v_server())[clients[id].get_server_id()], webserv.get_kq(), clients);
 				}
 				else if (clients.find(id) != clients.end() && clients[id].get_status() != WAIT) // 이벤트 주체가 client
 				{
@@ -263,7 +262,7 @@ int main(int argc, char *argv[])
 
 						clients[id].set_status(WAIT);
 						fcntl(open_fd, F_SETFL, O_NONBLOCK);
-						change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+						change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 						break;
 					} // requests_ok
 
@@ -275,6 +274,9 @@ int main(int argc, char *argv[])
 						close(id);
 						clients.erase(i);
 					}
+
+					if (webserv.check_size(clients, Config, id, server_id) == -1)
+						break ;
 
 					if (clients[id].get_request().get_method() == "GET" ||
 						clients[id].get_request().get_method() == "DELETE")
@@ -292,7 +294,7 @@ int main(int argc, char *argv[])
 
 							clients[id].set_status(WAIT);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
-							change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 							break;
 						}
 						else if (location_id == -1) // dir
@@ -327,7 +329,7 @@ int main(int argc, char *argv[])
 								std::cerr << "write_fd : " << clients[id].get_write_fd() << std::endl;
 								clients[id].set_status(WAIT);
 								fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
-								change_events(kq.get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+								change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 								break;
 							}
 							std::string referer = clients[id].get_request().get_referer();
@@ -359,7 +361,7 @@ int main(int argc, char *argv[])
 
 								clients[id].set_status(WAIT);
 								fcntl(open_fd, F_SETFL, O_NONBLOCK);
-								change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+								change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 								break;
 							}
 							if (clients[id].get_request().get_method() == "DELETE")
@@ -373,7 +375,7 @@ int main(int argc, char *argv[])
 
 							clients[id].set_status(WAIT);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
-							change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 							break;
 						}
 						clients[id].set_location_id(location_id);
@@ -412,7 +414,7 @@ int main(int argc, char *argv[])
 
 								clients[id].set_status(WAIT);
 								fcntl(open_fd, F_SETFL, O_NONBLOCK);
-								change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+								change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 								break;
 							}
 
@@ -420,7 +422,7 @@ int main(int argc, char *argv[])
 							clients[open_fd].set_status(need_to_GET_read);
 							clients[id].set_status(WAIT);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
-							change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 						}
 						else if ((index.find("php") == std::string::npos && index.find("py") == std::string::npos))
 						{
@@ -447,7 +449,7 @@ int main(int argc, char *argv[])
 							// std::cout << "read_fd : " << clients[id].read_fd << std::endl;
 							fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
 							clients[id].set_status(WAIT);
-							change_events(kq.get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+							change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 						}
 					}
 
@@ -501,8 +503,8 @@ int main(int argc, char *argv[])
 							// 	std::cout << "clients[clients[" << id << "].read_fd].get_read_fd() :" << clients[clients[id].read_fd].get_read_fd()
 							// 			  << std::endl;
 							// 	std::cout << "read_fd : " << clients[id].read_fd << std::endl;
-							// 	change_events(kq.change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
-							// 	change_events(kq.change_list, clients[id].write_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+							// 	change_events(webserv.get_kq().change_list, clients[id].read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
+							// 	change_events(webserv.get_kq().change_list, clients[id].write_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
 							// 				  NULL); // cgi에 post_body 쓰기
 							// }
 							// else
@@ -510,7 +512,7 @@ int main(int argc, char *argv[])
 
 							clients[id].set_status(WAIT);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
-							change_events(kq.get_change_list(), open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
+							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
 						}
 						else ///////////////////////////////////// POST
 						{
@@ -540,8 +542,8 @@ int main(int argc, char *argv[])
 								clients[id].set_status(WAIT);
 								fcntl(clients[id].get_write_fd(), F_SETFL, O_NONBLOCK);
 								fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
-								change_events(kq.get_change_list(), clients[id].get_write_fd(), EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi에 post_body 쓰기
-								change_events(kq.get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+								change_events(webserv.get_kq().get_change_list(), clients[id].get_write_fd(), EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi에 post_body 쓰기
+								change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 								break;
 							}
 							int open_fd;
@@ -562,12 +564,12 @@ int main(int argc, char *argv[])
 
 							clients[id].set_status(WAIT);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
-							change_events(kq.get_change_list(), open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
+							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
 						}
 					} // end POST
 				}
 			} // end FILT READ
-			else if (kq.get_event_list()[i].filter == EVFILT_WRITE)
+			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_WRITE)
 			{
 				// std::cerr << "id: " << id << ", status: " << 
 				if (clients[id].get_status() == need_to_POST_write) //////////////////////////////// file에다가 write
@@ -598,7 +600,7 @@ int main(int argc, char *argv[])
 					int read_fd = clients[clients[id].get_write_fd()].get_read_fd();
 					clients[read_fd].set_status(need_to_cgi_read);
 					clients[id].set_status(WAIT);
-					// change_events(kq.get_change_list(), read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
+					// change_events(webserv.get_kq().get_change_list(), read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
 
 					fclose(fp);
 					close(id);
@@ -670,7 +672,7 @@ int main(int argc, char *argv[])
 									clients[open_fd].set_status(need_error_read);
 
 									clients[id].set_status(WAIT);
-									change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+									change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 									break;
 								}
 								if (dir != NULL)
