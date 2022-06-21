@@ -126,6 +126,26 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response += this->response_str + "\r\n";
 		// std::cout << this->response_str;
 	}
+	else if (status == 413)
+	{
+		std::cout << "413!!\n";
+		this->send_to_response = "HTTP/1.1 413 Request Entity Too Large\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
+		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += "\r\n\r\n";
+		this->send_to_response += this->response_str + "\r\n";
+	}
+	else if (status == 500)
+	{
+		std::cout << "500!!\n";
+		this->send_to_response = "HTTP/1.1 500 INTERNAL_SERVER_ERROR\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
+		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += "\r\n\r\n";
+		this->send_to_response += this->response_str + "\r\n";
+	}
 }
 
 void Response::clear_response(void)

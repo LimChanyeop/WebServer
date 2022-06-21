@@ -547,7 +547,7 @@ int main(int argc, char *argv[])
 					fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
 					// write(id, clients[id].get_request().get_post_body().c_str(), clients[id].get_request().get_post_body().length());
 					// write(id, clients[id].get_request().get_header().c_str(), clients[id].get_request().get_header().length());
-					// std::cerr << "write-" << id << " +++++++++++++++++++++++++++++++++++\n" << clients[id].get_request().get_post_body() << "\n+++++++++++++++++++++++++++++++++++++++\n";
+					// std::cerr << "write+++++++++++++++++++++++++\n" << id << " +++++++++++++++++++++++++++++++++++\n" << clients[id].get_request().get_post_body() << "\n+++++++++++++++++++++++++++++++++++++++\n";
 					int read_fd = clients[clients[id].get_write_fd()].get_read_fd();
 					clients[read_fd].set_status(need_to_cgi_read);
 					clients[id].set_status(WAIT);

@@ -328,12 +328,14 @@ int Webserv::check_size(std::map<int, Client> &clients, Config &config, int &ide
 	std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_v_server()[server_id].get_request_limit_header_size() << std::endl;
 	if (clients[ident].get_request().get_header_size() > config.get_v_server()[server_id].get_request_limit_header_size())
 	{
+		std::cout << "header size error\n";
 		this->set_error_page(clients, ident, 413);
 		return -1;
 	}
-	std::cerr << clients[ident].get_request().get_header_size() << " vs " << config.get_v_server()[server_id].get_request_limit_header_size();
+	std::cerr << clients[ident].get_request().get_post_body_size() << " vs " << config.get_v_server()[server_id].get_client_limit_body_size() << std::endl;
 	if (clients[ident].get_request().get_post_body_size() > config.get_v_server()[server_id].get_client_limit_body_size())
 	{
+		std::cout << "body size error\n";
 		this->set_error_page(clients, ident, 413);
 		return -1;
 	}
@@ -574,6 +576,7 @@ void Webserv::set_error_page(std::map<int, Client> &clients, const int &id, cons
 	clients[open_fd].set_status(need_error_read);
 
 	clients[id].set_status(WAIT);
+	change_events(kq.get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL); // read event 추가
 	fcntl(open_fd, F_SETFL, O_NONBLOCK);
 	change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 }
