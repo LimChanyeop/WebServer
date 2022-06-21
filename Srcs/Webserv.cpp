@@ -42,7 +42,7 @@ void Webserv::set_content_type(Client &client, const Webserv &webserv)
 		return;
 	}
 	std::string open_file_name = client.get_open_file_name();
-	int find;
+	unsigned long find;
 	while ((find = open_file_name.find('/')) != std::string::npos)
 	{
 		open_file_name.erase(0, find + 1);
@@ -236,7 +236,7 @@ std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &cl
 int Webserv::find_server_id(const int &event_ident, const Config &config, const Request &rq, std::map<int, Client> &clients)
 {
 	std::string port = ""; // 왜 포트를 못찾았을까? -> 포트를 파싱 안했었넹~ok -> 근데도 못찾네~
-	int server_id;
+	unsigned long server_id;
 	if (clients.find(event_ident) != clients.end())
 	{
 		server_id = 0;
@@ -275,6 +275,14 @@ int Webserv::check_except(std::map<int, Client> &clients, Config &config, int &i
 
 int Webserv::check_size(std::map<int, Client> &clients, Config &config, int &ident, int &server_id)
 {
+	if (clients[ident].get_request().get_method() == "POST")
+	{
+		if (clients[ident].get_request().get_post_body_size() == 0)
+		{
+			this->set_error_page(clients, ident, 400);
+			return -1;
+		}
+	}
 	if (clients[ident].get_request().get_header_size() > config.get_v_server()[server_id].get_request_limit_header_size())
 	{
 		this->set_error_page(clients, ident, 413);
@@ -296,7 +304,6 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client) // 
 	client.set_route(server.get_root() + referer);
 	std::string route = "." + client.get_route();
 	DIR *dir_ptr = NULL;
-	struct dirent *file = NULL;
 	if ((dir_ptr = opendir(route.c_str())) != NULL)
 	{
 		client.set_RETURN(201);
@@ -321,7 +328,7 @@ int Webserv::is_dir(const Server &server, const Request &rq, Client &client) // 
 
 int Webserv::find_location_id(const int &server_id, const Config &config, const Request &rq, Client &client)
 {
-	int location_id;
+	unsigned long location_id;
 	if (rq.get_method() == "GET")
 	{
 		for (location_id = 0; location_id < config.get_v_server()[server_id].get_v_location().size(); location_id++)
@@ -339,7 +346,6 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	std::string route = "." + config.get_v_server()[server_id].get_root() + referer;
 
 	DIR *dir_ptr = NULL;	// is dir?
-	struct dirent *ent = NULL;
 	if ((dir_ptr = opendir(route.c_str())) != NULL)
 	{
 		client.set_RETURN(200);
@@ -428,7 +434,6 @@ char **make_env(Client &client, const Server &server)
 
 void Webserv::run_cgi(const Server &server, const std::string &index_root, Client &client)
 {
-	char buff[1024] = {0};
 	int read_fd[2];
 	int write_fd[2];
 	char **cgi_env;
@@ -527,7 +532,7 @@ void Webserv::set_error_page(std::map<int, Client> &clients, const int &id, cons
 	change_events(kq.get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 }
 
-void Webserv::set_indexing(Client &client, int &id)
+void Webserv::set_indexing(Client &client)
 {
 	DIR *dir;
 	int is_root = 0;

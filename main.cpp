@@ -455,7 +455,7 @@ int main(int argc, char *argv[])
 						}
 						else if (clients[id].get_status() == is_file_read_ok)
 						{
-							webserv.set_indexing(clients[id], id);
+							webserv.set_indexing(clients[id]);
 							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 						}
 						else if (clients[id].get_status() == cgi_read_ok)
@@ -541,7 +541,6 @@ int main(int argc, char *argv[])
 
 							}
 						}
-						int count = 0;
 						size_t wr_val = fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char),
 							clients[id].get_response().get_send_to_response().size(), fp);
 						if (wr_val < 0)

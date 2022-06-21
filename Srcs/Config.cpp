@@ -1,7 +1,7 @@
 #include "../includes/Config.hpp"
 #include "../includes/ParseUtils.hpp"
 
-Config::Config() : request_limit_header_size(0), client_limit_body_size(0) {}
+Config::Config() {}
 
 const std::string &Config::get_user(void) const { return user; }
 const std::string &Config::get_worker_processes(void) const { return worker_processes; }

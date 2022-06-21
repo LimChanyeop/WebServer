@@ -20,6 +20,7 @@ enum status
 	need_error_read,
 	need_to_POST_write,
 	need_to_cgi_write,
+	chunked_WAIT,
 	WAIT,
 	WRITE_LINE, //////////// WRITE
 	redi_write,
@@ -52,6 +53,7 @@ private:
 	std::string route;
 	std::string content_type;
 	std::string open_file_name;
+	std::string chunked_str;
 
 public:
 	Client(/* args */);
@@ -79,6 +81,7 @@ public:
 	const char *get_ip(void) const;
 	Request &get_request(void);
 	Response &get_response(void);
+	const std::string &get_chunked_str(void);
 
 	void set_server_sock(int fd);
 	// void set_server_it(std::vector<Server>::iterator server_it_);

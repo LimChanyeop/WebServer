@@ -13,7 +13,7 @@ void Client::header_parsing(std::string &read_str)
 	std::string header;
 	std::string temp = read_str;
 
-	int find;
+	unsigned long find;
 	if ((find = temp.find("X-Powered-By:")) != std::string::npos) // if cgi -> header parsing
 	{
 		if ((find = temp.find("<")) != std::string::npos)

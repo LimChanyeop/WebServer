@@ -98,8 +98,6 @@ int Request::find_key(const std::string &key)
 
 void Request::split_request(const std::string &lines)
 {
-	int idx;
-	
 	for (std::string::const_iterator it = lines.begin(); it != lines.end(); it++)
 	{
 		if (*it == '\n')
@@ -107,7 +105,7 @@ void Request::split_request(const std::string &lines)
 		this->start_line += *it;
 	}
 	std::cout << start_line << std::endl;
-	int find;
+	unsigned long find;
 	std::string head = lines;
 	if ((find = head.find("\r\n\r\n")) != std::string::npos)
 	{
@@ -151,7 +149,7 @@ void Request::split_request(const std::string &lines)
 				post_header += post_body.substr(it - post_body.begin(), find - (it - post_body.begin()) + 4 + 8);
 		}
 	}
-	if (find != -1) // post
+	if (find != std::string::npos) // post
 		this->header_size = find;
 	else
 		this->header_size = head.size();
@@ -185,7 +183,7 @@ void Request::split_request(const std::string &lines)
 
 void Request::query_parsing(void)
 {
-	int find;
+	unsigned long find;
 	if ((find = this->get_referer().find("?")) != std::string::npos)
 	{
 		std::string temp = get_referer();
