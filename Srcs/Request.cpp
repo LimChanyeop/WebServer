@@ -7,7 +7,12 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 	std::vector<std::string> lists_ = lists;
 	for (std::vector<std::string>::iterator it = lists_.begin(); it != lists_.end(); it++)
 	{
-		// std::cout << "it [" << *it << "] " << find_key(*it) << "\n\n";
+		try{
+		std::cout << "it [" << *it << "] " << find_key(*it) << "\n\n";
+		}catch(std::exception e){
+			std::cout << e.what() << std::endl;
+			std::cout << strerror(errno) << std::endl;
+		}
 		switch (find_key(*it))
 		{
 		case Emethod:
@@ -64,10 +69,10 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 	}
 }
 
-int Request::find_key(const std::string &key)
+int Request::find_key(const std::string key)
 {
 	std::vector<std::string> keys;
-	int result = 0;
+	unsigned long result = 0;
 	keys.push_back("Method:");
 	keys.push_back("Protocol:");
 	keys.push_back("Host:");
@@ -91,7 +96,7 @@ int Request::find_key(const std::string &key)
 			return result;
 		result++;
 	}
-	if (it == keys.end())
+	if (result == keys.size())
 		return -1;
 	return -42;
 }

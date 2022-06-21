@@ -106,7 +106,7 @@ public:
 
 	void clear_request();
 	void request_parsing(const std::vector<std::string> &lists);
-	int find_key(const std::string &key);
+	int find_key(const std::string key);
 	void split_request(const std::string &lines);
 	void query_parsing(void);
 };

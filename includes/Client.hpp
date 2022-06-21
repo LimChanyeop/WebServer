@@ -21,6 +21,7 @@ enum status
 	need_to_POST_write,
 	need_to_cgi_write,
 	chunked_WAIT,
+	chunked_FINISH,
 	WAIT,
 	WRITE_LINE, //////////// WRITE
 	redi_write,

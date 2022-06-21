@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 				// close(webserv.get_kq().get_event_list()[i].ident);
 				continue;
 			}
-			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ)
+			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ || clients[id].get_status() == chunked_WAIT)
 			{
 				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
 					clients[id].get_status() == need_error_read)
@@ -153,11 +153,16 @@ int main(int argc, char *argv[])
 				}
 				else if (clients.find(id) != clients.end() && clients[id].get_status() != WAIT) // 이벤트 주체가 client
 				{
-					if (clients[id].request_parsing(id) == -1)
+					int i;
+					if ((i = clients[id].request_parsing(id)) == -1)
 					{
 						webserv.set_error_page(clients, id, 500);
 						break;
 					} // requests_ok
+					if (clients[id].get_status() == chunked_WAIT) // chunked wait
+					{
+						break;
+					}
 
 					///////////////////////////////////////////////////
 					std::cout << "referer: " << clients[id].get_request().get_referer() << std::endl;

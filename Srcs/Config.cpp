@@ -39,6 +39,8 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 	{
 		// std::cerr << "it: " << *it << ", find_key: " << find_key(*it) << std::endl;
 		std::string temp = "";
+		if (*it == "")
+			continue;
 		switch (find_key(*it))
 		{
 		case 0:

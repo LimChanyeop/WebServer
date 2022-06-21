@@ -1,6 +1,6 @@
 #include "../includes/Client.hpp"
 
-Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(no), is_file(0), RETURN(0), pid(-1), fp(NULL) {}
+Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(chunked_WAIT), is_file(0), RETURN(0), pid(-1), fp(NULL) {}
 
 Client::~Client()
 {
@@ -34,25 +34,36 @@ int Client::request_parsing(int event_ident)
 		return -1;
 	}
 
-	char buff[1024];
-	memset(buff, 0, 1024);
-	long valfread = 0;
-	std::string fread_str;
-	while ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
+	while (this->status != chunked_FINISH)
 	{
-		buff[valfread] = 0;
-		fread_str.append(buff, valfread);
-	}
-	if (valfread < 0)
-	{
-		return -1;
-	}
-	this->fp = file_ptr;
+		char buff[1024];
+		memset(buff, 0, 1024);
+		long valfread = 0;
+		if ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
+		{
+			std::cout << "(read)\n";
+			buff[valfread] = 0;
+			this->chunked_str.append(buff, valfread);
+		}
+		std::cout << "valfread: " << valfread << std::endl;
+		if (chunked_str.find())
 
-	this->request.split_request(fread_str);
-	this->request.request_parsing(this->request.get_requests());
-	this->request.query_parsing();
-	return 1;
+		if (valfread == 0)
+		{
+			std::cout << "finish!\n";
+			this->status = chunked_FINISH;
+			this->fp = file_ptr;
+
+			this->request.split_request(chunked_str);
+			this->request.request_parsing(this->request.get_requests());
+			this->request.query_parsing();
+		}
+		else if (valfread < 0)
+		{
+			return -1;
+		}
+	}
+	return 0;
 }
 
 const int &Client::get_server_sock(void) const { return this->server_sock; }
