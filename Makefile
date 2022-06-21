@@ -12,7 +12,7 @@ SFILE = ./srcs/Webserv.cpp \
 		./srcs/Client.cpp \
 		main.cpp
 
-OBJECT = $(SFILE:.cpp=/Srcs/.o)
+OBJECT = $(SFILE:.cpp=.o)
 
 SNAME = webserv
 
