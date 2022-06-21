@@ -37,17 +37,15 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 	std::vector<std::string>::iterator it;
 	for (it = lists.begin(); it != lists.end(); it++)
 	{
-		std::cerr << "it: " << *it << ", find_key: " << find_key(*it) << std::endl;
+		// std::cerr << "it: " << *it << ", find_key: " << find_key(*it) << std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{
 		case 0:
 			this->set_client_limit_body_size(atoi((*(it + 1)).c_str()));
-			std::cerr << "body_size: " << *(it + 1) << std::endl;
 			break;
 		case 1:
 			this->set_request_limit_header_size(atoi((*(it + 1)).c_str()));
-			std::cerr << "client_size: " << *(it + 1) << std::endl;
 			break;
 		case 2:
 			while (find_semi(*(it + 1)))
@@ -163,7 +161,6 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			}
 			temp += *(it + 1);
 			this->limit_except = temp;
-			std::cout << "Conf::limit_except: " << limit_except << std::endl;
 			break;
 		default:
 			break;
@@ -181,7 +178,7 @@ void Config::server_check(void)
 			std::cerr << "Duplicated Port\n";
 			exit(-1);
 		}
-		std::cout << dup[it->get_listen()] << std::endl;
+		// std::cout << dup[it->get_listen()] << std::endl;
 		dup[it->get_listen()] = 1;
 	}
 }

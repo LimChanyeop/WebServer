@@ -18,7 +18,6 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 			break;
 		case Ehost:
 			this->set_host(*(++it));
-			// std::cout << *it << std::endl;
 			break;
 		case Econnection:
 			connection = *(++it);
@@ -50,7 +49,6 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 		case 13: // GET
 			set_method("GET");
 			referer = *(++it);
-			// std::cout << "referer:" << referer << std::endl;
 			break;
 		case 14: // POST
 			set_method("POST");
@@ -61,7 +59,6 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 			referer = *(++it);
 			break;
 		default:
-			// std::cerr << "Invalid input\n";
 			break;
 		}
 	}
@@ -102,29 +99,22 @@ int Request::find_key(const std::string &key)
 void Request::split_request(const std::string &lines)
 {
 	int idx;
-	// if ((idx = lines.find("\r\n\r\n")) != std::string::npos) {
-	//     std::string temp = lines;
-	//     this->post_body = temp.erase(0, idx + 2);
-	//     // std::cout << "Request::body : " << this->post_body << std::endl;
-	// } else
 	
 	for (std::string::const_iterator it = lines.begin(); it != lines.end(); it++)
 	{
 		if (*it == '\n')
 			break;
 		this->start_line += *it;
-		// std::cerr << this->post_filename << std::endl;
 	}
+	std::cout << start_line << std::endl;
 	int find;
 	std::string head = lines;
 	if ((find = head.find("\r\n\r\n")) != std::string::npos)
 	{
 		this->post_body = head.substr(find + 4); // std::cout << "cant found body\n";
 		this->post_body_size = this->post_body.size();
-		// std::cerr << "post_body:" << this->post_body << ", size: " << post_body_size << std::endl;
 		if ((find = post_body.find("filename=")) != std::string::npos)
 		{
-			std::cout << "find filename\n";
 			std::string::iterator it = post_body.begin() + find;
 			for (int i = 0; it != post_body.end(); it++)
 			{
@@ -133,13 +123,10 @@ void Request::split_request(const std::string &lines)
 				else if (*it == '\"')
 					i++;
 				this->post_filename += *it;
-				// std::cerr << this->post_filename << std::endl;
 			}
 		}
-		// std::cerr << this->post_body << std::endl;
 		if ((find = post_body.find("Content-Type: ")) != std::string::npos)
 		{
-			std::cout << "find content type\n";
 			std::string::iterator it = post_body.begin() + find;
 			for (; it != post_body.end(); it++)
 			{
@@ -150,7 +137,6 @@ void Request::split_request(const std::string &lines)
 		}
 		if ((find = post_body.find("------")) != std::string::npos) // boundary
 		{
-			std::cout << "find -------------\n";
 			std::string::iterator it = post_body.begin() + find;
 			for (; it != post_body.end(); it++)
 			{
@@ -160,11 +146,9 @@ void Request::split_request(const std::string &lines)
 				this->post_header += *it;
 			}
 			this->boundary.erase(0, 2);
-			std::cout << "boundary: " << boundary << std::endl;
 			
 			if ((find = post_body.find("\r\n\r\n", it - post_body.begin())) != std::string::npos) // it 부터 찾게
 				post_header += post_body.substr(it - post_body.begin(), find - (it - post_body.begin()) + 4 + 8);
-			// std::cerr << "start(it - begin): " << it - post_body.begin() << ", find: " << find << std::endl;
 		}
 	}
 	if (find != -1) // post
@@ -172,14 +156,8 @@ void Request::split_request(const std::string &lines)
 	else
 		this->header_size = head.size();
 
-	
-	// std::cout << "header: " << head << "\nheader_size: " << header_size << std::endl;
-	// std::cerr << "Cli::body ======================================\n" << post_body << "\n===============================================\n";
-	// std::cerr << "Cli::header ======================================\n" << post_header << "\n===============================================\n";
-	
 	if (post_header == "")
 		post_header = post_body; ///////
-
 
 	std::string delim = " \t\n";
 	std::string::const_iterator it;
@@ -205,6 +183,17 @@ void Request::split_request(const std::string &lines)
 	}
 }
 
+void Request::query_parsing(void)
+{
+	int find;
+	if ((find = this->get_referer().find("?")) != std::string::npos)
+	{
+		std::string temp = get_referer();
+		this->set_referer(temp.substr(0, find));
+		this->set_query(temp.erase(0, find));
+	}
+}
+
 
 void Request::set_start_line(std::string _start_line) { this->start_line = _start_line; }
 void Request::set_method(std::string method) { this->method = method; }
@@ -222,7 +211,6 @@ void Request::set_host(std::string host)
 		it++;
 	}
 	this->host = host;
-	// std::cout << "TEST-host:" << host << std::endl;
 }
 void Request::set_connection(std::string connection) { this->connection = connection; }
 void Request::set_upgradeInSecureRequest(std::string upgradeInSecureRequest) { this->upgradeInSecureRequest = upgradeInSecureRequest; }
@@ -234,6 +222,7 @@ void Request::set_cookie(std::string cookie) { this->cookie = cookie; }
 void Request::set_referer(std::string referer) { this->referer = referer; }
 void Request::set_contentLength(std::string contentLength) { this->contentLength = contentLength; }
 void Request::set_contentType(std::string contentType) { this->contentType = contentType; }
+void Request::set_query(std::string query) { this->query = query; }
 void Request::set_post_content_type(std::string contentLength) { this->post_content_type = contentLength; }
 void Request::set_post_filename(std::string filename) { this->post_filename = filename; }
 void Request::set_boundary(std::string boundary) { this->boundary = boundary; }
@@ -255,6 +244,7 @@ const std::string &Request::get_cookie() const { return cookie; }
 const std::string &Request::get_referer() const { return referer; }
 const std::string &Request::get_contentLength() const { return contentLength; }
 const std::string &Request::get_contentType() const { return contentType; }
+const std::string &Request::get_query() const { return query; }
 const std::string &Request::get_post_body() const { return post_body; }
 const std::string &Request::get_post_content_type() const { return post_content_type; }
 const std::string &Request::get_post_filename() const { return post_filename; }
@@ -266,7 +256,5 @@ const int &Request::get_header_size(void) const { return this->header_size; }
 
 
 void Request::clear_request() { requests.erase(requests.begin(), requests.end()); }
-
-const std::string &Request::get_query() const { return query; }
 
 void Request::set_post_body(std::string post_body) { this->post_body = post_body; }

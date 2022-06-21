@@ -26,7 +26,7 @@ all : $(SNAME) $(CNAME)
 
 #  -g -fsanitize=address
 $(SNAME) : $(SFILE)
-	$(CC) $(SFILE) -o $(SNAME) -g -fsanitize=address
+	$(CC) $(SFILE) -o $(SNAME) -g
 
 $(CNAME) : $(CFILE)
 	$(CC) $(CFILE) -o $(CNAME)

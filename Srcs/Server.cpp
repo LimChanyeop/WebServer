@@ -44,9 +44,7 @@ void Server::set_return_n(std::string str) { return_n = str; }
 void Server::set_error_page(std::string str) { error_page = str; }
 void Server::set_cgi_path(std::string str)
 {
-	// std::cout << "before cgi path-" << str << std::endl;
 	str.erase(0, str.find("./"));
-	// std::cout << "after cgi path-" << str << std::endl;
 	cgi_path = str;
 }
 void Server::set_allow_methods(std::string str) { allow_methods = str; }
@@ -59,17 +57,15 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 {
 	for (; it != lists.end() && *it != "}"; it++)
 	{
-		std::cerr << "ser::it: " << *it << ", find_key: " << find_key(*it) << std::endl;
+		// std::cerr << "ser::it: " << *it << ", find_key: " << find_key(*it) << std::endl;
 		std::string temp = "";
 		switch (find_key(*it))
 		{
 		case 0:
 			this->set_client_limit_body_size(atoi((*(it + 1)).c_str()));
-			std::cerr << "SERVER_body_size: " << *(it + 1) << std::endl;
 			break;
 		case 1:
 			this->set_request_limit_header_size(atoi((*(it + 1)).c_str()));
-			std::cerr << "SERVER_client_size: " << *(it + 1) << std::endl;
 			break;
 		case 2:
 			while (find_semi(*(it + 1)))
@@ -192,7 +188,6 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 			this->set_auth_key(temp);
 			break;
 		case 14: // server
-			std::cerr << "double server!\n";
 			break;
 		case 15:														   // location
 			v_location.push_back(Location(*this));						   // vec v_location push_back
@@ -206,7 +201,6 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 			}
 			temp += *(it + 1);
 			this->limit_except = temp;
-			std::cout << "Serv::limit_except: " << limit_except << "==================" << std::endl;
 			break;
 		default:
 			break;

@@ -126,7 +126,6 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 			if (*(temp.end() - 1) == ';')
 				temp.pop_back();
 			this->set_redi_return(status, temp);
-			std::cerr << "status: " << status << ", root: " << *it << std::endl;
 			break;
 		case 10:
 			while (find_semi(*(it + 1)))

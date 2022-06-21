@@ -28,12 +28,9 @@ void Client::header_parsing(std::string &read_str)
 
 int Client::request_parsing(int event_ident)
 {
-	std::cerr << "parsing~\n";
 	FILE *file_ptr = fdopen(event_ident, "r"); /////////////
 	if (file_ptr == NULL)
 	{
-		std::cout << "id:" << event_ident << std::endl;
-		std::cout << strerror(errno) << std::endl;
 		return -1;
 	}
 
@@ -48,14 +45,13 @@ int Client::request_parsing(int event_ident)
 	}
 	if (valfread < 0)
 	{
-		std::cout << strerror(errno) << std::endl;
 		return -1;
 	}
 	this->fp = file_ptr;
 
-	// std::cerr << "Cli::fread_str======================================\n" << fread_str << "\nfread end===============================================\n";
 	this->request.split_request(fread_str);
 	this->request.request_parsing(this->request.get_requests());
+	this->request.query_parsing();
 	return 1;
 }
 

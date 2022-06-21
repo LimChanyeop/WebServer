@@ -39,7 +39,7 @@ std::string remove_annotaion(char *argv)
 	std::string line;
 	if (config_file.is_open() < 1)
 	{
-		std::cerr << "not opened\n";
+		error_exit("is open");
 	}
 	while (getline(config_file, line))
 	{
@@ -57,7 +57,6 @@ std::string remove_annotaion(char *argv)
 
 int find_semi(std::string &str)
 {
-	std::cout << "hi";
 	if (*(str.end() - 1) == ';')
 	{
 		str.erase(str.end() - 1);
