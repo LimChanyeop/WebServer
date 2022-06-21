@@ -102,7 +102,6 @@ int Request::find_key(const std::string &key)
 void Request::split_request(const std::string &lines)
 {
 	int idx;
-	std::string head = lines;
 	// if ((idx = lines.find("\r\n\r\n")) != std::string::npos) {
 	//     std::string temp = lines;
 	//     this->post_body = temp.erase(0, idx + 2);
@@ -117,13 +116,15 @@ void Request::split_request(const std::string &lines)
 		// std::cerr << this->post_filename << std::endl;
 	}
 	int find;
-	if ((find = lines.find("\r\n\r\n")) != std::string::npos)
+	std::string head = lines;
+	if ((find = head.find("\r\n\r\n")) != std::string::npos)
 	{
-		this->post_body = lines.substr(find + 4); // std::cout << "cant found body\n";
+		this->post_body = head.substr(find + 4); // std::cout << "cant found body\n";
 		this->post_body_size = this->post_body.size();
-		std::cerr << "post_body:" << this->post_body << ", size: " << post_body_size << std::endl;
+		// std::cerr << "post_body:" << this->post_body << ", size: " << post_body_size << std::endl;
 		if ((find = post_body.find("filename=")) != std::string::npos)
 		{
+			std::cout << "find filename\n";
 			std::string::iterator it = post_body.begin() + find;
 			for (int i = 0; it != post_body.end(); it++)
 			{
@@ -135,9 +136,10 @@ void Request::split_request(const std::string &lines)
 				// std::cerr << this->post_filename << std::endl;
 			}
 		}
-		std::cerr << this->post_body << std::endl;
+		// std::cerr << this->post_body << std::endl;
 		if ((find = post_body.find("Content-Type: ")) != std::string::npos)
 		{
+			std::cout << "find content type\n";
 			std::string::iterator it = post_body.begin() + find;
 			for (; it != post_body.end(); it++)
 			{
@@ -148,6 +150,7 @@ void Request::split_request(const std::string &lines)
 		}
 		if ((find = post_body.find("------")) != std::string::npos) // boundary
 		{
+			std::cout << "find -------------\n";
 			std::string::iterator it = post_body.begin() + find;
 			for (; it != post_body.end(); it++)
 			{
@@ -157,19 +160,20 @@ void Request::split_request(const std::string &lines)
 				this->post_header += *it;
 			}
 			this->boundary.erase(0, 2);
+			std::cout << "boundary: " << boundary << std::endl;
 			
 			if ((find = post_body.find("\r\n\r\n", it - post_body.begin())) != std::string::npos) // it 부터 찾게
 				post_header += post_body.substr(it - post_body.begin(), find - (it - post_body.begin()) + 4 + 8);
-			std::cerr << "start(it - begin): " << it - post_body.begin() << ", find: " << find << std::endl;
+			// std::cerr << "start(it - begin): " << it - post_body.begin() << ", find: " << find << std::endl;
 		}
 	}
 	if (find != -1) // post
 		this->header_size = find;
 	else
-		this->header_size = lines.size();
+		this->header_size = head.size();
 
 	
-	std::cout << "header: " << head << "\nheader_size: " << header_size << std::endl;
+	// std::cout << "header: " << head << "\nheader_size: " << header_size << std::endl;
 	// std::cerr << "Cli::body ======================================\n" << post_body << "\n===============================================\n";
 	// std::cerr << "Cli::header ======================================\n" << post_header << "\n===============================================\n";
 	

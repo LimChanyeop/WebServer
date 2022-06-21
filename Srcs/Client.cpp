@@ -48,11 +48,12 @@ int Client::request_parsing(int event_ident)
 	}
 	if (valfread < 0)
 	{
-		std::cerr << "request fread error\n";
+		std::cout << strerror(errno) << std::endl;
+		return -1;
 	}
 	this->fp = file_ptr;
 
-	std::cerr << "Cli::fread_str======================================\n" << fread_str << "\nfread end===============================================\n";
+	// std::cerr << "Cli::fread_str======================================\n" << fread_str << "\nfread end===============================================\n";
 	this->request.split_request(fread_str);
 	this->request.request_parsing(this->request.get_requests());
 	return 1;

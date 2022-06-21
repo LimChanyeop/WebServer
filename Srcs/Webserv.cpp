@@ -122,8 +122,10 @@ std::string &Webserv::mime_read(std::string &default_mime)
 	std::string read_str;
 	int valread = 0;
 	memset(buff, 0, 1024);
-	while ((valread = read(open_fd, buff, 1023)) > 0)
+	while ((valread = read(open_fd, buff, 1023)) >= 0)
 	{
+		if (valread == 0)
+			break;
 		buff[valread] = 0;
 		read_str.append(buff, valread);
 	}

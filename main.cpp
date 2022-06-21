@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 			}
 			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ)
 			{
-				std::cout << "accept READ Event / ident :" << id << std::endl;
+				// std::cout << "accept READ Event / ident :" << id << std::endl;
 				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
 					clients[id].get_status() == need_error_read)
 				{
@@ -83,24 +83,31 @@ int main(int argc, char *argv[])
 					// FILE *file_ptr = fdopen(id, "r");
 					FILE *file_ptr;
 					file_ptr = fdopen(id, "r");
+					int read_fd = clients[id].get_read_fd(); //
 					int valfread = 0;
 					std::string fread_str;
 					char buff[1024];
+
 					memset(buff, 0, 1024);
 					std::cout << "fp: " << file_ptr << std::endl;
-					while ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
+					while ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) >= 0)
 					{
-						if (valfread < 0)
-						{
-							std::cerr << "fread error\n";
+						if (valfread == 0)
 							break;
-						}
 						buff[valfread] = 0;
 						fread_str.append(buff, valfread);
 					}
+					if (valfread < 0)
+					{
+						std::cerr << "read_error!\n";
+						webserv.set_error_page(clients, read_fd, 500);
+
+						close(id);
+						clients.erase(id);
+						break;
+					}
 					
 					fclose(file_ptr);
-					int read_fd = clients[id].get_read_fd(); //
 					clients[read_fd].get_response().set_response_str(fread_str);
 					if (clients[id].get_status() == need_error_read)
 						clients[read_fd].set_status(error_read_ok);
@@ -162,10 +169,13 @@ int main(int argc, char *argv[])
 					int valread = 0;
 					std::string read_str;
 					char buff[1024];
+					int read_fd = clients[id].get_read_fd(); //
 					// int valread = recv(acc_socket, read_str, 1024, 0);
 					memset(buff, 0, 1024);
-					while ((valread = read(id, buff, 1023)) > 0)
+					while ((valread = read(id, buff, 1023)) >= 0)
 					{ // read
+						if (valread == 0)
+							break;
 						buff[valread] = 0;
 						read_str.append(buff, valread);
 					}
@@ -173,9 +183,12 @@ int main(int argc, char *argv[])
 					if (valread < 0)
 					{
 						std::cerr << "read_error!\n";
-						exit(0);
+						webserv.set_error_page(clients, read_fd, 500);
+
+						close(id);
+						clients.erase(id);
+						break;
 					}
-					int read_fd = clients[id].get_read_fd(); //
 
 					clients[read_fd].header_parsing(read_str);
 					// std::cout << "read)_for)open:" << read_str << std::endl;
@@ -195,17 +208,6 @@ int main(int argc, char *argv[])
 					if (clients[id].request_parsing(id) == -1)
 					{
 						webserv.set_error_page(clients, id, 500);
-						// clients[id].set_RETURN(404); // 500
-						// int open_fd = open("./status_pages/404.html", O_RDONLY);
-						// clients[id].set_open_file_name("./status_pages/404.html");
-						// if (open_fd < 0)
-						// 	std::cerr << "open error - " << clients[id].get_route() << std::endl;
-						// clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
-						// clients[open_fd].set_status(need_error_read);
-
-						// clients[id].set_status(WAIT);
-						// fcntl(open_fd, F_SETFL, O_NONBLOCK);
-						// change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 						break;
 					} // requests_ok
 
@@ -232,17 +234,6 @@ int main(int argc, char *argv[])
 						{
 							std::cerr << "set_404" << std::endl;
 							webserv.set_error_page(clients, id, 404);
-							// clients[id].set_RETURN(404);
-							// int open_fd = open("./status_pages/404.html", O_RDONLY);
-							// clients[id].set_open_file_name("./status_pages/404.html");
-							// if (open_fd < 0)
-							// 	std::cerr << "open error - " << clients[id].get_route() << std::endl;
-							// clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
-							// clients[open_fd].set_status(need_error_read);
-
-							// clients[id].set_status(WAIT);
-							// fcntl(open_fd, F_SETFL, O_NONBLOCK);
-							// change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 							break;
 						}
 						else if (location_id == -1) // dir
@@ -298,20 +289,6 @@ int main(int argc, char *argv[])
 							{
 								std::cerr << "set_404" << std::endl;
 								webserv.set_error_page(clients, id, 404);
-								// std::cerr << "open error - ." << clients[id].get_route() << std::endl;
-								// int open_fd = open("./status_pages/404.html", O_RDONLY);
-								// clients[id].set_open_file_name("./status_pages/404.html");
-								// if (open_fd < 0)
-								// {
-								// 	std::cerr << "open error - ." << clients[id].get_route() << std::endl;
-								// 	exit(-1);
-								// }
-								// clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
-								// clients[open_fd].set_status(need_error_read);
-
-								// clients[id].set_status(WAIT);
-								// fcntl(open_fd, F_SETFL, O_NONBLOCK);
-								// change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 								break;
 							}
 							if (clients[id].get_request().get_method() == "DELETE")
@@ -493,9 +470,11 @@ int main(int argc, char *argv[])
 								clients[clients[id].get_write_fd()].set_pid(clients[id].get_pid());
 								clients[clients[id].get_read_fd()].set_read_fd(id);
 								clients[clients[id].get_write_fd()].set_write_fd(id);
+
 								clients[clients[id].get_read_fd()].get_request().set_post_body(clients[id].get_request().get_post_body());
 								clients[clients[id].get_write_fd()].get_request().set_post_body(clients[id].get_request().get_post_body()); // body
 								clients[clients[id].get_write_fd()].get_request().set_header(clients[id].get_request().get_header()); // header
+								
 								clients[clients[id].get_write_fd()].set_status(need_to_cgi_write);
 
 								std::cerr << "clients[read_fd:" << clients[id].get_read_fd() << "].set_read_fd(" << id << ")\n";
