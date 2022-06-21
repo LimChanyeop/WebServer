@@ -267,6 +267,7 @@ int main(int argc, char *argv[])
 								std::cout << "read_fd : " << clients[id].get_read_fd() << std::endl;
 								std::cerr << "write_fd : " << clients[id].get_write_fd() << std::endl;
 								clients[id].set_status(WAIT);
+								change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 								fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
 								change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 								break;
@@ -301,6 +302,7 @@ int main(int argc, char *argv[])
 							clients[open_fd].set_status(need_to_is_file_read);
 
 							clients[id].set_status(WAIT);
+							change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 							break;
@@ -355,7 +357,8 @@ int main(int argc, char *argv[])
 
 							clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
 							clients[open_fd].set_status(need_to_GET_read);
-							// clients[id].set_status(WAIT);
+							clients[id].set_status(WAIT);
+							change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 							std::cout << "open index ok!, open_fd: " << open_fd << ", clients[open_fd].set_read_fd: " << id << std::endl;
@@ -384,8 +387,9 @@ int main(int argc, char *argv[])
 							// std::cout << "clients[clients[" << id << "].read_fd].get_read_fd() :" << clients[clients[id].read_fd].get_read_fd()
 							// 		  << std::endl;
 							// std::cout << "read_fd : " << clients[id].read_fd << std::endl;
-							fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
 							clients[id].set_status(WAIT);
+							change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+							fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
 							change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 						}
 					}
@@ -451,6 +455,7 @@ int main(int argc, char *argv[])
 								clients[open_fd].get_request().set_post_body(clients[id].get_request().get_post_body());
 
 							clients[id].set_status(WAIT);
+							change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
 						}
@@ -474,7 +479,7 @@ int main(int argc, char *argv[])
 								clients[clients[id].get_read_fd()].get_request().set_post_body(clients[id].get_request().get_post_body());
 								clients[clients[id].get_write_fd()].get_request().set_post_body(clients[id].get_request().get_post_body()); // body
 								clients[clients[id].get_write_fd()].get_request().set_header(clients[id].get_request().get_header()); // header
-								
+
 								clients[clients[id].get_write_fd()].set_status(need_to_cgi_write);
 
 								std::cerr << "clients[read_fd:" << clients[id].get_read_fd() << "].set_read_fd(" << id << ")\n";
@@ -482,6 +487,7 @@ int main(int argc, char *argv[])
 								std::cerr << "read_fd : " << clients[id].get_read_fd() << ", write_fd : " << clients[id].get_write_fd() <<std::endl;
 
 								clients[id].set_status(WAIT);
+								change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 								fcntl(clients[id].get_write_fd(), F_SETFL, O_NONBLOCK);
 								fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
 								change_events(webserv.get_kq().get_change_list(), clients[id].get_write_fd(), EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi에 post_body 쓰기
