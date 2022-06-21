@@ -50,10 +50,6 @@ int main(int argc, char *argv[])
 		for (int i = 0; i < num_of_event; i++)
 		{
 			int id = webserv.get_kq().get_event_list()[i].ident;
-			if (id == -1)
-			{
-				break ;
-			}
 			// std::cout << "event id:" << id << \
 			// 	" , event filter:" << webserv.get_kq().get_event_list()[i].filter << \
 			// 	" , status:" << clients[id].get_status() << std::endl;
@@ -86,44 +82,35 @@ int main(int argc, char *argv[])
 					
 					// FILE *file_ptr = fdopen(id, "r");
 					FILE *file_ptr;
-					try {
-						file_ptr = fdopen(id, "r");
-						int valfread = 0;
-						std::string fread_str;
-						char buff[1024];
-						memset(buff, 0, 1024);
-						std::cout << "fp: " << file_ptr << std::endl;
-						while ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
-						{
-							if (valfread < 0)
-							{
-								std::cerr << "fread error\n";
-								break;
-							}
-							buff[valfread] = 0;
-							fread_str.append(buff, valfread);
-						}
-						
-						// fclose(file_ptr);
-						close(id);
-						id = 0;
-						int read_fd = clients[id].get_read_fd(); //
-						clients[read_fd].get_response().set_response_str(fread_str);
-						if (clients[id].get_status() == need_error_read)
-							clients[read_fd].set_status(error_read_ok);
-						else if (clients[id].get_status() == need_to_is_file_read)
-							clients[read_fd].set_status(is_file_read_ok);
-						else
-							clients[read_fd].set_status(GET_read_ok);
-						std::cout << ", id: " << read_fd << " status: " << clients[read_fd].get_status() << std::endl;
-						clients.erase(id);
-					}
-					catch (std::exception e)
+					file_ptr = fdopen(id, "r");
+					int valfread = 0;
+					std::string fread_str;
+					char buff[1024];
+					memset(buff, 0, 1024);
+					std::cout << "fp: " << file_ptr << std::endl;
+					while ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
 					{
-						std::cerr << strerror(errno) << std::endl;
-						std::cerr << "id: " << id <<std::endl;
-						std::cerr << e.what() << std::endl;
-					} 
+						if (valfread < 0)
+						{
+							std::cerr << "fread error\n";
+							break;
+						}
+						buff[valfread] = 0;
+						fread_str.append(buff, valfread);
+					}
+					
+					fclose(file_ptr);
+					int read_fd = clients[id].get_read_fd(); //
+					clients[read_fd].get_response().set_response_str(fread_str);
+					if (clients[id].get_status() == need_error_read)
+						clients[read_fd].set_status(error_read_ok);
+					else if (clients[id].get_status() == need_to_is_file_read)
+						clients[read_fd].set_status(is_file_read_ok);
+					else
+						clients[read_fd].set_status(GET_read_ok);
+					std::cout << ", id: " << read_fd << " status: " << clients[read_fd].get_status() << std::endl;
+					close(id);
+					clients.erase(id);
 
 					// if (file_ptr == NULL)
 					// int valfread = 0;
@@ -199,7 +186,7 @@ int main(int argc, char *argv[])
 					close(id);
 					clients.erase(id);
 				}
-				else if (webserv.find_server(Config, clients[id], id)) // 이벤트 주체가 server
+				else if (webserv.find_server(Config, clients[id], id)) // 이벤트 주체가 server /////////////////////////////////////////////////
 				{
 					webserv.accept_add_events(id, const_cast<std::vector<Server> &>(Config.get_v_server())[clients[id].get_server_id()], webserv.get_kq(), clients);
 				}
@@ -359,17 +346,19 @@ int main(int argc, char *argv[])
 							std::cerr << "is index!\n";
 							clients[id].set_RETURN(200);
 							std::string root = Config.get_v_server()[server_id].get_v_location()[location_id].get_root();
-							if (root != "/" && root != "" && *(root.end() - 1) != '/')
-								root += '/';
-							if (root == "/")
-								clients[id].set_route(index);
-							else
+							std::cout << "root[" << root << "]" << std::endl;
+							if (root == "/" || root == "" || *(root.end() - 1) == '/')
+								root.pop_back();
+							std::cout << "root[" << root << "]" << std::endl;
+							if (*index.begin() == '/')
 								clients[id].set_route(root + index);
-							std::cout << "route: " << clients[id].get_route() << std::endl;
+							else
+								clients[id].set_route(root + '/' + index);
+							std::cout << "route: ." << clients[id].get_route() << std::endl;
 
 							int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
 							clients[id].set_open_file_name('.' + clients[id].get_route());
-							if (open_fd < 0)
+							if (open_fd == -1)
 							{
 								std::cerr << "set_404" << std::endl;
 								webserv.set_error_page(clients, id, 404);
@@ -389,9 +378,11 @@ int main(int argc, char *argv[])
 
 							clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
 							clients[open_fd].set_status(need_to_GET_read);
-							clients[id].set_status(WAIT);
+							// clients[id].set_status(WAIT);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+							std::cout << "open index ok!, open_fd: " << open_fd << ", clients[open_fd].set_read_fd: " << id << std::endl;
+							break;
 						}
 						else if ((index.find("php") == std::string::npos && index.find("py") == std::string::npos))
 						{
