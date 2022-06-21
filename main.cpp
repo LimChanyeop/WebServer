@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 			}
 			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ)
 			{
-				// std::cout << "accept READ Event / ident :" << id << std::endl;
+				std::cout << "accept READ Event / ident :" << id << std::endl;
 				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
 					clients[id].get_status() == need_error_read)
 				{
@@ -514,6 +514,7 @@ int main(int argc, char *argv[])
 							clients[open_fd].get_request().set_post_body(clients[id].get_request().get_post_body());
 
 							clients[id].set_status(WAIT);
+							change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
 						}
@@ -528,10 +529,20 @@ int main(int argc, char *argv[])
 					std::cerr << "im POST(file) write!!\n";
 					FILE *fp = fdopen(id, "wb");
 
-					// write(id, clients[id].get_request().post_body.c_str(), clients[id].get_request().post_body.length());
-					fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
-					std::cerr << "write-" << id << ":\n" << clients[id].get_request().get_post_body() << std::endl;
-					clients[clients[id].get_write_fd()].set_status(POST_ok);
+					size_t wr_val = fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
+					if (wr_val < 0)
+					{
+						fclose(fp);
+						close(id);
+						clients.erase(id);
+						webserv.set_error_page(clients, clients[id].get_write_fd(), 500);
+						break;
+					}
+					else
+					{
+						std::cerr << "write-" << id << ":\n" << clients[id].get_request().get_post_body() << std::endl;
+						clients[clients[id].get_write_fd()].set_status(POST_ok);
+					}
 
 					fclose(fp);
 					close(id);
@@ -543,21 +554,31 @@ int main(int argc, char *argv[])
 					std::cerr << "im POST-CGI write!! id: " << id << ", origin is: " << clients[id].get_write_fd() << ".\n"; 
 					FILE *fp = fdopen(id, "wb");
 
-					// fwrite(clients[id].get_request().get_header().c_str(), sizeof(char), clients[id].get_request().get_header().length(), fp);
-					fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
-					// write(id, clients[id].get_request().get_post_body().c_str(), clients[id].get_request().get_post_body().length());
-					// write(id, clients[id].get_request().get_header().c_str(), clients[id].get_request().get_header().length());
-					// std::cerr << "write+++++++++++++++++++++++++\n" << id << " +++++++++++++++++++++++++++++++++++\n" << clients[id].get_request().get_post_body() << "\n+++++++++++++++++++++++++++++++++++++++\n";
-					int read_fd = clients[clients[id].get_write_fd()].get_read_fd();
-					clients[read_fd].set_status(need_to_cgi_read);
-					clients[id].set_status(WAIT);
-					// change_events(webserv.get_kq().get_change_list(), read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
+					size_t wr_val = fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
+					if (wr_val < 0)
+					{
+						int read_fd = clients[clients[id].get_write_fd()].get_read_fd();
+						change_events(webserv.get_kq().get_change_list(), read_fd, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
 
-					fclose(fp);
-					close(id);
-					clients.erase(id);
-					std::cerr << "post cgi end, go to fd: " << read_fd << "\n";
-					break;
+						fclose(fp);
+						close(id);
+						clients.erase(id);
+						webserv.set_error_page(clients, clients[id].get_write_fd(), 500);
+						break;
+					}
+					else // wr_val >= 0
+					{
+						// std::cerr << "write+++++++++++++++++++++++++\n" << id << " +++++++++++++++++++++++++++++++++++\n" << clients[id].get_request().get_post_body() << "\n+++++++++++++++++++++++++++++++++++++++\n";
+						int read_fd = clients[clients[id].get_write_fd()].get_read_fd();
+						clients[read_fd].set_status(need_to_cgi_read);
+						// change_events(webserv.get_kq().get_change_list(), read_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // cgi result 읽기
+
+						fclose(fp);
+						close(id);
+						clients.erase(id);
+						std::cerr << "post cgi end, go to fd: " << read_fd << "\n";
+						break;
+					}
 				}
 				else if (clients[id].get_status() >= WRITE_LINE)
 				{
@@ -651,36 +672,57 @@ int main(int argc, char *argv[])
 						FILE *fp = fdopen(id, "wb");
 						if (clients[id].get_status() == cgi_read_ok)
 						{
-							write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
-							// fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char), clients[id].get_response().get_send_to_response().length(), fp);
-							std::cerr << "END::::" << clients[id].get_request().get_start_line() << std::endl;
-							close(id);
-							// fclose(fp);
-							clients.erase(id);
-							break;
+							size_t wr_val = write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
+							if (wr_val < 0)
+							{
+								webserv.set_error_page(clients, id, 500);
+									close(id);
+								// fclose(fp);
+								clients.erase(id);
+								break;
+							}
+							else
+							{
+								std::cerr << "END::::" << clients[id].get_request().get_start_line() << std::endl;
+								close(id);
+								// fclose(fp);
+								clients.erase(id);
+								break;
+
+							}
 						}
 						// std::cerr << "response :: " << clients[id].get_response().get_send_to_response().c_str() << std::endl;
 						int count = 0;
 
 						// std::cout << "send_to_res\n" << clients[id].get_response().get_send_to_response() << std::endl;
-						if (fp == NULL)
+						// if (fp == NULL)
+						// {
+						// 	std::cerr << "ㅇㅛ기요요요요요기\n\n" << std::endl;
+						// 	// webserv.set_error_page(clients, id, 500);
+						// 	change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL); // write event 추가
+						// 	change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL); // write event 추가
+						// 	// fclose(fp);
+						// 	// close(id);
+						// 	clients.erase(id);
+						// 	break;
+						// }
+						size_t wr_val = fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char),
+							clients[id].get_response().get_send_to_response().size(), fp);
+						if (wr_val < 0)
 						{
-							std::cerr << "ㅇㅛ기요요요요요기\n\n" << std::endl;
-							// webserv.set_error_page(clients, id, 500);
-							change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL); // write event 추가
-							change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL); // write event 추가
-							// fclose(fp);
-							// close(id);
+							webserv.set_error_page(clients, id, 500);
+							fclose(fp);
+							close(id);
 							clients.erase(id);
 							break;
 						}
-						fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char),
-							clients[id].get_response().get_send_to_response().size(), fp);
-						std::cerr << "END::::" << clients[id].get_request().get_start_line() << std::endl;
-
-						fclose(fp);
-						close(id);
-						clients.erase(id);
+						else
+						{
+							std::cerr << "END::::" << clients[id].get_request().get_start_line() << std::endl;
+							fclose(fp);
+							close(id);
+							clients.erase(id);
+						}
 					}
 				}
 			}
