@@ -48,7 +48,7 @@ private:
     std::string post_filename; // post
     std::string post_content_type; // post
     std::string boundary; // post
-	std::string post_header; // post
+	std::string header; // post
 	std::string query;
 	int post_body_size;
 	int header_size;

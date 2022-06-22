@@ -8,7 +8,7 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 	for (std::vector<std::string>::iterator it = lists_.begin(); it != lists_.end(); it++)
 	{
 		try{
-		std::cout << "it [" << *it << "] " << find_key(*it) << "\n\n";
+		// std::cout << "it [" << *it << "] " << find_key(*it) << "\n";
 		}catch(std::exception e){
 			std::cout << e.what() << std::endl;
 			std::cout << strerror(errno) << std::endl;
@@ -114,6 +114,7 @@ void Request::split_request(const std::string &lines)
 	std::string head = lines;
 	if ((find = head.find("\r\n\r\n")) != std::string::npos)
 	{
+		this->header = head.substr(0, find);
 		this->post_body = head.substr(find + 4); // std::cout << "cant found body\n";
 		this->post_body_size = this->post_body.size();
 		if ((find = post_body.find("filename=")) != std::string::npos)
@@ -146,23 +147,42 @@ void Request::split_request(const std::string &lines)
 				if (*it == '\n')
 					break;
 				this->boundary += *it;
-				this->post_header += *it;
+				// this->header += *it;
 			}
 			this->boundary.erase(0, 2);
 			
-			if ((find = post_body.find("\r\n\r\n", it - post_body.begin())) != std::string::npos) // it 부터 찾게
-				post_header += post_body.substr(it - post_body.begin(), find - (it - post_body.begin()) + 4 + 8);
+			// if ((find = post_body.find("\r\n\r\n", it - post_body.begin())) != std::string::npos) // it 부터 찾게
+			// 	header += post_body.substr(it - post_body.begin(), find - (it - post_body.begin()) + 4 + 8);
 		}
 	}
-	if (find != std::string::npos) // post
-		this->header_size = find;
-	else
-		this->header_size = head.size();
+	if (header == "")
+		header = post_body; ///////
+	this->header_size = this->header.size();
 
-	if (post_header == "")
-		post_header = post_body; ///////
+	// head = this->header;
+	// std::cout << "header: " << header << std::endl;
+	// while (head != "")
+	// {
+	// 	unsigned long find;
+	// 	if ((find = head.find("\r\n")) != std::string::npos)
+	// 	{
+	// 		requests.push_back(head.substr(0, find));
+	// 		head.erase(0, find + 2);
+	// 	}
+	// 	else if ((find = head.find(" ")) != std::string::npos)
+	// 	{
+	// 		requests.push_back(head.substr(0, find));
+	// 		head.erase(0, find + 1);
+	// 	}
+	// 	else
+	// 	{
+	// 		requests.push_back(head.substr(0, head.end() - head.begin()));
+	// 		break;
+	// 	}
+	// }
+	// std::cout << "head: " << head << std::endl;
 
-	std::string delim = " \t\n";
+	std::string delim = " \t\r\n";
 	std::string::const_iterator it;
 	std::string attr = "";
 	for (it = lines.begin(); it != lines.end(); it++)
@@ -229,7 +249,7 @@ void Request::set_query(std::string query) { this->query = query; }
 void Request::set_post_content_type(std::string contentLength) { this->post_content_type = contentLength; }
 void Request::set_post_filename(std::string filename) { this->post_filename = filename; }
 void Request::set_boundary(std::string boundary) { this->boundary = boundary; }
-void Request::set_header(std::string str) { this->post_header = str; }
+void Request::set_header(std::string str) { this->header = str; }
 void Request::set_post_body_size(int i) { this->post_body_size = i; }
 void Request::set_header_size(int i) { this->header_size = i; }
 
@@ -253,7 +273,7 @@ const std::string &Request::get_post_content_type() const { return post_content_
 const std::string &Request::get_post_filename() const { return post_filename; }
 const std::vector<std::string> &Request::get_requests() const { return requests; }
 const std::string &Request::get_boundary(void) const {return this->boundary;}
-const std::string &Request::get_header(void) const { return this->post_header; }
+const std::string &Request::get_header(void) const { return this->header; }
 const int &Request::get_post_body_size(void) const { return this->post_body_size; }
 const int &Request::get_header_size(void) const { return this->header_size; }
 

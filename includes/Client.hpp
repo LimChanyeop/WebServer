@@ -21,6 +21,7 @@ enum status
 	need_to_POST_write,
 	need_to_cgi_write,
 	chunked_WAIT,
+	not_chunked,
 	chunked_FINISH,
 	WAIT,
 	WRITE_LINE, //////////// WRITE
@@ -47,21 +48,25 @@ private:
 	int RETURN;
 	std::string redi_root;
 	int pid;
-	FILE *fp;
+	FILE *read_fp;
+	FILE *write_fp;
 	char ip[20];
 	Response response;
 	Request request;
 	std::string route;
 	std::string content_type;
 	std::string open_file_name;
-	std::string chunked_str;
+	std::string chunked_header;
+	std::string chunked_body;
+	std::string string_buff;
+	int chunked;
 
 public:
 	Client(/* args */);
 	~Client();
 
 	void header_parsing(std::string &read_str);
-	int request_parsing(int event_ident);
+	int request_parsing(FILE *file_ptr);
 
 	const int &get_server_sock(void) const;
 	// std::vector<Server>::iterator &get_server_it(void); // not const
@@ -78,7 +83,8 @@ public:
 	const std::string &get_redi_root(void) const;
 	const int &get_is_file(void) const;
 	const int &get_pid(void) const;
-	const FILE *get_fp(void) const;
+	const FILE *get_read_fp(void) const;
+	const FILE *get_write_fp(void) const;
 	const char *get_ip(void) const;
 	Request &get_request(void);
 	Response &get_response(void);
@@ -98,7 +104,8 @@ public:
 	void set_RETURN(int i);
 	void set_redi_root(std::string str);
 	void set_is_file(int i);
-	void set_fp(FILE *fp);
+	void set_read_fp(FILE *fp);
+	void set_write_fp(FILE *fp);
 	void set_pid(int i);
 	void set_ip(const char *str);
 	void set_request(Request request_);

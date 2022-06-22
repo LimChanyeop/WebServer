@@ -51,21 +51,20 @@ int main(int argc, char *argv[])
 					if (clients[id].get_pid() == -1)
 					{
 						if (clients[id].get_request().get_requests().size() > 0)
-							fclose(const_cast<FILE *>(clients[id].get_fp())); // fclose by jwoo
+							fclose(const_cast<FILE *>(clients[id].get_read_fp())); // fclose by jwoo
 						if (clients[id].get_response().get_response_str().length() > 0)
-							close(clients[id].get_write_fd());
+							fclose(const_cast<FILE *>(clients[id].get_write_fp()));
 					}
 				}
 				webserv.set_error_page(clients, id, 500);
 				// close(webserv.get_kq().get_event_list()[i].ident);
 				continue;
 			}
-			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ || clients[id].get_status() == chunked_WAIT)
+			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ)
 			{
 				if (clients[id].get_status() == need_to_GET_read || clients[id].get_status() == need_to_is_file_read ||
 					clients[id].get_status() == need_error_read)
 				{
-					
 					FILE *file_ptr;
 					file_ptr = fdopen(id, "r");
 					int read_fd = clients[id].get_read_fd(); //
@@ -153,16 +152,26 @@ int main(int argc, char *argv[])
 				}
 				else if (clients.find(id) != clients.end() && clients[id].get_status() != WAIT) // 이벤트 주체가 client
 				{
-					int i;
-					if ((i = clients[id].request_parsing(id)) == -1)
+					int k = 1;
+					clients[id].set_status(chunked_WAIT);
+					FILE *file_ptr = fdopen(id, "r"); /////////////
+					if (file_ptr == NULL)
+					{
+						return -1;
+					}
+					clients[id].set_read_fp(file_ptr);
+
+					while (k == 1)
+					{
+						// std::cout << "while\n";
+						k = clients[id].request_parsing(file_ptr);
+					} // requests_ok
+					if (k == -1)
 					{
 						webserv.set_error_page(clients, id, 500);
 						break;
-					} // requests_ok
-					if (clients[id].get_status() == chunked_WAIT) // chunked wait
-					{
-						break;
 					}
+					std::cout << clients[id].get_request().get_header_size() << ", " << clients[id].get_request().get_post_body_size() << std::endl;
 
 					///////////////////////////////////////////////////
 					std::cout << "referer: " << clients[id].get_request().get_referer() << std::endl;
@@ -370,6 +379,7 @@ int main(int argc, char *argv[])
 								change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 								break;
 							}
+							std::cout << "maybe this\n";
 							int open_fd;
 							if (clients[id].get_RETURN() == 200)
 								open_fd = open(route.c_str(), O_RDWR | O_APPEND | O_SYNC, 0777);
@@ -524,8 +534,8 @@ int main(int argc, char *argv[])
 						{
 							clients[id].get_response().set_header(200, "", clients[id].get_content_type()); // ok
 						}
-
 						FILE *fp = fdopen(id, "wb");
+						clients[id].set_write_fp(fp);
 						if (clients[id].get_status() == cgi_read_ok)
 						{
 							size_t wr_val = write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());

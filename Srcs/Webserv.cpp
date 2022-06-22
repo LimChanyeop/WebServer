@@ -519,7 +519,8 @@ void Webserv::set_error_page(std::map<int, Client> &clients, const int &id, cons
 		if (open_fd < 0)
 		{
 			std::cerr << "No File To Show\n";
-			exit(-1);
+			close(id);
+			clients.erase(id);
 		}
 	}
 	clients[id].set_open_file_name(route);
