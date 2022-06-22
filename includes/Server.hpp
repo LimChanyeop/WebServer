@@ -13,16 +13,8 @@ class Config;
 
 class Server : virtual public Fd
 {
-	// protected: // Fd
-	// 	int fd;
-	// 	int socket_type;
-	// 	unsigned int address_len;
-
 private:
 	std::vector<Location> v_location;
-
-	// Request request;
-	// Response response;
 
 	int client_limit_body_size;
 	int request_limit_header_size;

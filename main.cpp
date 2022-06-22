@@ -70,10 +70,10 @@ int main(int argc, char *argv[])
 					int read_fd = clients[id].get_read_fd(); //
 					int valfread = 0;
 					std::string fread_str;
-					char buff[1024];
+					char buff[BUFSIZE];
 
-					memset(buff, 0, 1024);
-					while ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) >= 0)
+					memset(buff, 0, BUFSIZE);
+					while ((valfread = fread(buff, sizeof(char), BUFSIZE - 1, file_ptr)) >= 0)
 					{
 						if (valfread == 0)
 							break;
@@ -119,11 +119,11 @@ int main(int argc, char *argv[])
 					}
 					int valread = 0;
 					std::string read_str;
-					char buff[1024];
+					char buff[BUFSIZE];
 					int read_fd = clients[id].get_read_fd(); //
-					// int valread = recv(acc_socket, read_str, 1024, 0);
-					memset(buff, 0, 1024);
-					while ((valread = read(id, buff, 1023)) >= 0)
+					// int valread = recv(acc_socket, read_str, BUF, 0);
+					memset(buff, 0, BUFSIZE);
+					while ((valread = read(id, buff, BUFSIZE - 1)) >= 0)
 					{ // read
 						if (valread == 0)
 							break;
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 					close(id);
 					clients.erase(id);
 				}
-				else if (webserv.find_server(Config, clients[id], id)) // 이벤트 주체가 server /////////////////////////////////////////////////
+				else if (webserv.find_server(Config, clients[id], id)) // 이벤트 주체가 server
 				{
 					webserv.accept_add_events(id, const_cast<std::vector<Server> &>(Config.get_v_server())[clients[id].get_server_id()], webserv.get_kq(), clients);
 				}
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 				{
 					int k = 1;
 					clients[id].set_status(chunked_WAIT);
-					FILE *file_ptr = fdopen(id, "r"); /////////////
+					FILE *file_ptr = fdopen(id, "r");
 					if (file_ptr == NULL)
 					{
 						return -1;
@@ -163,7 +163,6 @@ int main(int argc, char *argv[])
 
 					while (k == 1)
 					{
-						// std::cout << "while\n";
 						k = clients[id].request_parsing(file_ptr);
 					} // requests_ok
 					if (k == -1)
@@ -171,10 +170,6 @@ int main(int argc, char *argv[])
 						webserv.set_error_page(clients, id, 500);
 						break;
 					}
-					std::cout << clients[id].get_request().get_header_size() << ", " << clients[id].get_request().get_post_body_size() << std::endl;
-
-					///////////////////////////////////////////////////
-					std::cout << "referer: " << clients[id].get_request().get_referer() << std::endl;
 
 					int server_id = webserv.find_server_id(id, Config, clients[id].get_request(), clients);
 					clients[id].set_server_id(server_id);
@@ -297,7 +292,7 @@ int main(int argc, char *argv[])
 							clients[id].set_RETURN(200);
 							clients[id].set_status(ok);
 						}
-						else /////////////////// cgi
+						else // cgi
 						{
 							clients[id].set_RETURN(201);
 							std::string root = '.' + Config.get_v_server()[server_id].get_v_location()[location_id].get_root();
@@ -315,10 +310,7 @@ int main(int argc, char *argv[])
 							change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 						}
 					}
-
-
-					////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-					else if (clients[id].get_request().get_method() == "POST") /////************ post ***************** ////////////////////////////////////////////////////////////
+					else if (clients[id].get_request().get_method() == "POST") //************ POST *****************
 					{
 						int is_dir = webserv.is_dir(Config.get_v_server()[server_id], clients[id].get_request(), clients[id]);
 						if (is_dir == 1) // is dir
@@ -350,7 +342,7 @@ int main(int argc, char *argv[])
 							fcntl(open_fd, F_SETFL, O_NONBLOCK);
 							change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL); // write event 추가
 						}
-						else ///////////////////////////////////// POST
+						else
 						{
 							std::string route = "." + clients[id].get_request().get_referer();
 							if (clients[id].get_request().get_referer().find("php") != std::string::npos ||
@@ -379,7 +371,6 @@ int main(int argc, char *argv[])
 								change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 								break;
 							}
-							std::cout << "maybe this\n";
 							int open_fd;
 							if (clients[id].get_RETURN() == 200)
 								open_fd = open(route.c_str(), O_RDWR | O_APPEND | O_SYNC, 0777);
@@ -405,7 +396,7 @@ int main(int argc, char *argv[])
 			} // end FILT READ
 			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_WRITE)
 			{
-				if (clients[id].get_status() == need_to_POST_write) //////////////////////////////// file에다가 write
+				if (clients[id].get_status() == need_to_POST_write) // file에다가 write
 				{
 					FILE *fp = fdopen(id, "wb");
 

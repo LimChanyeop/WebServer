@@ -6,6 +6,8 @@
 #include "./Server.hpp"
 #include <vector>
 
+#define BUFSIZE 100000
+
 class Server;
 
 enum status
@@ -24,7 +26,7 @@ enum status
 	not_chunked,
 	chunked_FINISH,
 	WAIT,
-	WRITE_LINE, //////////// WRITE
+	WRITE_LINE, // WRITE
 	redi_write,
 	GET_read_ok,
 	is_file_read_ok,

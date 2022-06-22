@@ -84,7 +84,7 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 	}
 	else if (status == 301)
 	{
-		std::cout << "REDI 301 Moved Permanently\n";
+		std::cout << "301 Moved Permanently\n";
 		this->send_to_response = "HTTP/1.1 301 Moved Permanently\r\nLocation: ";
 		this->send_to_response += opt + "\r\nContent-Type: ";
 		this->send_to_response += content_type;
@@ -95,16 +95,6 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 	{
 		std::cout << "400 Bad Request\n";
 		this->send_to_response = "HTTP/1.1 400 Bad Request\r\nContent-Type: ";
-		this->send_to_response += content_type;
-		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
-		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
-	}
-	else if (status == 404)
-	{
-		std::cout << "404 Not Found\n";
-		this->send_to_response = "HTTP/1.1 404 Not Found\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);
@@ -135,6 +125,16 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 	{
 		std::cout << "500 INTERNAL_SERVER_ERROR\n";
 		this->send_to_response = "HTTP/1.1 500 INTERNAL_SERVER_ERROR\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
+		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += "\r\n\r\n";
+		this->send_to_response += this->response_str + "\r\n";
+	}
+	else // 404
+	{
+		std::cout << "404 Not Found\n";
+		this->send_to_response = "HTTP/1.1 404 Not Found\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
 		this->send_to_response += std::to_string(this->response_str.length() + 1);

@@ -7,12 +7,7 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 	std::vector<std::string> lists_ = lists;
 	for (std::vector<std::string>::iterator it = lists_.begin(); it != lists_.end(); it++)
 	{
-		try{
 		// std::cout << "it [" << *it << "] " << find_key(*it) << "\n";
-		}catch(std::exception e){
-			std::cout << e.what() << std::endl;
-			std::cout << strerror(errno) << std::endl;
-		}
 		switch (find_key(*it))
 		{
 		case Emethod:
@@ -150,37 +145,11 @@ void Request::split_request(const std::string &lines)
 				// this->header += *it;
 			}
 			this->boundary.erase(0, 2);
-			
-			// if ((find = post_body.find("\r\n\r\n", it - post_body.begin())) != std::string::npos) // it 부터 찾게
-			// 	header += post_body.substr(it - post_body.begin(), find - (it - post_body.begin()) + 4 + 8);
 		}
 	}
 	if (header == "")
 		header = post_body; ///////
 	this->header_size = this->header.size();
-
-	// head = this->header;
-	// std::cout << "header: " << header << std::endl;
-	// while (head != "")
-	// {
-	// 	unsigned long find;
-	// 	if ((find = head.find("\r\n")) != std::string::npos)
-	// 	{
-	// 		requests.push_back(head.substr(0, find));
-	// 		head.erase(0, find + 2);
-	// 	}
-	// 	else if ((find = head.find(" ")) != std::string::npos)
-	// 	{
-	// 		requests.push_back(head.substr(0, find));
-	// 		head.erase(0, find + 1);
-	// 	}
-	// 	else
-	// 	{
-	// 		requests.push_back(head.substr(0, head.end() - head.begin()));
-	// 		break;
-	// 	}
-	// }
-	// std::cout << "head: " << head << std::endl;
 
 	std::string delim = " \t\r\n";
 	std::string::const_iterator it;

@@ -8,7 +8,7 @@ Client::~Client()
 		fclose(this->read_fp);
 	if (this->write_fp != NULL)
 		fclose(this->write_fp);
-} //////// 이거였어 해결!!!!
+}
 
 void Client::header_parsing(std::string &read_str)
 {
@@ -30,13 +30,11 @@ void Client::header_parsing(std::string &read_str)
 
 int Client::request_parsing(FILE *file_ptr)
 {
-	// std::cout << "status: " << status << std::endl;
-	char buff[1024];
-	memset(buff, 0, 1024);
+	char buff[BUFSIZE];
+	memset(buff, 0, BUFSIZE);
 	long valfread = 0;
-	if ((valfread = fread(buff, sizeof(char), 1023, file_ptr)) > 0)
+	if ((valfread = fread(buff, sizeof(char), BUFSIZE - 1, file_ptr)) > 0)
 	{
-		// std::cout << "(read):\n" << buff << std::endl;
 		buff[valfread] = 0;
 		string_buff.append(buff, valfread);
 	}
@@ -45,7 +43,6 @@ int Client::request_parsing(FILE *file_ptr)
 	else
 		return 1;
 
-	std::cout << "valfread: " << valfread << std::endl;
 	if (this->status == chunked_WAIT)
 	{
 		unsigned long find;
@@ -59,11 +56,9 @@ int Client::request_parsing(FILE *file_ptr)
 			{
 				if (this->chunked_header == "")
 					this->chunked_header = string_buff.substr(0, find + 4);
-				std::cout << "chunked_header: " << chunked_header << std::endl;
 
 				std::string body;
 				body = string_buff.erase(0, find + 4);
-				std::cout << "body: [" << body << "]\n";
 				std::string::iterator it = body.begin();
 				std::string size;
 				// hex
@@ -71,41 +66,29 @@ int Client::request_parsing(FILE *file_ptr)
 				it = body.begin();
 				while (it != body.end())
 				{
-					std::cout << "(body parsing..)\n";
-
 					find = body.find("\r\n");
 					size = body.substr(0, find);
 					body.erase(0, find + 2);
 					hex_to_int = strtol(size.c_str(), NULL, 16);
 					size.clear();
-					std::cout << "hex_to_int: " << hex_to_int << std::endl;
-					if (hex_to_int == 0)
+					if (hex_to_int == 0) // 14
 					{
 						this->status = chunked_FINISH;
 						break;
 					}
-					std::cout << "hex erase body: [" << body << "]\n";
 
-					// (abcdefg1234567)
-					find = body.find("0\r\n");
+					find = body.find("0\r\n"); // (abcdefg1234567)
 					this->chunked_body += body.substr(0, find);
-					// if (chunked_body )
-					std::cout << "chunked_body: " << chunked_body << std::endl;
 				}
 			}
 		}
-		else if (valfread == 1023)
-			this->status = not_chunked;
-		else if (valfread < 1023) // not chunked & all read
+		else if (valfread < BUFSIZE - 1) // not chunked & all read
 		{
-			std::cout << "ch_fin\n";
 			this->status = chunked_FINISH;
 		}
 	}
 	if (this->status == chunked_FINISH)
 	{
-		// std::cout << "\n\n\nfinish!==============================================\n";
-		// std::cout << "holl request(" << this->string_buff.size() << ") :\n" << string_buff << "\n-----------------------------\n";
 		if (this->chunked == 1)
 			this->request.split_request(this->chunked_header + this->chunked_body); // chunked
 		else
@@ -117,7 +100,6 @@ int Client::request_parsing(FILE *file_ptr)
 	}
 	else
 	{
-		std::cout << "not finished 1\n";
 		return 1;
 	}
 }

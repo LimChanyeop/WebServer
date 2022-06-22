@@ -180,7 +180,6 @@ void Config::server_check(void)
 			std::cerr << "Duplicated Port\n";
 			exit(-1);
 		}
-		// std::cout << dup[it->get_listen()] << std::endl;
 		dup[it->get_listen()] = 1;
 	}
 }

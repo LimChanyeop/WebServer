@@ -107,11 +107,11 @@ std::string &Webserv::mime_read(std::string &default_mime)
 		std::cerr << "mime open error!!\n";
 		exit(-1);
 	}
-	char buff[1024];
+	char buff[BUFSIZE];
 	std::string read_str;
 	int valread = 0;
-	memset(buff, 0, 1024);
-	while ((valread = read(open_fd, buff, 1023)) >= 0)
+	memset(buff, 0, BUFSIZE);
+	while ((valread = read(open_fd, buff, BUFSIZE - 1)) >= 0)
 	{
 		if (valread == 0)
 			break;
@@ -193,12 +193,6 @@ void Webserv::ready_webserv(Config &Config)
 				   sizeof(optvalue)); // to solve bind error
 
 		fcntl(it->get_socket_fd(), F_SETFL, O_NONBLOCK);
-		struct timeval tv;
-		tv.tv_sec = 7;
-		tv.tv_usec = 0;
-		// setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_RCVTIMEO, (struct timeval *)&tv, sizeof(struct timeval));
-		// setsockopt(it->get_socket_fd(), SOL_SOCKET, SO_SNDTIMEO, (struct timeval *)&tv, sizeof(struct timeval));
-
 		int ret;
 		if ((ret = bind(it->get_socket_fd(), (sockaddr *)&address, (socklen_t)sizeof(address))) == -1)
 		{
@@ -208,7 +202,7 @@ void Webserv::ready_webserv(Config &Config)
 		if ((listen(it->get_socket_fd(), NOE)) < 0)
 		{
 			std::cerr << "listen error" << std::endl;
-			exit(0); // why exit?
+			exit(0);
 		}
 	}
 }
@@ -218,10 +212,8 @@ std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &cl
 	std::vector<Server>::iterator it = const_cast<std::vector<Server> &>(Config.get_v_server()).begin(); // const cast
 	for (; it != Config.get_v_server().end(); it++)
 	{
-		// std::cout << "listen:" << it->get_socket_fd() << " vs " << client.get_server_sock() << std::endl;
 		if (it->get_socket_fd() == client.get_server_sock())
 		{
-			// client.set_server_it(it);
 			return it; // 드디어 어떤 서버인지 찾음
 		}
 	}
@@ -374,7 +366,7 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	}
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	struct timespec timeout;
-	timeout.tv_sec = 60; // 초
+	timeout.tv_sec = 10; // 초
 	timeout.tv_nsec = 0;
 	setsockopt(acc_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(struct timeval));
 	setsockopt(acc_fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(struct timeval));
