@@ -1,7 +1,7 @@
 #include "../includes/Config.hpp"
 #include "../includes/ParseUtils.hpp"
 
-Config::Config() {}
+Config::Config() : root("/") {}
 
 const std::string &Config::get_user(void) const { return user; }
 const std::string &Config::get_worker_processes(void) const { return worker_processes; }
@@ -37,7 +37,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 	std::vector<std::string>::iterator it;
 	for (it = lists.begin(); it != lists.end(); it++)
 	{
-		// std::cerr << "it: " << *it << ", find_key: " << find_key(*it) << std::endl;
+		std::cerr << "it: " << *it << ", find_key: " << find_key(*it) << std::endl;
 		std::string temp = "";
 		if (*it == "")
 			continue;

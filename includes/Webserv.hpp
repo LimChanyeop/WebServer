@@ -59,6 +59,7 @@ public:
 	void run_cgi(const Server &server, const std::string &index_root, Client &client);
 	void set_error_page(std::map<int, Client> &clients, const int &id, const int &status);
 	void set_indexing(Client &client);
+	void read_index(std::map<int, Client> &clients, int &id, int &server_id, const Config &Config);
 };
 
 void change_events(std::vector<struct kevent> &change_list, uintptr_t ident, int16_t filter, uint16_t flags, uint32_t fflags, intptr_t data,

@@ -1,6 +1,6 @@
 #include "../includes/Client.hpp"
 
-Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(no), is_file(0), RETURN(0), pid(-1), read_fp(NULL), write_fp(NULL), chunked(-1) {}
+Client::Client(/* args */) : server_sock(-1), server_id(-1), location_id(-1), read_fd(-1), write_fd(-1), status(chunked_WAIT), is_file(0), RETURN(0), pid(-1), read_fp(NULL), write_fp(NULL), chunked(-1) {}
 
 Client::~Client()
 {
@@ -66,6 +66,7 @@ int Client::request_parsing(FILE *file_ptr)
 				it = body.begin();
 				while (it != body.end())
 				{
+					std::cout << "hi";
 					find = body.find("\r\n");
 					size = body.substr(0, find);
 					body.erase(0, find + 2);

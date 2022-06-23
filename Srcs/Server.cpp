@@ -1,6 +1,6 @@
 #include "../includes/Server.hpp"
 
-Server::Server(Config conf) : Fd()
+Server::Server(Config conf) : Fd(), listen("7777")
 {
 	this->set_client_limit_body_size(conf.get_client_limit_body_size());
 	this->set_request_limit_header_size(conf.get_request_limit_header_size());

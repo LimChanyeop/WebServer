@@ -552,6 +552,66 @@ void Webserv::set_indexing(Client &client)
 	}
 }
 
+void Webserv::read_index(std::map<int, Client> &clients, int &id, int &server_id, const Config &Config)
+{
+	clients[id].set_RETURN(200);
+	if (clients[id].get_route().find(".php") != std::string::npos || // CGI
+		clients[id].get_route().find(".py") != std::string::npos)
+	{
+		this->run_cgi(Config.get_v_server()[server_id], clients[id].get_route(), clients[id]); // envp have to fix
+		close(clients[id].get_write_fd());
+		clients[clients[id].get_read_fd()].set_read_fd(id);
+		clients[clients[id].get_read_fd()].set_status(need_to_cgi_read);
+		clients[clients[id].get_read_fd()].set_pid(clients[id].get_pid());
+		clients[id].set_status(WAIT);
+		change_events(this->get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+		fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
+		change_events(this->get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+		return ;
+	}
+	std::string referer;
+	std::string root;
+	if (clients[id].get_request().get_referer() == "/")
+	{
+		referer = Config.get_v_server()[server_id].get_index(); // config
+		root = Config.get_v_server()[server_id].get_root();
+	}
+	else
+	{
+		referer = clients[id].get_request().get_referer(); // request
+		root = Config.get_v_server()[server_id].get_root();
+	}
+	if (*referer.begin() == '/')
+		referer.erase(referer.begin(), referer.begin() + 1);
+	if (root != "" && *(root.end() - 1) != '/')
+		root += '/';
+	clients[id].set_route(root + referer); // ./ + /View/file.php
+
+	std::cout << "route: " << clients[id].get_route() << std::endl; //////////////////////////
+
+
+	int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
+	clients[id].set_open_file_name('.' + clients[id].get_route());
+	if (open_fd < 0)
+	{
+		this->set_error_page(clients, id, 404);
+		return ;
+	}
+	if (clients[id].get_request().get_method() == "DELETE")
+	{
+		clients[id].set_status(DELETE_ok);
+		close(open_fd);
+		return ;
+	}
+	clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
+	clients[open_fd].set_status(need_to_is_file_read);
+
+	clients[id].set_status(WAIT);
+	change_events(this->get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+	fcntl(open_fd, F_SETFL, O_NONBLOCK);
+	change_events(this->get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+}
+
 
 std::map<std::string, std::string> &Webserv::get_mimes(void)
 {

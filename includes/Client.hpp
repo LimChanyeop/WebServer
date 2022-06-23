@@ -13,6 +13,9 @@ class Server;
 enum status
 {
 	no,
+	chunked_WAIT,
+	not_chunked,
+	chunked_FINISH,
 	server_READ_ok,
 	request_ok,
 	open_READ_ok,
@@ -22,9 +25,6 @@ enum status
 	need_error_read,
 	need_to_POST_write,
 	need_to_cgi_write,
-	chunked_WAIT,
-	not_chunked,
-	chunked_FINISH,
 	WAIT,
 	WRITE_LINE, // WRITE
 	redi_write,
