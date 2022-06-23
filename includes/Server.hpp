@@ -6,6 +6,7 @@
 #include "Location.hpp"
 #include "ParseUtils.hpp"
 #include <vector>
+#include <map>
 #include <sys/event.h>
 
 class Location;
@@ -26,7 +27,7 @@ private:
 	std::string index;
 	std::string autoindex;
 	std::string return_n;
-	std::string error_page;
+	std::map<int, std::string> error_page;
 	std::string cgi_path;
 	std::string allow_methods;
 	std::string auth_key;
@@ -42,7 +43,7 @@ public:
 	const std::string &get_index(void) const;
 	const std::string &get_autoindex(void) const;
 	const std::string &get_return_n(void) const;
-	const std::string &get_error_page(void) const;
+	const std::map<int, std::string> &get_error_page(void) const;
 	const std::string &get_cgi_path(void) const;
 	const std::string &get_allow_methods(void) const;
 	const std::string &get_auth_key(void) const;
@@ -59,7 +60,8 @@ public:
 	void set_index(std::string str);
 	void set_autoindex(std::string str);
 	void set_return_n(std::string str);
-	void set_error_page(std::string str);
+	void set_error_page(std::map<int, std::string> err);
+	void set_error_page(int i, std::string str);
 	void set_cgi_path(std::string str);
 	void set_allow_methods(std::string str);
 	void set_auth_key(std::string str);

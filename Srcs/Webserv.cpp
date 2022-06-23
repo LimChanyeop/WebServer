@@ -251,7 +251,7 @@ int Webserv::check_except(std::map<int, Client> &clients, Config &config, int &i
 	std::string method = clients[ident].get_request().get_method();
 	if (method != "GET" && method != "POST" && method != "DELETE")
 	{
-		this->set_error_page(clients, ident, 405);
+		this->set_error_page(clients, ident, 405, config);
 		return -1;
 	}
 	if (limit_except == "")
@@ -259,7 +259,7 @@ int Webserv::check_except(std::map<int, Client> &clients, Config &config, int &i
 	if (limit_except.find(method) == std::string::npos) // no match
 	{
 		std::cerr << "Not except\n";
-		this->set_error_page(clients, ident, 405);
+		this->set_error_page(clients, ident, 405, config);
 		return -1;
 	}
 	return 1;
@@ -271,18 +271,18 @@ int Webserv::check_size(std::map<int, Client> &clients, Config &config, int &ide
 	{
 		if (clients[ident].get_request().get_post_body_size() == 0)
 		{
-			this->set_error_page(clients, ident, 400);
+			this->set_error_page(clients, ident, 400, config);
 			return -1;
 		}
 	}
 	if (clients[ident].get_request().get_header_size() > config.get_v_server()[server_id].get_request_limit_header_size())
 	{
-		this->set_error_page(clients, ident, 413);
+		this->set_error_page(clients, ident, 413, config);
 		return -1;
 	}
 	if (clients[ident].get_request().get_post_body_size() > config.get_v_server()[server_id].get_client_limit_body_size())
 	{
-		this->set_error_page(clients, ident, 413);
+		this->set_error_page(clients, ident, 413, config);
 		return -1;
 	}
 	return 1;
@@ -340,6 +340,7 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	DIR *dir_ptr = NULL;	// is dir?
 	if ((dir_ptr = opendir(route.c_str())) != NULL)
 	{
+		std::cout << "is dir\n";
 		client.set_RETURN(200);
 		closedir(dir_ptr);
 		return -1;
@@ -347,6 +348,7 @@ int Webserv::find_location_id(const int &server_id, const Config &config, const 
 	FILE *file; // file exist?
 	if ((file = fopen(route.c_str(), "r")) != NULL)
 	{ // exist
+	std::cout << "is file\n";
 		fclose(file);
 		client.set_is_file(1);
 		client.set_RETURN(200);
@@ -377,9 +379,15 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 	clients[acc_fd].set_server_sock(event_ident);
 	clients[acc_fd].set_status(server_READ_ok);
 }
-char **make_env(Client &client, const Server &server)
+char **make_env(Client &client, const Server &server, const std::string &idx_root)
 {
 	std::map<std::string, std::string> cgi_map;
+	std::string index_root = idx_root;
+	std::cout << "index_root: " << index_root <<std::endl;
+	if (*index_root.begin() == '.')
+		index_root.erase(0, 1);
+	std::cout << "index_root: " << index_root <<std::endl;
+
 	cgi_map["SERVER_PROTOCOL"] = "HTTP/1.1";
 	cgi_map["GATEWAY_INTERFACE"] = "CGI/1.1";
 	cgi_map["SERVER_SOFTWARE"] = "nginx server";
@@ -388,14 +396,13 @@ char **make_env(Client &client, const Server &server)
 	cgi_map["SERVER_PORT"] = client.get_request().get_host();
 	cgi_map["SERVER_NAME"] = "localhost";
 	cgi_map["DOCUMENT_ROOT"] = server.get_cgi_path();			//"./cgiBinary/php-cgi"; //
-	cgi_map["DOCUMENT_URI"] = client.get_route();				//"/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함 //
-	cgi_map["REQUEST_URI"] = client.get_route();				// "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함 //
-	cgi_map["SCRIPT_NAME"] = client.get_route();				// "/View/file.php";	// 실행파일 전체 주소가 들어가야함 //
-	cgi_map["SCRIPT_FILENAME"] = '.' + client.get_route();		//"./View/file.php";
+	cgi_map["DOCUMENT_URI"] = index_root;				//"/View/file.php"; // 리퀘스트에 명시된 전체 주소가 들어가야 함 //
+	cgi_map["REQUEST_URI"] = index_root;				// "/View/file.php";	// 리퀘스트에 명시된 전체 주소가 들어가야 함 //
+	cgi_map["SCRIPT_NAME"] = index_root;				// "/View/file.php";	// 실행파일 전체 주소가 들어가야함 //
+	cgi_map["SCRIPT_FILENAME"] = '.' + index_root;		//"./View/file.php";
 	cgi_map["QUERY_STRING"] = client.get_request().get_query();	//
 	cgi_map["REMOTE_ADDR"] = "127.0.0.1"; 						//client.get_ip();
 	cgi_map["REDIRECT_STATUS"] = "200";
-	std::cerr << "file name:" << client.get_request().get_post_filename() << std::endl;
 	if (client.get_request().get_method() == "POST")
 		cgi_map["CONTENT_LENGTH"] = client.get_request().get_contentLength(); // GET은 노노
 	if (client.get_request().get_post_filename().find(".png") != std::string::npos ||
@@ -418,14 +425,16 @@ char **make_env(Client &client, const Server &server)
 		while (*(temp.end() - 1) == '\n' || *(temp.end() - 1) == '\r')
 			temp.pop_back();
 		cgi_env[i] = strdup(temp.c_str());
+		std::cout << "cgi_env: " << cgi_env[i] << std::endl;
 		i++;
 	}
 	cgi_env[i] = NULL;
 	return cgi_env;
 }
 
-void Webserv::run_cgi(const Server &server, const std::string &index_root, Client &client)
+void Webserv::run_cgi(const Server &server, const std::string &index_root, Client &client, const int &location_id)
 {
+	(void)location_id;
 	int read_fd[2];
 	int write_fd[2];
 	char **cgi_env;
@@ -437,7 +446,7 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	}
 	pipe(write_fd);
 
-	cgi_env = make_env(client, server);
+	cgi_env = make_env(client, server, index_root);
 	int pid = fork();
 	if (pid == -1)
 	{
@@ -497,17 +506,29 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	client.set_write_fd(write_fd[1]);
 }
 
-void Webserv::set_error_page(std::map<int, Client> &clients, const int &id, const int &status)
+void Webserv::set_error_page(std::map<int, Client> &clients, const int &id, const int &status, const Config &Config)
 {
+	std::string route = "./static_files/" + std::to_string(status) + ".html";
+	if (clients[id].get_server_id() > 0)
+	{
+		std::map<int, std::string>::const_iterator it;
+		Server server = Config.get_v_server()[clients[id].get_server_id()];
+		if (clients[id].get_server_id() > 0 && status >= 400 &&
+			(it = server.get_error_page().find(status)) != server.get_error_page().end())
+		{
+			route = it->second;
+		}
+	}
+
 	clients[id].set_RETURN(status);
-	std::string route = "./status_pages/" + std::to_string(status) + ".html";
 	if (status == 0) // default
-		route = "./status_pages/Default_error.html";
+		route = "./static_files/Default_error.html";
+	std::cout << "route: " << route << std::endl;
 	int open_fd = open(route.c_str(), O_RDONLY);
 	if (open_fd < 0)
 	{
 		std::cerr << "open error - " << route << std::endl;
-		open_fd = open("./status_pages/Default_error.html", O_RDONLY);
+		open_fd = open("./static_files/Default_error.html", O_RDONLY);
 		if (open_fd < 0)
 		{
 			std::cerr << "No File To Show\n";
@@ -552,13 +573,15 @@ void Webserv::set_indexing(Client &client)
 	}
 }
 
-void Webserv::read_index(std::map<int, Client> &clients, int &id, int &server_id, const Config &Config)
+void Webserv::read_index(std::map<int, Client> &clients, const int &id, const Config &Config)
 {
+	Server server = Config.get_v_server()[clients[id].get_server_id()];
 	clients[id].set_RETURN(200);
 	if (clients[id].get_route().find(".php") != std::string::npos || // CGI
 		clients[id].get_route().find(".py") != std::string::npos)
 	{
-		this->run_cgi(Config.get_v_server()[server_id], clients[id].get_route(), clients[id]); // envp have to fix
+		std::cout << "im CGI! get_route: " << clients[id].get_route() << "\n";
+		this->run_cgi(server, clients[id].get_route(), clients[id], -1); // envp have to fix
 		close(clients[id].get_write_fd());
 		clients[clients[id].get_read_fd()].set_read_fd(id);
 		clients[clients[id].get_read_fd()].set_status(need_to_cgi_read);
@@ -569,17 +592,18 @@ void Webserv::read_index(std::map<int, Client> &clients, int &id, int &server_id
 		change_events(this->get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
 		return ;
 	}
+	std::cout << "not cgi??\n";
 	std::string referer;
 	std::string root;
 	if (clients[id].get_request().get_referer() == "/")
 	{
-		referer = Config.get_v_server()[server_id].get_index(); // config
-		root = Config.get_v_server()[server_id].get_root();
+		referer = server.get_index(); // config
+		root = server.get_root();
 	}
 	else
 	{
 		referer = clients[id].get_request().get_referer(); // request
-		root = Config.get_v_server()[server_id].get_root();
+		root = server.get_root();
 	}
 	if (*referer.begin() == '/')
 		referer.erase(referer.begin(), referer.begin() + 1);
@@ -587,19 +611,18 @@ void Webserv::read_index(std::map<int, Client> &clients, int &id, int &server_id
 		root += '/';
 	clients[id].set_route(root + referer); // ./ + /View/file.php
 
-	std::cout << "route: " << clients[id].get_route() << std::endl; //////////////////////////
-
-
 	int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
 	clients[id].set_open_file_name('.' + clients[id].get_route());
 	if (open_fd < 0)
 	{
-		this->set_error_page(clients, id, 404);
+		this->set_error_page(clients, id, 404, Config);
 		return ;
 	}
 	if (clients[id].get_request().get_method() == "DELETE")
 	{
 		clients[id].set_status(DELETE_ok);
+		close(clients[id].get_read_fd());
+		close(clients[id].get_write_fd());
 		close(open_fd);
 		return ;
 	}
@@ -611,6 +634,33 @@ void Webserv::read_index(std::map<int, Client> &clients, int &id, int &server_id
 	fcntl(open_fd, F_SETFL, O_NONBLOCK);
 	change_events(this->get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
 }
+
+// void Webserv::read_index(std::map<int, Client> &clients, const int &id, std::string root, std::string index)
+// {
+// 	clients[id].set_RETURN(200);
+// 	// std::string root = Config.get_v_server()[server_id].get_v_location()[location_id].get_root();
+// 	if (root == "/" || root == "" || *(root.end() - 1) == '/')
+// 		root.pop_back();
+// 	if (*index.begin() == '/')
+// 		clients[id].set_route(root + index);
+// 	else
+// 		clients[id].set_route(root + '/' + index);
+
+// 	int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
+// 	clients[id].set_open_file_name('.' + clients[id].get_route());
+// 	if (open_fd == -1)
+// 	{
+// 		this->set_error_page(clients, id, 404);
+// 		return ;
+// 	}
+
+// 	clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
+// 	clients[open_fd].set_status(need_to_GET_read);
+// 	clients[id].set_status(WAIT);
+// 	change_events(this->get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+// 	fcntl(open_fd, F_SETFL, O_NONBLOCK);
+// 	change_events(this->get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+// }
 
 
 std::map<std::string, std::string> &Webserv::get_mimes(void)

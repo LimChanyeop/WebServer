@@ -74,7 +74,7 @@ int find_key(const std::string &key)
 	keys.push_back("user");
 	keys.push_back("worker_processes");
 	keys.push_back("listen");
-	keys.push_back("server_name");
+	keys.push_back("server_name"); // 5
 	keys.push_back("root");
 	keys.push_back("index");
 	keys.push_back("autoindex");

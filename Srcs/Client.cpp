@@ -66,7 +66,6 @@ int Client::request_parsing(FILE *file_ptr)
 				it = body.begin();
 				while (it != body.end())
 				{
-					std::cout << "hi";
 					find = body.find("\r\n");
 					size = body.substr(0, find);
 					body.erase(0, find + 2);

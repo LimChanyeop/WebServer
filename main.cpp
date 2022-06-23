@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 	Config.config_parsing(vec_attr);
-	Config.server_check();
+	Config.config_check();
 	std::string &mime = webserv.mime_read(default_mime);
 	webserv.mime_parsing(mime);
 
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 							fclose(const_cast<FILE *>(clients[id].get_write_fp()));
 					}
 				}
-				webserv.set_error_page(clients, id, 500);
+				webserv.set_error_page(clients, id, 500, Config);
 				// close(webserv.get_kq().get_event_list()[i].ident);
 				continue;
 			}
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 					}
 					if (valfread < 0)
 					{
-						webserv.set_error_page(clients, read_fd, 500);
+						webserv.set_error_page(clients, read_fd, 500, Config);
 
 						close(id);
 						clients.erase(id);
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 					}
 					if (valread < 0)
 					{
-						webserv.set_error_page(clients, read_fd, 500);
+						webserv.set_error_page(clients, read_fd, 500, Config);
 
 						close(id);
 						clients.erase(id);
@@ -163,12 +163,11 @@ int main(int argc, char *argv[])
 
 					while (k == 1)
 					{
-						std::cout << "4"; ////////////////////////////////////////////////////////////////////////////////////////
 						k = clients[id].request_parsing(file_ptr);
 					} // requests_ok
 					if (k == -1)
 					{
-						webserv.set_error_page(clients, id, 500);
+						webserv.set_error_page(clients, id, 500, Config);
 						break;
 					}
 
@@ -191,7 +190,7 @@ int main(int argc, char *argv[])
 						int location_id = webserv.find_location_id(server_id, Config, clients[id].get_request(), clients[id]); // /abc가 있는가?
 						if (location_id == 404)																				   // is not found
 						{
-							webserv.set_error_page(clients, id, 404);
+							webserv.set_error_page(clients, id, 404, Config);
 							break;
 						}
 						else if (location_id == -1) // dir
@@ -204,63 +203,20 @@ int main(int argc, char *argv[])
 							if (clients[id].get_request().get_referer() == "/" &&
 								Config.get_v_server()[server_id].get_index() != "")
 							{
-								webserv.read_index(clients, id, server_id, Config);
+								webserv.read_index(clients, id, Config);
 								break;
 							}
 							break;
 						}
 						else if (location_id == -2) // is file
 						{
-							webserv.read_index(clients, id, server_id, Config);
-							// clients[id].set_RETURN(200);
-							// if (clients[id].get_route().find(".php") != std::string::npos ||
-							// 	clients[id].get_route().find(".py") != std::string::npos)
-							// {
-							// 	webserv.run_cgi(Config.get_v_server()[server_id], clients[id].get_route(), clients[id]); // envp have to fix
-							// 	close(clients[id].get_write_fd());
-							// 	clients[clients[id].get_read_fd()].set_read_fd(id);
-							// 	clients[clients[id].get_read_fd()].set_status(need_to_cgi_read);
-							// 	clients[clients[id].get_read_fd()].set_pid(clients[id].get_pid());
-							// 	clients[id].set_status(WAIT);
-							// 	change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
-							// 	fcntl(clients[id].get_read_fd(), F_SETFL, O_NONBLOCK);
-							// 	change_events(webserv.get_kq().get_change_list(), clients[id].get_read_fd(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
-							// 	break;
-							// }
-							// std::string referer = clients[id].get_request().get_referer();
-							// if (*referer.begin() == '/')
-							// 	referer.erase(referer.begin(), referer.begin() + 1);
-							// std::string root = Config.get_v_server()[server_id].get_root();
-							// if (root != "" && *(root.end() - 1) != '/')
-							// 	root += '/';
-							// clients[id].set_route(root + referer);
-
-							// int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
-							// clients[id].set_open_file_name('.' + clients[id].get_route());
-							// if (open_fd < 0)
-							// {
-							// 	webserv.set_error_page(clients, id, 404);
-							// 	break;
-							// }
-							// if (clients[id].get_request().get_method() == "DELETE")
-							// {
-							// 	clients[id].set_status(DELETE_ok);
-							// 	close(open_fd);
-							// 	break;
-							// }
-							// clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
-							// clients[open_fd].set_status(need_to_is_file_read);
-
-							// clients[id].set_status(WAIT);
-							// change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
-							// fcntl(open_fd, F_SETFL, O_NONBLOCK);
-							// change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+							webserv.read_index(clients, id, Config);
 							break;
 						}
 						clients[id].set_location_id(location_id);
 
 
-						std::cout << "index: " << Config.get_v_server()[server_id].get_v_location()[location_id].get_index() << std::endl; //////////////////
+						std::cout << "hear!! index: " << Config.get_v_server()[server_id].get_v_location()[location_id].get_index() << std::endl; //////////////////
 
 
 						int stat = Config.get_v_server()[server_id].get_v_location()[location_id].get_redi_status();
@@ -288,7 +244,7 @@ int main(int argc, char *argv[])
 							clients[id].set_open_file_name('.' + clients[id].get_route());
 							if (open_fd == -1)
 							{
-								webserv.set_error_page(clients, id, 404);
+								webserv.set_error_page(clients, id, 404, Config);
 								break;
 							}
 
@@ -312,7 +268,7 @@ int main(int argc, char *argv[])
 							if (root != "" && *(root.end() - 1) != '/')
 								root += '/';
 							std::string index_root = root + Config.get_v_server()[server_id].get_v_location()[location_id].get_index();
-							webserv.run_cgi(Config.get_v_server()[server_id], index_root, clients[id]); // envp have to fix
+							webserv.run_cgi(Config.get_v_server()[server_id], index_root, clients[id], location_id); // envp have to fix
 							close(clients[id].get_write_fd());
 							clients[clients[id].get_read_fd()].set_read_fd(id);
 							clients[clients[id].get_read_fd()].set_status(need_to_cgi_read);
@@ -343,7 +299,7 @@ int main(int argc, char *argv[])
 							int open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, 0777);
 							if (open_fd < 0)
 							{
-								webserv.set_error_page(clients, id, 404);
+								webserv.set_error_page(clients, id, 404, Config);
 								break;
 							}
 							clients[open_fd].set_status(need_to_POST_write);
@@ -357,14 +313,13 @@ int main(int argc, char *argv[])
 						}
 						else
 						{
-							std::string route = "." + clients[id].get_request().get_referer();
+							std::string index_root = "." + clients[id].get_request().get_referer();
 							if (clients[id].get_request().get_referer().find("php") != std::string::npos ||
 								clients[id].get_request().get_referer().find("py") != std::string::npos)
 							{
 								// POST CGI
 								clients[id].set_RETURN(200);
-								std::string index_root = route + std::to_string(i);
-								webserv.run_cgi(Config.get_v_server()[server_id], index_root, clients[id]);
+								webserv.run_cgi(Config.get_v_server()[server_id], index_root, clients[id], -1);
 								clients[clients[id].get_read_fd()].set_pid(clients[id].get_pid());
 								clients[clients[id].get_write_fd()].set_pid(clients[id].get_pid());
 								clients[clients[id].get_read_fd()].set_read_fd(id);
@@ -386,13 +341,13 @@ int main(int argc, char *argv[])
 							}
 							int open_fd;
 							if (clients[id].get_RETURN() == 200)
-								open_fd = open(route.c_str(), O_RDWR | O_APPEND | O_SYNC, 0777);
+								open_fd = open(index_root.c_str(), O_RDWR | O_APPEND | O_SYNC, 0777);
 							else
-								open_fd = open(route.c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, 0777);
-							clients[id].set_open_file_name(route);
+								open_fd = open(index_root.c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, 0777);
+							clients[id].set_open_file_name(index_root);
 							if (open_fd < 0)
 							{
-								webserv.set_error_page(clients, id, 404);
+								webserv.set_error_page(clients, id, 404, Config);
 								break;
 							}
 							clients[open_fd].set_status(need_to_POST_write);
@@ -419,7 +374,7 @@ int main(int argc, char *argv[])
 						fclose(fp);
 						close(id);
 						clients.erase(id);
-						webserv.set_error_page(clients, clients[id].get_write_fd(), 500);
+						webserv.set_error_page(clients, clients[id].get_write_fd(), 500, Config);
 						break;
 					}
 					else
@@ -435,7 +390,6 @@ int main(int argc, char *argv[])
 				}
 				else if (clients[id].get_status() == need_to_cgi_write) // CGI에다가 write
 				{
-					std::cout << "1";
 					FILE *fp = fdopen(id, "wb");
 
 					size_t wr_val = fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
@@ -448,7 +402,7 @@ int main(int argc, char *argv[])
 						close(id);
 						clients.erase(id);
 						// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
-						webserv.set_error_page(clients, clients[id].get_write_fd(), 500);
+						webserv.set_error_page(clients, clients[id].get_write_fd(), 500, Config);
 						break;
 					}
 					else // wr_val >= 0
@@ -513,7 +467,7 @@ int main(int argc, char *argv[])
 								}
 								else
 								{
-									webserv.set_error_page(clients, id, 404);
+									webserv.set_error_page(clients, id, 404, Config);
 									break;
 								}
 								if (dir != NULL)
@@ -546,7 +500,7 @@ int main(int argc, char *argv[])
 						}
 						// if ((size_t)Config.get_response_limit_size() < clients[id].get_response().get_send_to_response().size())
 						// {
-						// 	webserv.set_error_page(clients, id, 413); // Payload Too Large
+						// 	webserv.set_error_page(clients, id, 413); // Payload Too Lar, Configge
 						// 	clients[id].get_response().set_response_str("");
 						// 	break;
 						// }
@@ -558,7 +512,7 @@ int main(int argc, char *argv[])
 							wr_val = write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
 							if (wr_val < 0)
 							{
-								webserv.set_error_page(clients, id, 500);
+								webserv.set_error_page(clients, id, 500, Config);
 								clients[id].get_response().set_response_str("");
 								break;
 							}
@@ -574,7 +528,7 @@ int main(int argc, char *argv[])
 						std::cout << wr_val << " vs " << clients[id].get_response().get_send_to_response().size() << std::endl;
 						if (wr_val < 0)
 						{
-							webserv.set_error_page(clients, id, 500);
+							webserv.set_error_page(clients, id, 500, Config);
 							clients[id].get_response().set_response_str("");
 							fclose(fp);
 							close(id);

@@ -10,7 +10,8 @@ Server::Server(Config conf) : Fd(), listen("7777")
 	this->set_index(conf.get_index());
 	this->set_autoindex(conf.get_autoindex());
 	this->set_return_n(conf.get_return_n());
-	this->set_error_page(conf.get_error_page());
+	std::map<int, std::string> err = conf.get_error_page();
+	this->set_error_page(err);
 	this->set_auth_key(conf.get_auth_key());
 	this->set_cgi_path(conf.get_cgi_path());
 	this->set_allow_methods(conf.get_allow_methods());
@@ -24,7 +25,7 @@ const std::string &Server::get_root(void) const { return root; }
 const std::string &Server::get_index(void) const { return index; }
 const std::string &Server::get_autoindex(void) const { return autoindex; }
 const std::string &Server::get_return_n(void) const { return return_n; }
-const std::string &Server::get_error_page(void) const { return error_page; }
+const std::map<int, std::string> &Server::get_error_page(void) const { return error_page; }
 const std::string &Server::get_cgi_path(void) const { return cgi_path; }
 const std::string &Server::get_allow_methods(void) const { return allow_methods; }
 const std::string &Server::get_auth_key(void) const { return auth_key; }
@@ -41,7 +42,9 @@ void Server::set_root(std::string str) { root = str; }
 void Server::set_index(std::string str) { index = str; }
 void Server::set_autoindex(std::string str) { autoindex = str; }
 void Server::set_return_n(std::string str) { return_n = str; }
-void Server::set_error_page(std::string str) { error_page = str; }
+void Server::set_error_page(std::map<int, std::string> err) { error_page = err; }
+void Server::set_error_page(int i, std::string err) { error_page[i] = err; }
+
 void Server::set_cgi_path(std::string str)
 {
 	str.erase(0, str.find("./"));
@@ -59,6 +62,8 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 	{
 		// std::cerr << "ser::it: " << *it << ", find_key: " << find_key(*it) << std::endl;
 		std::string temp = "";
+		unsigned int i = 0;
+		unsigned long find;
 		switch (find_key(*it))
 		{
 		case 0:
@@ -148,14 +153,11 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 			this->set_return_n(temp);
 			break;
 		case 10:
-			while (find_semi(*(it + 1)))
-			{
-				temp += *it;
-				temp += ' ';
-				it++;
-			}
-			temp += *(it + 1);
-			this->set_error_page(temp);
+			i = atoi((++it)->c_str());
+			temp = '.' + *(++it);
+			while ((find = temp.find(";")) != std::string::npos)
+				temp.erase(find, find + 1);
+			this->set_error_page(i, temp);
 			break;
 		case 11:
 			while (find_semi(*(it + 1)))

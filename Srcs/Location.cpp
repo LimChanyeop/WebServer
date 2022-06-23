@@ -11,7 +11,6 @@ Location::Location(Server sb) : redi_status(0)
 	this->set_root(sb.get_root());
 	this->set_index(sb.get_index());
 	this->set_autoindex(sb.get_autoindex());
-	this->set_error_page(sb.get_error_page());
 	this->set_auth_key(sb.get_auth_key());
 	this->set_cgi_path(sb.get_cgi_path());
 	this->set_allow_methods(sb.get_allow_methods());
