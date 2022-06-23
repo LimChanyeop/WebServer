@@ -15,6 +15,8 @@ void Response::set_autoindex(const std::string &referer, const std::string &name
 {
 	// /(View) + /redi.html
 	std::string route;
+	if (name.find(".o") != std::string::npos)
+		return;
 	if (name == ".." && i == 1)
 		return;
 	else if (*name.begin() == '.' && i == 1)

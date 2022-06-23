@@ -96,3 +96,4 @@ video/x-ms-wmv                                   wmv;
 video/x-msvideo                                  avi;
 
 image/vnd.microsoft.icon                         ico;
+application/octet-stream                         o;

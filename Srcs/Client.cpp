@@ -41,7 +41,7 @@ int Client::request_parsing(FILE *file_ptr)
 	else if (valfread < 0)
 		return -1;
 	else
-		return 1;
+		this->status = chunked_FINISH;
 
 	if (this->status == chunked_WAIT)
 	{
@@ -79,10 +79,11 @@ int Client::request_parsing(FILE *file_ptr)
 
 					find = body.find("0\r\n"); // (abcdefg1234567)
 					this->chunked_body += body.substr(0, find);
+					body.clear();
 				}
 			}
 		}
-		else if (valfread < BUFSIZE - 1) // not chunked & all read
+		else if (valfread == 0 || valfread < BUFSIZE - 1) // not chunked & all read
 		{
 			this->status = chunked_FINISH;
 		}

@@ -163,6 +163,7 @@ int main(int argc, char *argv[])
 
 					while (k == 1)
 					{
+						std::cout << "4"; ////////////////////////////////////////////////////////////////////////////////////////
 						k = clients[id].request_parsing(file_ptr);
 					} // requests_ok
 					if (k == -1)
@@ -417,10 +418,12 @@ int main(int argc, char *argv[])
 					fclose(fp);
 					close(id);
 					clients.erase(id);
+					// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 					break;
 				}
 				else if (clients[id].get_status() == need_to_cgi_write) // CGI에다가 write
 				{
+					std::cout << "1";
 					FILE *fp = fdopen(id, "wb");
 
 					size_t wr_val = fwrite(clients[id].get_request().get_post_body().c_str(), sizeof(char), clients[id].get_request().get_post_body().length(), fp);
@@ -432,6 +435,7 @@ int main(int argc, char *argv[])
 						fclose(fp);
 						close(id);
 						clients.erase(id);
+						// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 						webserv.set_error_page(clients, clients[id].get_write_fd(), 500);
 						break;
 					}
@@ -443,6 +447,7 @@ int main(int argc, char *argv[])
 						fclose(fp);
 						close(id);
 						clients.erase(id);
+						// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 						break;
 					}
 				}
@@ -515,7 +520,9 @@ int main(int argc, char *argv[])
 								else
 								{
 									/* could not open directory */
-									perror("");
+									close(id);
+									clients.erase(id);
+									// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 									return EXIT_FAILURE;
 								}
 							}
@@ -526,16 +533,14 @@ int main(int argc, char *argv[])
 							clients[id].get_response().set_header(200, "", clients[id].get_content_type()); // ok
 						}
 						FILE *fp = fdopen(id, "wb");
+						size_t wr_val = 0;
 						clients[id].set_write_fp(fp);
 						if (clients[id].get_status() == cgi_read_ok)
 						{
-							size_t wr_val = write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
+							wr_val = write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
 							if (wr_val < 0)
 							{
 								webserv.set_error_page(clients, id, 500);
-								close(id);
-								fclose(fp);
-								clients.erase(id);
 								break;
 							}
 							else
@@ -544,17 +549,25 @@ int main(int argc, char *argv[])
 								fclose(fp);
 								clients.erase(id);
 								break;
-
 							}
 						}
-						size_t wr_val = fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char),
-							clients[id].get_response().get_send_to_response().size(), fp);
+						while ((wr_val += fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char),
+							clients[id].get_response().get_send_to_response().size(), fp)) != clients[id].get_response().get_send_to_response().size())
+							;
+						std::cout << wr_val << " vs " << clients[id].get_response().get_send_to_response().size() << std::endl;
+						if (wr_val != clients[id].get_response().get_send_to_response().size())
+						{
+							webserv.set_error_page(clients, id, 400);
+							// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+							break;
+						}
 						if (wr_val < 0)
 						{
 							webserv.set_error_page(clients, id, 500);
 							fclose(fp);
 							close(id);
 							clients.erase(id);
+							// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 							break;
 						}
 						else
@@ -562,6 +575,7 @@ int main(int argc, char *argv[])
 							fclose(fp);
 							close(id);
 							clients.erase(id);
+							// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 						}
 					}
 				}
