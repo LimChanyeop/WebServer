@@ -551,13 +551,14 @@ void Webserv::set_indexing(Client &client)
 	DIR *dir;
 	int is_root = 0;
 	struct dirent *ent;
-	if (client.get_location_id() < 0 && client.get_is_file() != 1) // /abc
+	if (client.get_location_id() < 0 && client.get_is_file() != 1) // referer: /abc
 		dir = opendir(('.' + client.get_request().get_referer()).c_str());
 	else// (client.get_request().get_referer() == "/")
 	{
 		is_root = 1;
 		dir = opendir(('.' + client.get_request().get_referer()).c_str());
 	}
+	std::cout << "webserv::route: ." + client.get_request().get_referer() << std::endl;
 	if (dir != NULL)
 	{
 		/* print all the files and directories within directory */
@@ -611,6 +612,8 @@ void Webserv::read_index(std::map<int, Client> &clients, const int &id, const Co
 		root += '/';
 	clients[id].set_route(root + referer); // ./ + /View/file.php
 
+	std::cout << "route : " << '.' + root + referer << std::endl;
+
 	int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
 	clients[id].set_open_file_name('.' + clients[id].get_route());
 	if (open_fd < 0)
@@ -618,14 +621,14 @@ void Webserv::read_index(std::map<int, Client> &clients, const int &id, const Co
 		this->set_error_page(clients, id, 404, Config);
 		return ;
 	}
-	if (clients[id].get_request().get_method() == "DELETE")
-	{
-		clients[id].set_status(DELETE_ok);
-		close(clients[id].get_read_fd());
-		close(clients[id].get_write_fd());
-		close(open_fd);
-		return ;
-	}
+	// if (clients[id].get_request().get_method() == "DELETE")
+	// {
+	// 	clients[id].set_status(DELETE_ok);
+	// 	close(clients[id].get_read_fd());
+	// 	close(clients[id].get_write_fd());
+	// 	close(open_fd);
+	// 	return ;
+	// }
 	clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
 	clients[open_fd].set_status(need_to_is_file_read);
 

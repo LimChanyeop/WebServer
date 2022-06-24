@@ -76,6 +76,8 @@ int main(int argc, char *argv[])
 					std::string fread_str;
 					char buff[BUFSIZE];
 
+					std::cout << "file read, id: " << id << ", file_ptr: " << file_ptr << std::endl;
+					
 					memset(buff, 0, BUFSIZE);
 					while ((valfread = fread(buff, sizeof(char), BUFSIZE - 1, file_ptr)) >= 0)
 					{
@@ -101,6 +103,7 @@ int main(int argc, char *argv[])
 						clients[read_fd].set_status(is_file_read_ok);
 					else
 						clients[read_fd].set_status(GET_read_ok);
+					std::cout << "hear? status: " << clients[id].get_status() << ", read_fd status: " << read_fd << std::endl;
 					close(id);
 					clients.erase(id);
 				}
@@ -203,7 +206,7 @@ int main(int argc, char *argv[])
 							{
 								clients[id].set_RETURN(200);
 								clients[id].set_status(ok);
-								change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+								// change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 							}
 							else // DELETE
 							{
@@ -259,6 +262,8 @@ int main(int argc, char *argv[])
 								clients[id].set_route(root + index);
 							else
 								clients[id].set_route(root + '/' + index);
+
+							std::cout << "route : ." + clients[id].get_route() << std::endl;
 
 							int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
 							clients[id].set_open_file_name('.' + clients[id].get_route());
@@ -452,7 +457,8 @@ int main(int argc, char *argv[])
 						}
 						else if (clients[id].get_status() == is_file_read_ok)
 						{
-							webserv.set_indexing(clients[id]);
+							std::cout <<"hear???\n";
+							// webserv.set_indexing(clients[id]);
 							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 						}
 						else if (clients[id].get_status() == cgi_read_ok)
