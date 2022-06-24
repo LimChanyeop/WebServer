@@ -539,7 +539,9 @@ int main(int argc, char *argv[])
 						clients[id].set_write_fp(fp);
 						if (clients[id].get_status() == cgi_read_ok)
 						{
-							wr_val = write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
+							while ((wr_val = write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().size()))
+								< clients[id].get_response().get_send_to_response().size())
+								;
 							if (wr_val < 0)
 							{
 								std::cout << "12";
@@ -555,7 +557,10 @@ int main(int argc, char *argv[])
 								break;
 							}
 						}
-						wr_val += fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char), clients[id].get_response().get_send_to_response().size(), fp);
+						std::cout << "while write \n";
+						while ((wr_val += fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char), clients[id].get_response().get_send_to_response().size(), fp))
+							< clients[id].get_response().get_send_to_response().size())
+							;
 						if (wr_val < 0)
 						{
 							std::cout << "13";
