@@ -440,6 +440,8 @@ int main(int argc, char *argv[])
 						}
 						else if (clients[id].get_status() == is_file_read_ok)
 						{
+							if (clients[id].get_request().get_referer() == "/")
+								webserv.set_indexing(clients[id]);
 							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 						}
 						else if (clients[id].get_status() == cgi_read_ok)
