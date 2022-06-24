@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
 							{
 								webserv.read_index(clients, id, Config);
 							}
-							else
+							else if (Config.get_v_server()[server_id].get_autoindex() != "on")
 							{
 								int open_fd = open("./static_files/Default.html", O_RDONLY);
 								if (open_fd < 0)
