@@ -219,8 +219,24 @@ int main(int argc, char *argv[])
 								Config.get_v_server()[server_id].get_index() != "")
 							{
 								webserv.read_index(clients, id, Config);
-								break;
 							}
+							else
+							{
+								int open_fd = open("./static_files/Default.html", O_RDONLY);
+								if (open_fd < 0)
+								{
+									webserv.set_error_page(clients, id, 404, Config);
+									break ;
+								}
+								clients[open_fd].set_read_fd(id); // event_fd:6 -> open_fd:10  발생된10->6
+								clients[open_fd].set_status(need_to_is_file_read);
+
+								clients[id].set_status(WAIT);
+								change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+								fcntl(open_fd, F_SETFL, O_NONBLOCK);
+								change_events(webserv.get_kq().get_change_list(), open_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL); // read event 추가
+							}
+
 							break;
 						}
 						else if (location_id == -2) // is file
