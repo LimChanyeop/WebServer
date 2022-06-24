@@ -74,6 +74,16 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response += "\r\n\r\n";
 		this->send_to_response += this->response_str + "\r\n";
 	}
+	else if (status == 202)
+	{
+		std::cout << "202 Accepted\n";
+		this->send_to_response = "HTTP/1.1 202 Accepted\r\nContent-Type: ";
+		this->send_to_response += content_type;
+		this->send_to_response += "\r\nContent-Length: ";
+		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += "\r\n\r\n";
+		this->send_to_response += this->response_str + "\r\n";
+	}
 	else if (status == 204) // POST
 	{
 		std::cout << "204 No Content\n";

@@ -167,9 +167,13 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 			this->set_auth_key(temp);
 			break;
 		case 14: // server
+			std::cerr << "Config Parsing Error, Server in Location\n";
+			exit(-1);
 			break;
-		// case 15: // location
-		// 	break;
+		case 15: // location
+			std::cerr << "Config Parsing Error, Location in Location\n";
+			exit(-1);
+			break;
 		default:
 			break;
 		}

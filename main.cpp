@@ -57,6 +57,10 @@ int main(int argc, char *argv[])
 					}
 				}
 				webserv.set_error_page(clients, id, 500, Config);
+				if (clients[id].get_read_fd() > 0)
+					clients.erase(clients[id].get_read_fd());
+				else if (clients[id].get_write_fd() > 0)
+					clients.erase(clients[id].get_write_fd());
 				// close(webserv.get_kq().get_event_list()[i].ident);
 				continue;
 			}
@@ -195,11 +199,20 @@ int main(int argc, char *argv[])
 						}
 						else if (location_id == -1) // dir
 						{
-							clients[id].set_RETURN(200);
 							if (clients[id].get_request().get_method() == "GET")
+							{
+								clients[id].set_RETURN(200);
 								clients[id].set_status(ok);
-							else
+								change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+							}
+							else // DELETE
+							{
+								std::cout << "im delete!\n";
+								clients[id].set_RETURN(202); // Accepted
 								clients[id].set_status(DELETE_ok);
+								change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
+								break;
+							}
 							if (clients[id].get_request().get_referer() == "/" &&
 								Config.get_v_server()[server_id].get_index() != "")
 							{
@@ -210,7 +223,14 @@ int main(int argc, char *argv[])
 						}
 						else if (location_id == -2) // is file
 						{
-							webserv.read_index(clients, id, Config);
+							if (clients[id].get_request().get_method() == "DELETE")
+							{
+								std::cout << "i will remote - " << clients[id].get_request().get_referer() << std::endl;
+								remove(('.' + clients[id].get_request().get_referer()).c_str());
+								clients[id].set_status(ok);
+							}
+							else
+								webserv.read_index(clients, id, Config);
 							break;
 						}
 						clients[id].set_location_id(location_id);
@@ -445,7 +465,7 @@ int main(int argc, char *argv[])
 						}
 						else if (clients[id].get_status() == DELETE_ok)
 						{
-							clients[id].get_response().set_header(200, "", "DELETE");
+							clients[id].get_response().set_header(clients[id].get_RETURN(), "", "DELETE");
 						}
 						else if (clients[id].get_location_id() > 0)
 						{
@@ -492,11 +512,11 @@ int main(int argc, char *argv[])
 									return EXIT_FAILURE;
 								}
 							}
-							clients[id].get_response().set_header(200, "", clients[id].get_content_type());
+							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 						}
 						else
 						{
-							clients[id].get_response().set_header(200, "", clients[id].get_content_type()); // ok
+							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type()); // ok
 						}
 						// if ((size_t)Config.get_response_limit_size() < clients[id].get_response().get_send_to_response().size())
 						// {
