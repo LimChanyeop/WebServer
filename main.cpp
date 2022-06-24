@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
 					clients.erase(clients[id].get_read_fd());
 				else if (clients[id].get_write_fd() > 0)
 					clients.erase(clients[id].get_write_fd());
-				// close(webserv.get_kq().get_event_list()[i].ident);
 				continue;
 			}
 			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ)
@@ -125,7 +124,6 @@ int main(int argc, char *argv[])
 					std::string read_str;
 					char buff[BUFSIZE];
 					int read_fd = clients[id].get_read_fd(); //
-					// int valread = recv(acc_socket, read_str, BUF, 0);
 					memset(buff, 0, BUFSIZE);
 					while ((valread = read(id, buff, BUFSIZE - 1)) >= 0)
 					{ // read
@@ -203,7 +201,6 @@ int main(int argc, char *argv[])
 							{
 								clients[id].set_RETURN(200);
 								clients[id].set_status(ok);
-								// change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 							}
 							else // DELETE
 							{
@@ -232,9 +229,6 @@ int main(int argc, char *argv[])
 							break;
 						}
 						clients[id].set_location_id(location_id);
-
-
-
 
 						int stat = Config.get_v_server()[server_id].get_v_location()[location_id].get_redi_status();
 						if (stat > 0) // rediraction!!
@@ -402,7 +396,6 @@ int main(int argc, char *argv[])
 					fclose(fp);
 					close(id);
 					clients.erase(id);
-					// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 					break;
 				}
 				else if (clients[id].get_status() == need_to_cgi_write) // CGI에다가 write
@@ -418,7 +411,6 @@ int main(int argc, char *argv[])
 						fclose(fp);
 						close(id);
 						clients.erase(id);
-						// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 						webserv.set_error_page(clients, clients[id].get_write_fd(), 500, Config);
 						break;
 					}
@@ -430,7 +422,6 @@ int main(int argc, char *argv[])
 						fclose(fp);
 						close(id);
 						clients.erase(id);
-						// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 						break;
 					}
 				}
@@ -449,7 +440,6 @@ int main(int argc, char *argv[])
 						}
 						else if (clients[id].get_status() == is_file_read_ok)
 						{
-							// webserv.set_indexing(clients[id]);
 							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 						}
 						else if (clients[id].get_status() == cgi_read_ok)
@@ -469,7 +459,7 @@ int main(int argc, char *argv[])
 							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 						}
 						else if (clients[id].get_request().get_referer().find("favicon.ico") == std::string::npos && clients[id].get_request().get_method() == "GET")
-						{																			  // clients[id].location_id != -1 &&
+						{
 							if (Config.get_v_server()[clients[id].get_server_id()].get_autoindex() == "on") // location on?
 							{
 								DIR *dir;
@@ -505,7 +495,6 @@ int main(int argc, char *argv[])
 									/* could not open directory */
 									close(id);
 									clients.erase(id);
-									// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 									return EXIT_FAILURE;
 								}
 							}
@@ -515,12 +504,6 @@ int main(int argc, char *argv[])
 						{
 							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type()); // ok
 						}
-						// if ((size_t)Config.get_response_limit_size() < clients[id].get_response().get_send_to_response().size())
-						// {
-						// 	webserv.set_error_page(clients, id, 413); // Payload Too Lar, Configge
-						// 	clients[id].get_response().set_response_str("");
-						// 	break;
-						// }
 						FILE *fp = fdopen(id, "wb");
 						size_t wr_val = 0;
 						clients[id].set_write_fp(fp);
@@ -549,7 +532,6 @@ int main(int argc, char *argv[])
 							fclose(fp);
 							close(id);
 							clients.erase(id);
-							// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 							break;
 						}
 						else
@@ -557,7 +539,6 @@ int main(int argc, char *argv[])
 							fclose(fp);
 							close(id);
 							clients.erase(id);
-							// change_events(webserv.get_kq().get_change_list(), id, EVFILT_WRITE, EV_DELETE | EV_ENABLE, 0, 0, NULL);
 						}
 					}
 				}

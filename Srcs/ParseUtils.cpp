@@ -102,7 +102,5 @@ std::string remove_delim(const std::string &str)
 	while (*it == ' ')
 		it++;
 	temp.erase(temp.begin(), it);
-	// if (temp.end() - 1 == ';')
-	// 	temp.erase(temp.end() - 1);
 	return temp;
 }
