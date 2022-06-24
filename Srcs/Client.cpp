@@ -97,6 +97,7 @@ int Client::request_parsing(FILE *file_ptr)
 		this->string_buff.clear();
 		this->request.request_parsing(this->request.get_requests());
 		this->request.query_parsing();
+		std::cout << this->request.get_start_line() << std::endl;
 		return 0;
 	}
 	else

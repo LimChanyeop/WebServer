@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
 			int id = webserv.get_kq().get_event_list()[i].ident;
 			if (webserv.get_kq().get_event_list()[i].flags & EV_ERROR)
 			{
+				std::cout << "1";
+				// webserv.set_error_page(clients, id, 500, Config);
 				if (webserv.is_client(Config, id))
 				{
 					if (clients[id].get_pid() == -1)
@@ -56,11 +58,11 @@ int main(int argc, char *argv[])
 							fclose(const_cast<FILE *>(clients[id].get_write_fp()));
 					}
 				}
-				webserv.set_error_page(clients, id, 500, Config);
 				if (clients[id].get_read_fd() > 0)
 					clients.erase(clients[id].get_read_fd());
 				else if (clients[id].get_write_fd() > 0)
 					clients.erase(clients[id].get_write_fd());
+				clients.erase(id);
 				continue;
 			}
 			else if (webserv.get_kq().get_event_list()[i].filter == EVFILT_READ)
@@ -85,6 +87,7 @@ int main(int argc, char *argv[])
 					}
 					if (valfread < 0)
 					{
+						std::cout << "2";
 						webserv.set_error_page(clients, read_fd, 500, Config);
 
 						close(id);
@@ -134,6 +137,7 @@ int main(int argc, char *argv[])
 					}
 					if (valread < 0)
 					{
+						std::cout << "3";
 						webserv.set_error_page(clients, read_fd, 500, Config);
 
 						close(id);
@@ -169,6 +173,7 @@ int main(int argc, char *argv[])
 					} // requests_ok
 					if (k == -1)
 					{
+						std::cout << "4";
 						webserv.set_error_page(clients, id, 500, Config);
 						break;
 					}
@@ -192,6 +197,7 @@ int main(int argc, char *argv[])
 						int location_id = webserv.find_location_id(server_id, Config, clients[id].get_request(), clients[id]); // /abc가 있는가?
 						if (location_id == 404)																				   // is not found
 						{
+							std::cout << "5";
 							webserv.set_error_page(clients, id, 404, Config);
 							break;
 						}
@@ -255,6 +261,7 @@ int main(int argc, char *argv[])
 							clients[id].set_open_file_name('.' + clients[id].get_route());
 							if (open_fd == -1)
 							{
+								std::cout << "6";
 								webserv.set_error_page(clients, id, 404, Config);
 								break;
 							}
@@ -310,6 +317,7 @@ int main(int argc, char *argv[])
 							int open_fd = open((route + std::to_string(i)).c_str(), O_RDWR | O_CREAT | O_APPEND | O_SYNC, 0777);
 							if (open_fd < 0)
 							{
+								std::cout << "7";
 								webserv.set_error_page(clients, id, 404, Config);
 								break;
 							}
@@ -358,6 +366,7 @@ int main(int argc, char *argv[])
 							clients[id].set_open_file_name(index_root);
 							if (open_fd < 0)
 							{
+								std::cout << "8";
 								webserv.set_error_page(clients, id, 404, Config);
 								break;
 							}
@@ -385,6 +394,7 @@ int main(int argc, char *argv[])
 						fclose(fp);
 						close(id);
 						clients.erase(id);
+						std::cout << "9";
 						webserv.set_error_page(clients, clients[id].get_write_fd(), 500, Config);
 						break;
 					}
@@ -411,6 +421,7 @@ int main(int argc, char *argv[])
 						fclose(fp);
 						close(id);
 						clients.erase(id);
+						std::cout << "10";
 						webserv.set_error_page(clients, clients[id].get_write_fd(), 500, Config);
 						break;
 					}
@@ -476,6 +487,7 @@ int main(int argc, char *argv[])
 								}
 								else
 								{
+									std::cout << "11";
 									webserv.set_error_page(clients, id, 404, Config);
 									break;
 								}
@@ -514,6 +526,7 @@ int main(int argc, char *argv[])
 							wr_val = write(id, clients[id].get_response().get_send_to_response().c_str(), clients[id].get_response().get_send_to_response().length());
 							if (wr_val < 0)
 							{
+								std::cout << "12";
 								webserv.set_error_page(clients, id, 500, Config);
 								clients[id].get_response().set_response_str("");
 								break;
@@ -529,6 +542,7 @@ int main(int argc, char *argv[])
 						wr_val += fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char), clients[id].get_response().get_send_to_response().size(), fp);
 						if (wr_val < 0)
 						{
+							std::cout << "13";
 							webserv.set_error_page(clients, id, 500, Config);
 							clients[id].get_response().set_response_str("");
 							fclose(fp);

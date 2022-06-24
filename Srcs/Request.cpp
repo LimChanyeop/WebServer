@@ -107,7 +107,7 @@ void Request::split_request(const std::string &lines)
 			break;
 		this->start_line += *it;
 	}
-	std::cout << start_line << std::endl;
+	// std::cout << start_line << std::endl;
 	unsigned long find;
 	std::string head = lines;
 	if ((find = head.find("\r\n\r\n")) != std::string::npos)
