@@ -1,7 +1,5 @@
 CC = c++
-
-# MAIN = main.cpp
-
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g -fsanitize=address
 SFILE = ./srcs/Webserv.cpp \
 		./srcs/Fd.cpp \
 		./srcs/ParseUtils.cpp \
@@ -13,27 +11,26 @@ SFILE = ./srcs/Webserv.cpp \
 		./srcs/Kqueue.cpp \
 		./srcs/Client.cpp \
 		main.cpp
-		
 
-# SOBJ = $(SFILE:.c=.o)
-CFILE = ./Client/testclient.cpp
-# COBJ = $(CFILE:.c=.o)
+OBJECT = $(SFILE:.cpp=.o)
 
 SNAME = webserv
-CNAME = testClient
 
-all : $(SNAME) $(CNAME)
+all : $(SNAME)
 
 #  -g -fsanitize=address
-$(SNAME) : $(SFILE)
-	$(CC) $(SFILE) -o $(SNAME) -g -fsanitize=address
+$(SNAME) : $(OBJECT)
+	$(CC) $(CXXFLAGS) -o $(SNAME) $(OBJECT)
 
-$(CNAME) : $(CFILE)
-	$(CC) $(CFILE) -o $(CNAME)
+# $(OBJECT) : $(SFILE)
+# 	$(CC) $(CXXFLAGS) -c $(SFILE)
+
+clean :
+	rm -f $(OBJECT)
 
 fclean :
-	rm -f $(SNAME) $(CNAME)
+	rm -f $(SNAME) $(OBJECT)
 
 re : fclean all
 
-.PHONY : all fclean
+.PHONY : all clean fclean

@@ -3,7 +3,7 @@
 	<meta charset="utf-8">
 </head>
 <header>
-	<img src="./test.jpeg" alt="minsikim">
+	<img src="../images/img.gif" alt="minsikim">
 	<h1><a href="http://localhost:4242/">go to home</a></h1>
 </header>
 <nav>

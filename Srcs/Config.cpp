@@ -1,38 +1,49 @@
 #include "../includes/Config.hpp"
 #include "../includes/ParseUtils.hpp"
 
+Config::Config() : client_limit_body_size(10000000), request_limit_header_size(4096), root("/") {}
+
+const int &Config::get_client_limit_body_size(void) const { return client_limit_body_size; }
+const int &Config::get_request_limit_header_size(void) const { return request_limit_header_size; }
 const std::string &Config::get_user(void) const { return user; }
 const std::string &Config::get_worker_processes(void) const { return worker_processes; }
 const std::string &Config::get_root(void) const { return root; }
 const std::string &Config::get_index(void) const { return index; }
 const std::string &Config::get_autoindex(void) const { return autoindex; }
 const std::string &Config::get_return_n(void) const { return return_n; }
-const std::string &Config::get_error_page(void) const { return error_page; }
+const std::map<int, std::string> &Config::get_error_page(void) const { return error_page; }
 const std::string &Config::get_cgi_path(void) const { return cgi_path; }
 const std::string &Config::get_allow_methods(void) const { return allow_methods; }
 const std::string &Config::get_auth_key(void) const { return auth_key; }
-const int &Config::get_client_limit_body_size(void) const { return client_limit_body_size; }
-const int &Config::get_request_limit_header_size(void) const { return request_limit_header_size; }
+const std::vector<Server> &Config::get_v_server(void) const { return v_server; }
+const std::string &Config::get_limit_except(void) const { return limit_except; }
 
+void Config::set_client_limit_body_size(int i) { client_limit_body_size = i; }
+void Config::set_request_limit_header_size(int i) { request_limit_header_size = i; }
 void Config::set_user(std::string str) { user = str; }
 void Config::set_worker_processes(std::string str) { worker_processes = str; }
 void Config::set_root(std::string str) { root = str; }
 void Config::set_index(std::string str) { index = str; }
 void Config::set_autoindex(std::string str) { autoindex = str; }
 void Config::set_return_n(std::string str) { return_n = str; }
-void Config::set_error_page(std::string str) { error_page = str; }
+void Config::set_error_page(int i, std::string str) { error_page[i] = str; }
 void Config::set_cgi_path(std::string str) { cgi_path = str; }
 void Config::set_allow_methods(std::string str) { allow_methods = str; }
 void Config::set_auth_key(std::string str) { auth_key = str; }
-void Config::set_client_limit_body_size(int i) { client_limit_body_size = i; }
-void Config::set_request_limit_header_size(int i) { request_limit_header_size = i; }
+void Config::set_limit_except(std::string str) { limit_except = str; }
 
 void Config::config_parsing(std::vector<std::string> lists) //, Config_base config_base)
 {
 	std::vector<std::string>::iterator it;
 	for (it = lists.begin(); it != lists.end(); it++)
 	{
+		std::cerr << "it: " << *it << ", find_key: " << find_key(*it) << std::endl;
 		std::string temp = "";
+		unsigned int i;
+		unsigned long find;
+
+		if (*it == "")
+			continue;
 		switch (find_key(*it))
 		{
 		case 0:
@@ -46,6 +57,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_user(temp);
@@ -55,6 +67,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_worker_processes(temp);
@@ -64,6 +77,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_root(temp);
@@ -73,6 +87,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_index(temp);
@@ -82,6 +97,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_autoindex(temp);
@@ -91,24 +107,24 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_return_n(temp);
 			break;
 		case 10:
-			while (find_semi(*(it + 1)))
-			{
-				temp += *it;
-				temp += ' ';
-			}
-			temp += *(it + 1);
-			this->set_error_page(temp);
+			i = atoi((++it)->c_str());
+			temp = '.' + *(++it);
+			while ((find = temp.find(";")) != std::string::npos)
+				temp.erase(find, find + 1);
+			this->set_error_page(i, temp);
 			break;
 		case 11:
 			while (find_semi(*(it + 1)))
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_cgi_path(temp);
@@ -118,6 +134,7 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_allow_methods(temp);
@@ -127,20 +144,66 @@ void Config::config_parsing(std::vector<std::string> lists) //, Config_base conf
 			{
 				temp += *it;
 				temp += ' ';
+				it++;
 			}
 			temp += *(it + 1);
 			this->set_auth_key(temp);
 			break;
-		case 14:												 // server
-			v_server.push_back(Server(*this));					 // vec serverpush_back
+		case 14:													   // server
+			v_server.push_back(Server(*this));						   // vec serverpush_back
 			v_server[v_server.size() - 1].config_parsing(++it, lists); // v_server[i].server_block_parsing((&)it, conf_lists)
-			break;													 // location
-
+			break;
 		// case 15: // location
-		// 	this->set_auth_key(*(++it));
-		// 	break;
+		case 16: // limit
+			while (find_semi(*(it + 1)))
+			{
+				temp += *it;
+				temp += ' ';
+				it++;
+			}
+			temp += *(it + 1);
+			this->limit_except = temp;
+			break;
 		default:
 			break;
+		}
+	}
+}
+
+void Config::config_check(void)
+{ // listen
+	if (this->v_server.size() == 0)
+	{
+		std::cerr << "No Server\n";
+		exit(-1);
+	}
+	std::map<std::string, int> dup;
+	std::vector<Server>::iterator it = this->v_server.begin();
+	for (; it != v_server.end(); it++) {
+		if (dup[it->get_listen()] == 1)
+		{
+			std::cerr << "Duplicated Port - " << it->get_listen() << std::endl;
+			exit(-1);
+		}
+		dup[it->get_listen()] = 1;
+
+		if (it->get_cgi_path() == "")
+		{
+			std::cerr << "No CGI path - " << it->get_listen() << std::endl;
+			exit(-1);
+		}
+
+		std::vector<Location>::const_iterator it2 = it->get_v_location().begin();
+		for (; it2 != it->get_v_location().end(); it2++)
+		{
+			if (it2->get_location() == "/favicon.ico")
+				break;
+			std::cout << it2->get_location() << std::endl;
+		}
+		if ((size_t)(it2 - it->get_v_location().begin()) == it->get_v_location().size())
+		{
+			std::cerr << "No favicon path - " << it->get_listen() << std::endl;
+			exit(-1);
 		}
 	}
 }

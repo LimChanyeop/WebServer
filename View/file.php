@@ -25,7 +25,6 @@
     </head>
     <body>
 <?php
-
 // 디렉토리 설정
 $upload_dir = "/uploads";
 //$dir = $_SERVER['DOCUMENT_ROOT'] . $upload_dir;

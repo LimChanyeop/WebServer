@@ -1,5 +1,11 @@
 #include "../includes/ParseUtils.hpp"
 
+void error_exit(std::string error)
+{
+	std::cerr << error << " error!\n";
+	exit(-1);
+}
+
 void split_config(std::string lines, std::vector<std::string> &vec_attr)
 {
 	std::string delim = " \t";
@@ -33,7 +39,7 @@ std::string remove_annotaion(char *argv)
 	std::string line;
 	if (config_file.is_open() < 1)
 	{
-		std::cerr << "not opened\n";
+		error_exit("is open");
 	}
 	while (getline(config_file, line))
 	{
@@ -63,22 +69,23 @@ int find_semi(std::string &str)
 int find_key(const std::string &key)
 {
 	std::vector<std::string> keys;
-	keys.push_back("client_limit_body_size");
+	keys.push_back("client_limit_body_size"); // 0
 	keys.push_back("request_limit_header_size");
 	keys.push_back("user");
 	keys.push_back("worker_processes");
 	keys.push_back("listen");
-	keys.push_back("server_name");
+	keys.push_back("server_name"); // 5
 	keys.push_back("root");
 	keys.push_back("index");
 	keys.push_back("autoindex");
 	keys.push_back("return");
-	keys.push_back("error_page");
+	keys.push_back("error_page"); // 10
 	keys.push_back("cgi_path");
 	keys.push_back("allow_nethods");
 	keys.push_back("auth_key");
 	keys.push_back("server");
 	keys.push_back("location");
+	keys.push_back("limit_except");
 
 	for (std::vector<std::string>::iterator it = keys.begin(); it != keys.end(); it++)
 	{

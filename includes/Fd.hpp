@@ -6,7 +6,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
-enum type{
+enum type
+{
 	server,
 	client
 };
@@ -22,11 +23,12 @@ public:
 	Fd(/* args */);
 	~Fd();
 
-	void set_socket_fd(int fd_);
 	const int &get_socket_fd(void) const;
-	void set_address_len(unsigned int len);
 	sockaddr_in &get_address(void);
 	unsigned int &get_address_len(void);
+
+	void set_socket_fd(int fd_);
+	void set_address_len(unsigned int len);
 };
 
 #endif
