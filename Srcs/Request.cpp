@@ -52,7 +52,6 @@ void Request::request_parsing(const std::vector<std::string> &lists)
 			unsigned long find;
 			while ((find = referer.find("//")) != std::string::npos)
 				referer.erase(find, find + 1);
-			std::cout << "referer : " << referer << std::endl;
 			break;
 		case 14: // POST
 			set_method("POST");

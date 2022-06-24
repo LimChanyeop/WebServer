@@ -1,5 +1,6 @@
 CC = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -g -fsanitize=address
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+#  -g -fsanitize=address
 SFILE = ./srcs/Webserv.cpp \
 		./srcs/Fd.cpp \
 		./srcs/ParseUtils.cpp \
@@ -18,7 +19,6 @@ SNAME = webserv
 
 all : $(SNAME)
 
-#  -g -fsanitize=address
 $(SNAME) : $(OBJECT)
 	$(CC) $(CXXFLAGS) -o $(SNAME) $(OBJECT)
 

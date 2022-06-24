@@ -75,8 +75,6 @@ int main(int argc, char *argv[])
 					int valfread = 0;
 					std::string fread_str;
 					char buff[BUFSIZE];
-
-					std::cout << "file read, id: " << id << ", file_ptr: " << file_ptr << std::endl;
 					
 					memset(buff, 0, BUFSIZE);
 					while ((valfread = fread(buff, sizeof(char), BUFSIZE - 1, file_ptr)) >= 0)
@@ -103,7 +101,6 @@ int main(int argc, char *argv[])
 						clients[read_fd].set_status(is_file_read_ok);
 					else
 						clients[read_fd].set_status(GET_read_ok);
-					std::cout << "hear? status: " << clients[id].get_status() << ", read_fd status: " << read_fd << std::endl;
 					close(id);
 					clients.erase(id);
 				}
@@ -210,7 +207,6 @@ int main(int argc, char *argv[])
 							}
 							else // DELETE
 							{
-								std::cout << "im delete!\n";
 								clients[id].set_RETURN(202); // Accepted
 								clients[id].set_status(DELETE_ok);
 								change_events(webserv.get_kq().get_change_list(), id, EVFILT_READ, EV_DELETE | EV_ENABLE, 0, 0, NULL);
@@ -228,7 +224,6 @@ int main(int argc, char *argv[])
 						{
 							if (clients[id].get_request().get_method() == "DELETE")
 							{
-								std::cout << "i will remote - " << clients[id].get_request().get_referer() << std::endl;
 								remove(('.' + clients[id].get_request().get_referer()).c_str());
 								clients[id].set_status(ok);
 							}
@@ -239,7 +234,6 @@ int main(int argc, char *argv[])
 						clients[id].set_location_id(location_id);
 
 
-						std::cout << "hear!! index: " << Config.get_v_server()[server_id].get_v_location()[location_id].get_index() << std::endl; //////////////////
 
 
 						int stat = Config.get_v_server()[server_id].get_v_location()[location_id].get_redi_status();
@@ -262,8 +256,6 @@ int main(int argc, char *argv[])
 								clients[id].set_route(root + index);
 							else
 								clients[id].set_route(root + '/' + index);
-
-							std::cout << "route : ." + clients[id].get_route() << std::endl;
 
 							int open_fd = open(('.' + clients[id].get_route()).c_str(), O_RDONLY);
 							clients[id].set_open_file_name('.' + clients[id].get_route());
@@ -457,7 +449,6 @@ int main(int argc, char *argv[])
 						}
 						else if (clients[id].get_status() == is_file_read_ok)
 						{
-							std::cout <<"hear???\n";
 							// webserv.set_indexing(clients[id]);
 							clients[id].get_response().set_header(clients[id].get_RETURN(), "", clients[id].get_content_type());
 						}
@@ -551,7 +542,6 @@ int main(int argc, char *argv[])
 							}
 						}
 						wr_val += fwrite(clients[id].get_response().get_send_to_response().c_str(), sizeof(char), clients[id].get_response().get_send_to_response().size(), fp);
-						std::cout << wr_val << " vs " << clients[id].get_response().get_send_to_response().size() << std::endl;
 						if (wr_val < 0)
 						{
 							webserv.set_error_page(clients, id, 500, Config);

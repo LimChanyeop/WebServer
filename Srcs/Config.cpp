@@ -198,7 +198,6 @@ void Config::config_check(void)
 		{
 			if (it2->get_location() == "/favicon.ico")
 				break;
-			std::cout << it2->get_location() << std::endl;
 		}
 		if ((size_t)(it2 - it->get_v_location().begin()) == it->get_v_location().size())
 		{
