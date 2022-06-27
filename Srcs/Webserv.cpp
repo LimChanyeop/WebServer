@@ -105,7 +105,7 @@ std::string &Webserv::mime_read(std::string &default_mime)
 	if (open_fd < 0)
 	{
 		std::cerr << "mime open error!!\n";
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	char buff[BUFSIZE];
 	std::string read_str;
@@ -121,7 +121,7 @@ std::string &Webserv::mime_read(std::string &default_mime)
 	if (valread < 0)
 	{
 		std::cerr << "mime read error!!\n";
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	default_mime = read_str;
 	return default_mime;
@@ -176,7 +176,7 @@ void Webserv::ready_webserv(Config &Config)
 		if (it->get_socket_fd() <= 0)
 		{
 			std::cerr << "socket error" << std::endl;
-			exit(0);
+			exit(EXIT_FAILURE);
 		}
 
 		sockaddr_in &address = it->get_address();
@@ -197,12 +197,12 @@ void Webserv::ready_webserv(Config &Config)
 		if ((ret = bind(it->get_socket_fd(), (sockaddr *)&address, (socklen_t)sizeof(address))) == -1)
 		{
 			std::cerr << "bind error : return value = " << ret << std::endl;
-			exit(0);
+			exit(EXIT_FAILURE);
 		}
 		if ((listen(it->get_socket_fd(), NOE)) < 0)
 		{
 			std::cerr << "listen error" << std::endl;
-			exit(0);
+			exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -220,7 +220,7 @@ std::vector<Server>::iterator Webserv::find_server_it(Config &Config, Client &cl
 	if (it == Config.get_v_server().end())
 	{
 		std::cerr << "Can not found Server\n";
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	return it;
 }
@@ -362,7 +362,7 @@ void Webserv::accept_add_events(const int &event_ident, Server &server, Kqueue &
 						 (socklen_t *)&(server.get_address_len()))) == -1) //
 	{
 		std::cerr << "accept error " << acc_fd << std::endl;
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	fcntl(acc_fd, F_SETFL, O_NONBLOCK);
 	struct timespec timeout;
@@ -437,7 +437,7 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	if (pipe(read_fd) == -1)
 	{
 		std::cerr << "pipe error\n";
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	pipe(write_fd);
 
@@ -446,7 +446,7 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 	if (pid == -1)
 	{
 		std::cerr << "fork error\n";
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	else if (pid == 0) // child
 	{
@@ -473,7 +473,7 @@ void Webserv::run_cgi(const Server &server, const std::string &index_root, Clien
 				}
 			}
 			delete cgi_env;
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 		if (cgi_env != NULL)
 		{

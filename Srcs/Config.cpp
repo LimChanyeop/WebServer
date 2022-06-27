@@ -175,7 +175,7 @@ void Config::config_check(void)
 	if (this->v_server.size() == 0)
 	{
 		std::cerr << "No Server\n";
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 	std::map<std::string, int> dup;
 	std::vector<Server>::iterator it = this->v_server.begin();
@@ -183,14 +183,14 @@ void Config::config_check(void)
 		if (dup[it->get_listen()] == 1)
 		{
 			std::cerr << "Duplicated Port - " << it->get_listen() << std::endl;
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 		dup[it->get_listen()] = 1;
 
 		if (it->get_cgi_path() == "")
 		{
 			std::cerr << "No CGI path - " << it->get_listen() << std::endl;
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 
 		std::vector<Location>::const_iterator it2 = it->get_v_location().begin();
@@ -202,7 +202,7 @@ void Config::config_check(void)
 		if ((size_t)(it2 - it->get_v_location().begin()) == it->get_v_location().size())
 		{
 			std::cerr << "No favicon path - " << it->get_listen() << std::endl;
-			exit(-1);
+			exit(EXIT_FAILURE);
 		}
 	}
 }

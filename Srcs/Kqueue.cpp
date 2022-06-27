@@ -32,7 +32,7 @@ int Kqueue::set_event(void)
 	{
 		std::cerr << strerror(errno) << std::endl;
 		std::cerr << "kevent error\n";
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	change_list.clear(); // 등록 이벤트 목록 초기화
 	return num_of_event;

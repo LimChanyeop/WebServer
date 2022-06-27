@@ -59,9 +59,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 			this->send_to_response += content_type;
 			this->send_to_response += "\r\nContent-Length: ";
 		}
-		this->send_to_response += std::to_string(this->response_str.length() + 2);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 		// std::cout << this->response_str;
 	}
 	else if (status == 201)
@@ -70,9 +73,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response = "HTTP/1.1 201 Created\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 	}
 	else if (status == 202)
 	{
@@ -80,9 +86,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response = "HTTP/1.1 202 Accepted\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 	}
 	else if (status == 204) // POST
 	{
@@ -90,9 +99,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response = "HTTP/1.1 204 No Content\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 	}
 	else if (status == 301)
 	{
@@ -109,9 +121,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response = "HTTP/1.1 400 Bad Request\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 	}
 	else if (status == 405)
 	{
@@ -119,9 +134,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response = "HTTP/1.1 405 Method Not Allowed\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 	}
 	else if (status == 413)
 	{
@@ -129,9 +147,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response = "HTTP/1.1 413 Request Entity Too Large\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 	}
 	else if (status == 500)
 	{
@@ -139,9 +160,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response = "HTTP/1.1 500 INTERNAL_SERVER_ERROR\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 	}
 	else // 404
 	{
@@ -149,9 +173,12 @@ void Response::set_header(const int &status, const std::string &opt, const std::
 		this->send_to_response = "HTTP/1.1 404 Not Found\r\nContent-Type: ";
 		this->send_to_response += content_type;
 		this->send_to_response += "\r\nContent-Length: ";
-		this->send_to_response += std::to_string(this->response_str.length() + 1);
+		this->send_to_response += std::to_string(this->response_str.length());
 		this->send_to_response += "\r\n\r\n";
-		this->send_to_response += this->response_str + "\r\n";
+		if (this->response_str != "")
+		{
+			this->send_to_response += this->response_str;
+		}
 	}
 }
 

@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	else
 	{
 		std::cerr << "input error argc-(" << argc << ")\n";
-		exit(0);
+		exit(EXIT_FAILURE);
 	}
 	Config.config_parsing(vec_attr);
 	Config.config_check();

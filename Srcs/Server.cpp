@@ -191,7 +191,7 @@ void Server::config_parsing(std::vector<std::string>::iterator &it, std::vector<
 			break;
 		case 14: // server
 			std::cerr << "Config Parsing Error, Server in Server\n";
-			exit(-1);
+			exit(EXIT_FAILURE);
 			break;
 		case 15:														   // location
 			v_location.push_back(Location(*this));						   // vec v_location push_back

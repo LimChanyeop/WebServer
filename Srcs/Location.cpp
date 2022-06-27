@@ -168,11 +168,11 @@ void Location::config_parsing(std::vector<std::string>::iterator &it, std::vecto
 			break;
 		case 14: // server
 			std::cerr << "Config Parsing Error, Server in Location\n";
-			exit(-1);
+			exit(EXIT_FAILURE);
 			break;
 		case 15: // location
 			std::cerr << "Config Parsing Error, Location in Location\n";
-			exit(-1);
+			exit(EXIT_FAILURE);
 			break;
 		default:
 			break;
